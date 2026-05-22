@@ -36,10 +36,10 @@ const QUICK_ACTION_KEYS = [
 ] as const;
 
 const ITEM_CLASS =
-  "flex cursor-pointer items-center gap-3 rounded-md border border-transparent px-3 py-2.5 text-sm text-foreground transition-colors data-[selected=true]:border-border data-[selected=true]:bg-secondary data-[selected=true]:text-foreground";
+  "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors data-[selected=true]:bg-accent data-[selected=true]:text-foreground";
 
 const GROUP_HEADING_CLASS =
-  "[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:label-mono [&_[cmdk-group-heading]]:text-muted-foreground";
+  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:label-mono [&_[cmdk-group-heading]]:text-muted-foreground";
 
 function ShortcutHint({ keys }: { readonly keys: string }) {
   return (
@@ -159,7 +159,7 @@ export function CommandPalette({
               onClick={(event) => event.stopPropagation()}
             >
               {/* Search input */}
-              <div className="flex items-center gap-2 border-b border-border px-4">
+              <div className="flex items-center gap-2 border-b border-border/60 px-4">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                 <Command.Input
                   placeholder={t("command.placeholder")}
@@ -256,7 +256,7 @@ export function CommandPalette({
               </Command.List>
 
               {/* Footer hint */}
-              <div className="flex items-center justify-between bg-muted/30 px-4 py-2">
+              <div className="flex items-center justify-between border-t border-border/60 bg-muted/40 px-4 py-2">
                 <span className="text-xs text-muted-foreground">
                   {t("command.navigateHint")} <kbd className="rounded border border-border bg-secondary px-1 py-0.5 font-mono text-micro text-muted-foreground">↑↓</kbd> · {t("command.selectHint")} <kbd className="rounded border border-border bg-secondary px-1 py-0.5 font-mono text-micro text-muted-foreground">↵</kbd>
                 </span>

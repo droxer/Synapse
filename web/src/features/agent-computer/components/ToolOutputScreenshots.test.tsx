@@ -44,7 +44,7 @@ describe("tool screenshot renderers", () => {
     );
 
     expect(OUTPUT_CARD_BASE_CLASSES).toContain("surface-panel");
-    expect(OUTPUT_HEADER_ROW_CLASSES).toContain("border-b border-border");
+    expect(OUTPUT_HEADER_ROW_CLASSES).toContain("border-b border-border/60");
     expect(OUTPUT_CARD_INNER_CLASSES).toContain("rounded-lg border border-border bg-muted");
     expect(computerHtml).toContain("surface-panel");
     expect(computerHtml).toContain("rounded-lg border border-border bg-muted");

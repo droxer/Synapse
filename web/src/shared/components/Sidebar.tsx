@@ -149,7 +149,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "relative flex h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-sidebar-bg",
+        "relative flex h-screen shrink-0 flex-col overflow-hidden bg-sidebar-bg",
         collapsed ? "w-12" : "",
         !collapsed && !isDragging && "transition-[width] duration-200 ease-in-out",
       )}
@@ -188,7 +188,7 @@ export function Sidebar({
         )}
       </div>
 
-      {/* New task + Skills + Integrations action bar */}
+      {/* New task + grouped navigation */}
       <div className={cn("relative", collapsed ? "px-2 pb-2 space-y-1" : "px-4 pb-3")}>
         {collapsed ? (
           <>
@@ -204,8 +204,8 @@ export function Sidebar({
                     "transition-[color,background-color,border-color] duration-200",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     activePath === "/" && !activeTaskId
-                      ? "border-border-strong bg-sidebar-active text-foreground"
-                      : "bg-sidebar-bg text-sidebar-foreground-muted hover:border-border hover:bg-sidebar-hover hover:text-foreground",
+                      ? "bg-sidebar-active text-foreground"
+                      : "bg-sidebar-bg text-sidebar-foreground-muted hover:bg-sidebar-hover hover:text-foreground",
                   )}
                 >
                   <Plus className="h-4 w-4 transition-transform duration-200 group-hover/new:rotate-90" />
@@ -213,26 +213,7 @@ export function Sidebar({
               </TooltipTrigger>
               <TooltipContent side="right">{t("sidebar.newTask")}</TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className={cn(
-                    "w-full",
-                    activePath === "/channels"
-                      ? "bg-sidebar-active text-foreground"
-                      : "text-sidebar-foreground-muted hover:bg-sidebar-hover hover:text-foreground",
-                  )}
-                  asChild
-                >
-                  <Link href="/channels" onClick={createNavClickHandler("/channels")}>
-                    <Radio className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{t("sidebar.channels")}</TooltipContent>
-            </Tooltip>
+            <div role="separator" aria-hidden="true" className="my-1 h-px bg-border/60" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -253,7 +234,28 @@ export function Sidebar({
               </TooltipTrigger>
               <TooltipContent side="right">{t("sidebar.library")}</TooltipContent>
             </Tooltip>
-            <div role="separator" aria-hidden="true" className="my-1" />
+            <div role="separator" aria-hidden="true" className="my-1 h-px bg-border/60" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className={cn(
+                    "w-full",
+                    activePath === "/channels"
+                      ? "bg-sidebar-active text-foreground"
+                      : "text-sidebar-foreground-muted hover:bg-sidebar-hover hover:text-foreground",
+                  )}
+                  asChild
+                >
+                  <Link href="/channels" onClick={createNavClickHandler("/channels")}>
+                    <Radio className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t("sidebar.channels")}</TooltipContent>
+            </Tooltip>
+            <div role="separator" aria-hidden="true" className="my-1 h-px bg-border/60" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -301,7 +303,7 @@ export function Sidebar({
               type="button"
               onClick={onNewTask}
               className={cn(
-                "group/new flex w-full items-center gap-2 rounded-lg px-2.5 py-2",
+                "group/new flex w-full items-center gap-2.5 rounded-md px-3 py-2",
                 "transition-colors duration-200 ease-out",
                 "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 isMobile && "min-h-11",
@@ -315,30 +317,14 @@ export function Sidebar({
                 {t("sidebar.newTask")}
               </span>
             </button>
-            <Link
-              href="/channels"
-              onClick={createNavClickHandler("/channels")}
-              aria-label={t("sidebar.channels")}
-              className={cn(
-                "group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                isMobile && "min-h-11",
-                activePath === "/channels"
-                  ? "bg-sidebar-active text-foreground"
-                  : "text-sidebar-foreground-muted hover:bg-sidebar-hover hover:text-foreground",
-              )}
-            >
-              <Radio className={cn(
-                "h-4 w-4 shrink-0 transition-colors duration-200",
-                activePath === "/channels" ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
-              )} />
-              {t("sidebar.channels")}
-            </Link>
+
+            <div role="separator" aria-hidden="true" className="my-2 h-px bg-border/60" />
             <Link
               href="/library"
               onClick={createNavClickHandler("/library")}
               aria-label={t("sidebar.library")}
               className={cn(
-                "group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                "group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 isMobile && "min-h-11",
                 activePath === "/library"
                   ? "bg-sidebar-active text-foreground"
@@ -351,13 +337,34 @@ export function Sidebar({
               )} />
               {t("sidebar.library")}
             </Link>
-            <div role="separator" aria-hidden="true" className="my-2" />
+
+            <div role="separator" aria-hidden="true" className="my-2 h-px bg-border/60" />
+            <Link
+              href="/channels"
+              onClick={createNavClickHandler("/channels")}
+              aria-label={t("sidebar.channels")}
+              className={cn(
+                "group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                isMobile && "min-h-11",
+                activePath === "/channels"
+                  ? "bg-sidebar-active text-foreground"
+                  : "text-sidebar-foreground-muted hover:bg-sidebar-hover hover:text-foreground",
+              )}
+            >
+              <Radio className={cn(
+                "h-4 w-4 shrink-0 transition-colors duration-200",
+                activePath === "/channels" ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+              )} />
+              {t("sidebar.channels")}
+            </Link>
+
+            <div role="separator" aria-hidden="true" className="my-2 h-px bg-border/60" />
             <Link
               href="/skills"
               onClick={createNavClickHandler("/skills")}
               aria-label={t("sidebar.skills")}
               className={cn(
-                "group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                "group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 isMobile && "min-h-11",
                 activePath === "/skills"
                   ? "bg-sidebar-active text-foreground"
@@ -375,7 +382,7 @@ export function Sidebar({
               onClick={createNavClickHandler("/mcp")}
               aria-label={t("sidebar.mcp")}
               className={cn(
-                "group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                "group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 isMobile && "min-h-11",
                 activePath === "/mcp"
                   ? "bg-sidebar-active text-foreground"
@@ -397,11 +404,10 @@ export function Sidebar({
 
       {/* Task list */}
       {!collapsed && (
-        <div className="flex items-center gap-2.5 px-4 pb-1 pt-2.5">
+        <div className="px-4 pb-1 pt-4">
           <span className="label-mono whitespace-nowrap text-muted-foreground">
             {t("sidebar.recentTasks")}
           </span>
-          <span className="h-px flex-1 bg-border" aria-hidden="true" />
         </div>
       )}
       <div ref={scrollRef} className={cn("relative min-h-0 flex-1 overflow-y-auto", collapsed ? "px-2" : "px-4 pt-0.5")}>
@@ -428,7 +434,7 @@ export function Sidebar({
                         "relative flex w-full cursor-pointer items-center justify-center rounded-md p-2 transition-colors duration-200",
                         "hover:bg-sidebar-hover",
                         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                        isActive && "bg-sidebar-active ring-1 ring-border-strong",
+                        isActive && "bg-sidebar-active",
                       )}
                     >
                       {isPlanner ? (
@@ -460,7 +466,7 @@ export function Sidebar({
                     aria-current={isActive ? "true" : undefined}
                     onClick={() => onSelectTask?.(task.id)}
                     className={cn(
-                      "relative flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 pr-9 text-left",
+                      "relative flex w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 pr-9 text-left",
                       "transition-colors duration-200 ease-out",
                       "hover:bg-sidebar-hover",
                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
@@ -554,8 +560,8 @@ export function Sidebar({
           onMouseDown={handleDragStart}
           aria-hidden="true"
           className={cn(
-            "absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/30",
-            isDragging && "bg-primary/30",
+            "absolute right-0 top-0 h-full w-px cursor-col-resize bg-transparent transition-colors hover:bg-border-strong/60 active:bg-border-strong",
+            isDragging && "bg-border-strong",
           )}
         />
       )}

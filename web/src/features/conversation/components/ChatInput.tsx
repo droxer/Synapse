@@ -165,7 +165,7 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
   }, [hasContent, onContentStateChange]);
 
   return (
-    <div className={cn(!isWelcome && "shrink-0 px-4 pb-safe-4 pt-2")}>
+    <div className={cn(!isWelcome && "shrink-0 px-6 pb-safe-4 pt-3")}>
       <form
         onSubmit={handleSubmit}
         onDragOver={handleDragOver}
@@ -234,13 +234,13 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
             autoFocus={autoFocus}
             aria-label={t("chat.inputLabel")}
             className={cn(
-              "w-full resize-none bg-transparent px-4 pt-3 pb-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none",
+              "w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none",
               disabled && "opacity-50 cursor-not-allowed",
             )}
           />
 
           {/* Toolbar divider + action bar */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2">
+          <div className="flex items-center justify-between gap-1.5 px-3 pb-2 pt-1">
             {/* Left: tools + hints */}
             <div className="flex items-center gap-1.5">
               <Button

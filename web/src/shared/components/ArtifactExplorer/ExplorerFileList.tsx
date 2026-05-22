@@ -514,7 +514,7 @@ export function ExplorerFileList({
 
               return (
                 <div key={group.id} className="mb-8 last:mb-0">
-                  <div className="flex items-center gap-3 mb-3 mt-8 first:mt-0 pb-3 border-b border-border">
+                  <div className="flex items-center gap-3 mb-3 mt-8 first:mt-0 pb-3 border-b border-border/60">
                     <h3 className="text-sm font-semibold text-foreground truncate flex-1">
                       {group.title}
                     </h3>
@@ -554,7 +554,7 @@ export function ExplorerFileList({
 
               return (
                 <div key={group.id} className="mb-8 last:mb-0">
-                  <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0 pb-3 border-b border-border">
+                  <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0 pb-3 border-b border-border/60">
                     <h3 className="text-sm font-semibold text-foreground truncate flex-1">
                       {group.title}
                     </h3>

@@ -465,7 +465,7 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
               <div className={cn(OUTPUT_CARD_INNER_CLASSES, OUTPUT_SCROLL_AREA_CLASSES)}>
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-border">
+                    <tr className="border-b border-border/60">
                       {columns.map((col) => (
                         <th key={col} className="whitespace-nowrap px-2 py-1 text-micro font-medium text-muted-foreground-dim">{col}</th>
                       ))}
@@ -473,7 +473,7 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
                   </thead>
                   <tbody>
                     {rows.map((row, i) => (
-                      <tr key={i} className={cn("border-b border-border", i % 2 === 1 && "bg-background")}>
+                      <tr key={i} className={cn("border-b border-border/60", i % 2 === 1 && "bg-background")}>
                         {columns.map((col) => (
                           <td key={col} className="px-2 py-1 text-muted-foreground break-words">{String(row[col] ?? "")}</td>
                         ))}

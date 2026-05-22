@@ -67,7 +67,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
       <AppSidebar />
 
       {isMobile && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-border bg-background px-3 py-2 md:hidden">
+        <div className="flex shrink-0 items-center gap-2 border-b border-border/60 bg-background px-3 py-2 md:hidden">
           <button
             type="button"
             onClick={openSidebar}

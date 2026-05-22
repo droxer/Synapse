@@ -141,7 +141,7 @@ export function TokenUsageTab() {
                     key={item.conversation_id}
                     variants={listItem}
                     className={cn(
-                      "border-t border-border first:border-t-0 transition-colors duration-100 hover:bg-secondary",
+                      "border-t border-border/60 first:border-t-0 transition-colors duration-100 hover:bg-secondary",
                       "px-4 py-3 text-sm md:grid md:grid-cols-[minmax(0,1fr)_minmax(5.5rem,7.5rem)_minmax(5.5rem,7.5rem)_minmax(6.5rem,8.5rem)_minmax(5.5rem,7rem)] md:items-center md:gap-3",
                     )}
                   >

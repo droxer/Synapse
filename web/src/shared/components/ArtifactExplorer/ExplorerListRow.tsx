@@ -55,7 +55,7 @@ export function ExplorerListRow({
   return (
     <motion.div
       className={cn(
-        "flex items-center gap-3 px-3 border-b border-border last:border-b-0",
+        "flex items-center gap-3 px-3 border-b border-border/60 last:border-b-0",
         "border-l transition-colors duration-150 ease-out group relative",
         isPreviewOpen
           ? "bg-secondary border-l-border-strong"

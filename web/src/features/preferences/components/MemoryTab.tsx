@@ -93,7 +93,7 @@ export function MemoryTab() {
                   key={entry.id}
                   variants={listItem}
                   className={cn(
-                    "border-t border-border first:border-t-0 transition-colors duration-100 hover:bg-secondary",
+                    "border-t border-border/60 first:border-t-0 transition-colors duration-100 hover:bg-secondary",
                     "px-4 py-3 text-sm",
                   )}
                 >

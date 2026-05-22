@@ -128,7 +128,7 @@ export function FileContentViewer({
     return (
       <div className="flex h-full flex-col">
         {/* Breadcrumb skeleton */}
-        <div className="shrink-0 border-b border-border px-4 py-2.5">
+        <div className="shrink-0 border-b border-border/60 px-4 py-2.5">
           <div className="flex items-center gap-2">
             <div className="h-3.5 w-3.5 skeleton-shimmer rounded" />
             <div className="h-3.5 w-48 skeleton-shimmer rounded" />
@@ -153,7 +153,7 @@ export function FileContentViewer({
   return (
     <div className="flex h-full flex-col">
       {/* Breadcrumb header */}
-      <div className="shrink-0 border-b border-border px-4 py-2.5">
+      <div className="shrink-0 border-b border-border/60 px-4 py-2.5">
         <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
           <FileIcon aria-hidden="true" className="h-3.5 w-3.5 shrink-0 opacity-60" />
           {segments.map((seg, i) => (

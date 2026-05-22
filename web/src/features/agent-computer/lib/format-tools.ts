@@ -35,7 +35,7 @@ export const OUTPUT_META_TEXT_CLASSES = OUTPUT_SURFACE_META_CLASSES;
 export const OUTPUT_SCROLL_AREA_CLASSES = "min-h-0 max-h-64 overflow-auto overscroll-contain pr-1";
 export const EVENT_ROW_BASE_CLASSES = `surface-panel ${TOOLING_ACTIVITY_ROW_CLASSES}`;
 export { ACTIVITY_META_BADGE_CLASSES as EVENT_META_BADGE_CLASSES } from "@/shared/lib/activity-meta-badge";
-export const EVENT_LEFT_RAIL_CLASSES = "border-l border-border pl-3";
+export const EVENT_LEFT_RAIL_CLASSES = "border-l border-border/60 pl-3";
 export const SKILL_TOOL_NAMES = new Set(["activate_skill", "load_skill"]);
 
 export type ActivityEntryKind = "tool" | "skill" | "neutral";

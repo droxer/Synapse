@@ -9,7 +9,7 @@ export const OUTPUT_SURFACE_FOCUS_CLASSES =
 export const OUTPUT_SURFACE_ROOT_CLASSES =
   "surface-panel mt-2 overflow-hidden rounded-xl px-0 py-0";
 export const OUTPUT_SURFACE_HEADER_CLASSES =
-  "flex items-center gap-1.5 border-b border-border px-3 py-2";
+  "flex items-center gap-1.5 border-b border-border/60 px-3 py-2";
 export const OUTPUT_SURFACE_LABEL_CLASSES =
   "text-sm font-medium text-muted-foreground";
 export const OUTPUT_SURFACE_META_CLASSES =

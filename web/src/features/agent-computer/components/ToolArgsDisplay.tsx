@@ -113,7 +113,7 @@ export function ToolArgsDisplay({ input, compact = false }: ToolArgsDisplayProps
     <div
       className={cn(
         OUTPUT_CARD_DENSE_CLASSES,
-        "border-l border-border bg-muted",
+        "border-l border-border/60 bg-muted",
         compact && "px-2 py-1",
       )}
     >

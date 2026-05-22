@@ -52,12 +52,12 @@ export function getConversationWorkspaceLayoutClasses(
   return {
     contentWidthClass:
       panelOpen && isMobile
-        ? "max-w-[56rem]"
+        ? "max-w-[48rem]"
         : layoutVariant === "embedded" && panelOpen
-        ? "max-w-[42rem]"
+        ? "max-w-[40rem]"
         : panelOpen
-          ? "max-w-[46rem]"
-          : "max-w-[56rem]",
+          ? "max-w-[44rem]"
+          : "max-w-[48rem]",
     workspaceLayoutClass: panelOpen && !isMobile
       ? layoutVariant === "embedded"
         ? "grid grid-rows-[minmax(0,1fr)_minmax(18rem,40%)] md:grid-cols-[minmax(0,1fr)_minmax(20rem,36%)] md:grid-rows-1"
@@ -230,7 +230,7 @@ export const MessageRow = memo(function MessageRow({
   });
 
   return (
-    <div data-role={msg.role} className={cn(index > 0 && "mt-6")}>
+    <div data-role={msg.role} className={cn(index > 0 && "mt-8")}>
       {msg.role === "user" ? (
         /* ─── User message ─── right-aligned, refined bubble */
         <motion.div
@@ -297,7 +297,7 @@ export const MessageRow = memo(function MessageRow({
               </div>
             ) : null}
             {/* Message body */}
-            <div className="conversation-response-body text-sm leading-[1.5] text-foreground">
+            <div className="conversation-response-body text-sm leading-relaxed text-foreground">
               {hasPlanHere && (
                 <div className={showMarkdown || imageUrls.length > 0 ? "mb-3" : undefined}>
                   <PlanChecklistPanel planSteps={embeddedPlanSteps} />

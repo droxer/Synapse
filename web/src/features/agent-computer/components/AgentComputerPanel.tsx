@@ -403,7 +403,7 @@ export function SandboxPreviewPanel({ previewSession }: { readonly previewSessio
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <PanelTop className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />

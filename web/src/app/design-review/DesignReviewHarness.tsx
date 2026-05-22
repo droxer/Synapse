@@ -213,7 +213,7 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
   return (
     <main id="main" className="min-h-screen bg-background text-foreground">
       <ProductPageHeader
-        className="border-b border-border py-4"
+        className="border-b border-border/60 py-4"
         icon={<Bot className="h-5 w-5 text-muted-foreground" />}
         eyebrow="Local visual fixture"
         title={`Frontend design review: ${themeLabel}`}

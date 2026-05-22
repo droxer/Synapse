@@ -285,7 +285,7 @@ export function SkillActivityEntry({ toolCall }: SkillActivityEntryProps) {
               transition={{ duration: 0.12, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="border-t border-border px-2 py-2">
+              <div className="border-t border-border/60 px-2 py-2">
                 <pre className="max-h-48 md:max-h-64 overflow-auto font-mono text-micro leading-relaxed text-muted-foreground-dim">
                   {toolCall.output}
                 </pre>

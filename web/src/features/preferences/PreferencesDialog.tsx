@@ -54,7 +54,7 @@ export function PreferencesDialog({ open, onOpenChange }: PreferencesDialogProps
         <div className="flex h-[min(90vh,56rem)] min-h-[28rem] w-full min-w-0 flex-col md:flex-row">
           {/* Side menu */}
           <nav
-            className="flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-secondary p-2 md:w-72 md:flex-col md:overflow-x-visible md:border-b-0 md:p-3"
+            className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/60 bg-secondary p-2 md:w-72 md:flex-col md:overflow-x-visible md:border-b-0 md:p-3"
             aria-label={t("preferences.title")}
           >
             <p className="label-mono hidden px-3 pb-3 pt-4 text-muted-foreground-dim md:block">

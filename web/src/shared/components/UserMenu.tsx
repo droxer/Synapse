@@ -169,7 +169,7 @@ function ProfilePopoverContent({
         <p className="mt-0.5 truncate text-xs text-muted-foreground">{email}</p>
       </div>
 
-      <div className="border-t border-border" />
+      <div className="border-t border-border/60" />
 
       {/* Actions */}
       <div className="p-1.5">

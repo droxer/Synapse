@@ -113,7 +113,7 @@ export function MCPServerForm({
           autoFocus
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/20 px-4 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 bg-muted/20 px-4 py-2.5">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span
               className={cn(
@@ -139,7 +139,7 @@ export function MCPServerForm({
         </div>
       </section>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col-reverse gap-2 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex justify-end gap-2">
           <Button
             variant="ghost"

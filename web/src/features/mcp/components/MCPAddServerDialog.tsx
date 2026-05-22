@@ -56,7 +56,7 @@ export function MCPAddServerDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden p-0 sm:max-w-2xl">
-        <div className="border-b border-border bg-muted/30 px-5 py-4 sm:px-6">
+        <div className="border-b border-border/60 bg-muted/30 px-5 py-4 sm:px-6">
           <DialogHeader className="gap-3 pr-8">
             <div className="flex items-start gap-3">
               <div className="chip-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background">

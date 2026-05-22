@@ -41,7 +41,7 @@ export function TopBar({
   const isActive = taskState !== "idle";
 
   return (
-    <header className="flex h-10 shrink-0 items-center justify-between bg-background px-4">
+    <header className="flex h-12 shrink-0 items-center justify-between bg-background px-6">
       {/* Left: Breadcrumb */}
       <div className="min-w-0 flex items-center gap-1.5">
         <Button
@@ -107,7 +107,7 @@ export function TopBar({
         aria-label={t("topbar.search")}
         variant="ghost"
         size="sm"
-        className="shrink-0 gap-2 rounded-md border border-border bg-card text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+        className="shrink-0 gap-2 rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
       >
         <Search className="h-3.5 w-3.5" />
         <span className="hidden sm:inline text-xs">{t("topbar.search")}</span>

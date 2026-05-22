@@ -442,7 +442,7 @@ describe("areMessageRowsEqual", () => {
 describe("getConversationWorkspaceLayoutClasses", () => {
   it("keeps the default workspace on the spacious large-screen panel layout", () => {
     expect(getConversationWorkspaceLayoutClasses("default", true)).toEqual({
-      contentWidthClass: "max-w-[46rem]",
+      contentWidthClass: "max-w-[44rem]",
       workspaceLayoutClass:
         "grid grid-rows-[minmax(0,1fr)_minmax(20rem,42%)] lg:grid-cols-[minmax(0,1fr)_minmax(22rem,var(--agent-panel-width))] lg:grid-rows-1",
       panelBorderClass: "border-t lg:border-l lg:border-t-0",
@@ -451,7 +451,7 @@ describe("getConversationWorkspaceLayoutClasses", () => {
 
   it("uses the tighter embedded columns for channels", () => {
     expect(getConversationWorkspaceLayoutClasses("embedded", true)).toEqual({
-      contentWidthClass: "max-w-[42rem]",
+      contentWidthClass: "max-w-[40rem]",
       workspaceLayoutClass:
         "grid grid-rows-[minmax(0,1fr)_minmax(18rem,40%)] md:grid-cols-[minmax(0,1fr)_minmax(20rem,36%)] md:grid-rows-1",
       panelBorderClass: "border-t md:border-l md:border-t-0",
@@ -460,7 +460,7 @@ describe("getConversationWorkspaceLayoutClasses", () => {
 
   it("renders a single-column workspace when the panel is closed", () => {
     expect(getConversationWorkspaceLayoutClasses("embedded", false)).toMatchObject({
-      contentWidthClass: "max-w-[56rem]",
+      contentWidthClass: "max-w-[48rem]",
       workspaceLayoutClass: "flex flex-col",
     });
   });
@@ -469,7 +469,7 @@ describe("getConversationWorkspaceLayoutClasses", () => {
     const layoutClasses = getConversationWorkspaceLayoutClasses("default", true, true);
 
     expect(layoutClasses).toMatchObject({
-      contentWidthClass: "max-w-[56rem]",
+      contentWidthClass: "max-w-[48rem]",
       workspaceLayoutClass: "flex flex-col",
     });
     expect(layoutClasses.workspaceLayoutClass).not.toContain("grid-rows");

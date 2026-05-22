@@ -131,7 +131,7 @@ function TelegramConfigModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="max-w-md overflow-hidden rounded-lg border border-border bg-background p-0">
         {/* Header */}
-        <div className="relative flex items-center gap-3.5 px-6 py-4 border-b border-border overflow-hidden">
+        <div className="relative flex items-center gap-3.5 px-6 py-4 border-b border-border/60 overflow-hidden">
           <ChannelProviderIcon provider="telegram" size="lg" className="relative rounded-xl ring-1 ring-border" />
           <div className="relative flex-1 min-w-0">
             <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">{t("channels.telegram.title")}</DialogTitle>
@@ -195,7 +195,7 @@ function TelegramConfigModal({
                   {helpOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </button>
                 {helpOpen && (
-                  <ol className="space-y-2 border-t border-border bg-secondary px-4 py-3 leading-normal text-muted-foreground">
+                  <ol className="space-y-2 border-t border-border/60 bg-secondary px-4 py-3 leading-normal text-muted-foreground">
                     {[
                       t("channels.telegram.helpStep1"),
                       t("channels.telegram.helpStep2"),
@@ -360,7 +360,7 @@ function TelegramConfigModal({
                 <button
                   type="button"
                   onClick={onCopy}
-                  className="flex shrink-0 items-center justify-center gap-1.5 border-l border-border bg-card px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                  className="flex shrink-0 items-center justify-center gap-1.5 border-l border-border/60 bg-card px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 >
                   {copied ? <Check className="h-3.5 w-3.5 text-foreground" /> : <Copy className="h-3.5 w-3.5" />}
                   {copied ? t("channels.telegram.copiedButton") : t("channels.telegram.copyButton")}

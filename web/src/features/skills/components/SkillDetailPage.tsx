@@ -41,7 +41,7 @@ function DetailSkeleton() {
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Header skeleton */}
-      <div className="shrink-0 border-b border-border px-6 py-4">
+      <div className="shrink-0 border-b border-border/60 px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 skeleton-shimmer rounded-md" />
           <div className="h-9 w-9 skeleton-shimmer rounded-lg" />
@@ -53,7 +53,7 @@ function DetailSkeleton() {
       </div>
       {/* Body skeleton: sidebar + content */}
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
-        <div className="w-full md:w-[250px] md:shrink-0 max-h-[200px] md:max-h-none overflow-y-auto border-r border-border p-3 space-y-2">
+        <div className="w-full md:w-[250px] md:shrink-0 max-h-[200px] md:max-h-none overflow-y-auto border-r border-border/60 p-3 space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-5 skeleton-shimmer rounded" style={{ width: `${60 + Math.random() * 40}%` }} />
           ))}
@@ -114,7 +114,7 @@ export function SkillDetailPage({ name }: SkillDetailPageProps) {
   return (
     <div className="flex h-full flex-col bg-background">
       {/* ── Header ── */}
-      <div className="shrink-0 border-b border-border px-6 py-4">
+      <div className="shrink-0 border-b border-border/60 px-6 py-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon-sm" asChild>
             <Link href="/skills" aria-label={t("skills.backToSkills")}>
@@ -172,7 +172,7 @@ export function SkillDetailPage({ name }: SkillDetailPageProps) {
       {/* ── Body: File Tree + Content Viewer ── */}
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
         {/* Sidebar: File Tree */}
-        <div className="w-full md:w-[250px] md:shrink-0 max-h-[280px] md:max-h-none overflow-y-auto border-r border-border">
+        <div className="w-full md:w-[250px] md:shrink-0 max-h-[280px] md:max-h-none overflow-y-auto border-r border-border/60">
           {isLoadingTree ? (
             <div className="p-3 space-y-2">
               {Array.from({ length: 6 }).map((_, i) => (

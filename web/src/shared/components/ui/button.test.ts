@@ -23,7 +23,7 @@ describe("buttonVariants", () => {
     const classes = buttonVariants({ variant: "ghost" });
 
     expect(classes).toContain("hover:bg-accent");
-    expect(classes).toContain("hover:text-accent-foreground");
+    expect(classes).toContain("hover:text-foreground");
   });
 
   it("uses the focus token for inline links instead of the primary fill token", () => {

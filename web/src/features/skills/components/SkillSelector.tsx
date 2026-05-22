@@ -127,7 +127,7 @@ export function SkillSelector({
         >
           {/* Search filter */}
           {skills.length > 4 && (
-            <div className="border-b border-border px-3 py-2">
+            <div className="border-b border-border/60 px-3 py-2">
               <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5">
                 <Search aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" />
                 <input
