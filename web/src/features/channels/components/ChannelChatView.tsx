@@ -246,10 +246,10 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
               <p className="label-mono text-steel">
                 {pendingAsk.title ?? t("inputPrompt.title")}
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-ink-deep">
+              <p className="mt-1 whitespace-pre-wrap text-body-sm text-ink-deep">
                 {pendingAsk.question}
               </p>
-              <p className="mt-1 text-xs text-steel">
+              <p className="mt-1 text-caption text-steel">
                 {promptDisablesComposer
                   ? t("channels.prompt.chooseOption")
                   : t("inputPrompt.subtitle")}
@@ -264,11 +264,11 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
                       className="flex min-h-10 w-full items-start rounded-md border border-hairline-soft bg-canvas px-3 py-2 text-left transition-colors hover:border-charcoal hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
                     >
                       <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="text-sm font-medium leading-5 text-ink-deep">
+                        <span className="text-body-sm-bold text-ink-deep">
                           {option.label}
                         </span>
                         {option.description && (
-                          <span className="text-xs leading-4 text-steel">
+                          <span className="text-caption text-steel">
                             {option.description}
                           </span>
                         )}
@@ -278,7 +278,7 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
                 </div>
               )}
               {respondError && (
-                <p className="mt-2 text-xs text-critical">
+                <p className="mt-2 text-caption text-critical">
                   {respondError}
                 </p>
               )}

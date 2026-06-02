@@ -48,6 +48,11 @@ function loadBackendEnvFallback(): void {
       process.env[key] = value;
     }
   }
+
+  if (process.env.BACKEND_URL === undefined) {
+    const port = process.env.PORT ?? "8000";
+    process.env.BACKEND_URL = `http://127.0.0.1:${port}`;
+  }
 }
 
 loadBackendEnvFallback();

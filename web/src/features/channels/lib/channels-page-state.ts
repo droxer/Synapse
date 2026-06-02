@@ -1,6 +1,10 @@
 import type { ChannelConversation } from "../api/channel-api";
 
-export type ChannelsPane = "split" | "thread_list" | "chat";
+export type ChannelsPane = "split" | "thread_list" | "chat" | "focus";
+
+export function shouldShowThreadList(conversationCount: number): boolean {
+  return conversationCount >= 2;
+}
 
 export function sortChannelConversations(
   conversations: readonly ChannelConversation[],
@@ -36,13 +40,21 @@ export function resolveChannelsPane({
   isMobile,
   mobileChatOpen,
   hasSelectedConversation,
+  conversationCount,
 }: {
   readonly isMobile: boolean;
   readonly mobileChatOpen: boolean;
   readonly hasSelectedConversation: boolean;
+  readonly conversationCount: number;
 }): ChannelsPane {
+  const showThreadList = shouldShowThreadList(conversationCount);
+
   if (!isMobile) {
-    return "split";
+    return showThreadList ? "split" : "focus";
+  }
+
+  if (!showThreadList) {
+    return hasSelectedConversation ? "chat" : "focus";
   }
 
   return mobileChatOpen && hasSelectedConversation ? "chat" : "thread_list";

@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { motion, type Variants } from "framer-motion";
-import { RefreshCw, Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { listChannelConversations, type ChannelConversation } from "../api/channel-api";
 import { deleteConversation } from "@/shared/api/conversation-list-api";
 import { useAppStore } from "@/shared/stores";
 import { getProviderColor } from "./ChannelProviderIcon";
 import { useTranslation } from "@/i18n";
+import { channelsListContainer, channelsListItem } from "../lib/motion";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
 
 function formatRelativeTime(
   isoString: string | null,
@@ -80,13 +87,6 @@ export function ChannelConversationList({
     void fetchConversations();
   }, [fetchConversations, refreshToken]);
 
-  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (deletingId) return;
-    setPendingDeleteId(conversationId);
-  };
-
   const handleDeleteConfirm = async () => {
     if (!pendingDeleteId) return;
     try {
@@ -116,10 +116,12 @@ export function ChannelConversationList({
           <div key={i} className="flex items-center gap-3 rounded-md px-2.5 py-2.5">
             <div className="h-9 w-9 shrink-0 rounded-lg skeleton-shimmer" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-20 skeleton-shimmer" />
-              <div className="h-2.5 w-28 skeleton-shimmer" />
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-24 skeleton-shimmer" />
+                <div className="h-2.5 w-6 skeleton-shimmer" />
+              </div>
+              <div className="h-2.5 w-40 skeleton-shimmer" />
             </div>
-            <div className="h-2 w-5 skeleton-shimmer" />
           </div>
         ))}
       </div>
@@ -129,14 +131,14 @@ export function ChannelConversationList({
   if (loadError) {
     return (
       <div className="m-2 flex flex-col items-center gap-3 rounded-lg border border-critical-strong bg-critical-strong/5 px-4 py-8 text-center">
-        <p className="text-xs text-critical">{loadError}</p>
+        <p className="text-caption text-critical">{loadError}</p>
         <button
           type="button"
           onClick={() => {
             setLoading(true);
             void fetchConversations();
           }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-critical-strong bg-critical/10 px-3 py-1.5 text-xs font-medium text-critical transition-colors hover:bg-critical-strong/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          className="inline-flex items-center gap-1.5 rounded-md border border-critical-strong bg-critical/10 px-3 py-1.5 text-caption-bold text-critical transition-colors hover:bg-critical-strong/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           <RefreshCw className="h-3 w-3" />
           {t("channels.list.retry")}
@@ -148,7 +150,7 @@ export function ChannelConversationList({
   if (conversations.length === 0) {
     return (
       <div className="mx-2 mt-1 rounded-md border border-dashed border-hairline-soft bg-surface-soft px-3 py-4 text-center">
-        <p className="text-xs font-medium text-steel">{t("channels.list.emptyTitle")}</p>
+        <p className="text-caption-bold text-steel">{t("channels.list.emptyTitle")}</p>
         <p className="mt-0.5 text-micro leading-normal text-stone">
           {t("channels.list.emptyHint")}
         </p>
@@ -156,25 +158,16 @@ export function ChannelConversationList({
     );
   }
 
-  const container: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.02, delayChildren: 0.05 } },
-  };
-  const item: Variants = {
-    hidden: { opacity: 0, x: -6 },
-    show: { opacity: 1, x: 0, transition: { duration: 0.15, ease: "easeOut" } },
-  };
-
   return (
     <>
       <motion.div
-        variants={container}
+        variants={channelsListContainer}
         initial="hidden"
         animate="show"
         className="space-y-0.5 px-2 py-1.5"
       >
         {actionError && (
-          <div className="mx-0.5 mb-2 rounded-md border border-critical-strong bg-critical-strong/5 px-3 py-2 text-xs text-critical">
+          <div className="mx-0.5 mb-2 rounded-md border border-critical-strong bg-critical-strong/5 px-3 py-2 text-caption text-critical">
             {actionError}
           </div>
         )}
@@ -184,15 +177,16 @@ export function ChannelConversationList({
           const name = conv.display_name ?? conv.provider_chat_id;
           const initial = name.charAt(0).toUpperCase();
           const providerColor = getProviderColor(conv.provider);
+          const relTime = formatRelativeTime(conv.last_message_at, locale, t);
 
           return (
             <motion.div
               key={conv.conversation_id}
-              variants={item}
+              variants={channelsListItem}
               className={cn(
                 "group relative flex w-full items-center rounded-md text-left transition-colors duration-150",
                 isSelected
-                  ? "bg-surface-soft text-ink-deep before:absolute before:bottom-1.5 before:left-0 before:top-1.5 before:w-0.5 before:rounded-r-full before:bg-border-strong before:content-['']"
+                  ? "bg-surface-soft text-ink-deep"
                   : "text-ink-deep hover:bg-sidebar-hover",
                 deletingId === conv.conversation_id && "pointer-events-none opacity-50",
               )}
@@ -202,63 +196,75 @@ export function ChannelConversationList({
                 onClick={() => onSelect(conv)}
                 className="flex w-full flex-1 items-center gap-3 rounded-md px-2.5 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
               >
-                <div className="relative shrink-0">
-                  <div
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline-soft text-sm font-semibold text-on-cobalt"
-                    style={{ background: `linear-gradient(135deg, ${providerColor}cc, ${providerColor})` }}
-                  >
-                    {initial}
-                  </div>
-                  <div
-                    className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border border-sidebar-bg"
-                    style={{ background: providerColor }}
-                  />
+                <div
+                  className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-body-sm-bold text-on-cobalt shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                  style={{ background: `linear-gradient(135deg, ${providerColor}cc, ${providerColor})` }}
+                >
+                  {initial}
+                  {conv.session_active && (
+                    <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-2.5 w-2.5">
+                      <span className="absolute inset-0 rounded-full bg-accent-emerald/40 animate-ping" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent-emerald ring-2 ring-sidebar-bg" />
+                    </span>
+                  )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-1.5">
-                    <span className="truncate pr-6 text-sm font-medium leading-tight text-ink-deep">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-body-sm-bold text-ink-deep">
                       {name}
                     </span>
-                    {conv.last_message_at && (
-                      <span className="shrink-0 font-medium tabular-nums text-micro text-stone transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
-                        {formatRelativeTime(conv.last_message_at, locale, t)}
+                    {relTime && (
+                      <span className="shrink-0 tabular-nums text-micro font-medium text-stone">
+                        {relTime}
                       </span>
                     )}
                   </div>
                   {conv.last_message ? (
-                    <p className="mt-0.5 truncate text-xs leading-tight text-steel">
+                    <p className="mt-0.5 truncate text-caption text-steel">
                       {conv.last_message}
                     </p>
                   ) : (
-                    <p className="mt-0.5 text-xs italic leading-tight text-stone">
-                      {t("channels.list.newConversation")}
+                    <p className="mt-0.5 truncate text-caption text-stone">
+                      — {t("channels.list.newConversation")}
                     </p>
                   )}
                 </div>
-
-                {conv.session_active && (
-                  <div className="flex shrink-0 items-center justify-center transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
-                    <span className="inline-flex h-2 w-2 rounded-full bg-accent-emerald" />
-                  </div>
-                )}
               </button>
 
-              <div className="fine-hover-action absolute right-2 top-1/2 -translate-y-1/2 transition-opacity">
-                <button
-                  type="button"
-                  onClick={(e) => handleDeleteClick(e, conv.conversation_id)}
-                  className="touch-target flex h-7 w-7 items-center justify-center rounded-md border border-hairline-soft bg-card text-steel hover:border-critical-strong hover:bg-critical/10 hover:text-critical focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-                  title={t("channels.list.deleteConversation")}
-                  aria-label={t("channels.list.deleteConversation")}
-                >
-                  {deletingId === conv.conversation_id ? (
-                    <Trash2 className="h-3.5 w-3.5 animate-pulse text-critical" aria-hidden />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                  )}
-                </button>
+              <div className="fine-hover-action shrink-0 pr-1.5 transition-opacity">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={t("channels.list.deleteConversation")}
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-stone hover:bg-canvas hover:text-ink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                    >
+                      <MoreHorizontal className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" sideOffset={4} className="min-w-[10rem]">
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setPendingDeleteId(conv.conversation_id);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      {t("channels.list.deleteConversation")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+
+              {isSelected && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-1.5 left-0 w-[2px] rounded-r-full bg-border-strong"
+                />
+              )}
             </motion.div>
           );
         })}

@@ -4,6 +4,7 @@ import {
   resolveChannelsPane,
   resolveSelectedConversation,
   shouldShowChannelsHeader,
+  shouldShowThreadList,
   sortChannelConversations,
 } from "./channels-page-state";
 
@@ -61,22 +62,72 @@ describe("channels page state helpers", () => {
     ).toBe("conversation-2");
   });
 
-  it("keeps desktop on the split pane regardless of mobile chat state", () => {
+  it("shows the thread list only when there are two or more conversations", () => {
+    expect(shouldShowThreadList(0)).toBe(false);
+    expect(shouldShowThreadList(1)).toBe(false);
+    expect(shouldShowThreadList(2)).toBe(true);
+  });
+
+  it("uses focus layout on desktop for zero or one conversation", () => {
     expect(
       resolveChannelsPane({
         isMobile: false,
         mobileChatOpen: false,
         hasSelectedConversation: true,
+        conversationCount: 1,
+      }),
+    ).toBe("focus");
+
+    expect(
+      resolveChannelsPane({
+        isMobile: false,
+        mobileChatOpen: false,
+        hasSelectedConversation: false,
+        conversationCount: 0,
+      }),
+    ).toBe("focus");
+  });
+
+  it("keeps desktop on the split pane when multiple threads exist", () => {
+    expect(
+      resolveChannelsPane({
+        isMobile: false,
+        mobileChatOpen: false,
+        hasSelectedConversation: true,
+        conversationCount: 2,
       }),
     ).toBe("split");
   });
 
-  it("shows only the thread list on mobile until a selected chat is opened", () => {
+  it("opens chat directly on mobile for a single thread", () => {
     expect(
       resolveChannelsPane({
         isMobile: true,
         mobileChatOpen: false,
         hasSelectedConversation: true,
+        conversationCount: 1,
+      }),
+    ).toBe("chat");
+  });
+
+  it("shows listening on mobile when there are no threads", () => {
+    expect(
+      resolveChannelsPane({
+        isMobile: true,
+        mobileChatOpen: false,
+        hasSelectedConversation: false,
+        conversationCount: 0,
+      }),
+    ).toBe("focus");
+  });
+
+  it("shows only the thread list on mobile when multiple threads exist", () => {
+    expect(
+      resolveChannelsPane({
+        isMobile: true,
+        mobileChatOpen: false,
+        hasSelectedConversation: true,
+        conversationCount: 2,
       }),
     ).toBe("thread_list");
   });
@@ -87,6 +138,7 @@ describe("channels page state helpers", () => {
         isMobile: true,
         mobileChatOpen: true,
         hasSelectedConversation: true,
+        conversationCount: 2,
       }),
     ).toBe("chat");
   });
@@ -95,5 +147,6 @@ describe("channels page state helpers", () => {
     expect(shouldShowChannelsHeader("chat")).toBe(false);
     expect(shouldShowChannelsHeader("thread_list")).toBe(true);
     expect(shouldShowChannelsHeader("split")).toBe(true);
+    expect(shouldShowChannelsHeader("focus")).toBe(true);
   });
 });

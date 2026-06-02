@@ -159,7 +159,7 @@ export function ChannelProviderIcon({
         {iconEl}
       </div>
       {showLabel && (
-        <span className="text-sm font-medium text-ink-deep">{config.label}</span>
+        <span className="text-body-sm-bold text-ink-deep">{config.label}</span>
       )}
     </div>
   );
@@ -169,7 +169,7 @@ export function ChannelProviderBadge({ provider }: { provider: string }) {
   const config = getProviderConfig(provider);
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption-bold"
       style={{
         background: `${config.bgColor}15`,
         color: config.bgColor,

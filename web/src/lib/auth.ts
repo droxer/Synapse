@@ -2,8 +2,9 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { authorizeDesktopTokenCredentials } from "@/lib/desktop-auth-credentials";
+import { resolveBackendUrl } from "@/lib/backend-url";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
+const BACKEND_URL = resolveBackendUrl();
 const PROXY_SECRET = process.env.PROXY_SECRET ?? "";
 const BACKEND_API_KEY = process.env.API_KEY ?? "";
 

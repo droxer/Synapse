@@ -6,7 +6,8 @@ Run tasks from the **repository root** via `make` unless noted otherwise.
 
 | Command | Description |
 | --- | --- |
-| `make dev` | Backend (port 8000) + web (port 3000) concurrently |
+| `make dev` | Backend + web concurrently (backend port from `backend/.env` `PORT`, default 8000) |
+| `make dev PORT=9000` | Same, with backend and proxy on port 9000 |
 | `make backend` | Backend only: `cd backend && uv run python -m api.main` |
 | `make web` | Frontend only: `cd web && npm run dev` |
 

@@ -40,7 +40,7 @@
 
 ## Proxy
 
-`next.config.ts` rewrites `/api/*` → `http://localhost:8000/*` in development.
+`src/app/api/[...proxy]/route.ts` proxies `/api/*` to the FastAPI backend. The target URL comes from `BACKEND_URL`, or `PORT` in `backend/.env` (loaded by `next.config.ts`, default `8000`).
 
 ## Fonts and locale bootstrapping
 

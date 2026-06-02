@@ -321,7 +321,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### 前端无法连接后端
 
-前端通过代理将 `/api/*` 请求转发到 `http://127.0.0.1:8000`。请确保后端运行在 8000 端口。如果更改了后端端口，需同步修改 `web/next.config.ts`。
+前端通过代理将 `/api/*` 请求转发到后端；地址由 `backend/.env` 中的 `PORT` 决定（默认 `8000`）。可在 `web/.env.local` 中设置 `BACKEND_URL` 覆盖，或使用 `make dev PORT=<端口>`。
 
 ---
 

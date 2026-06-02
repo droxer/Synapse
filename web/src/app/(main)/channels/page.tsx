@@ -18,17 +18,34 @@ import {
   resolveSelectedConversation,
   resolveChannelsPane,
   shouldShowChannelsHeader,
+  shouldShowThreadList,
 } from "@/features/channels/lib/channels-page-state";
 
 
 function PageSkeleton() {
   return (
-    <div className="flex h-full items-center justify-center bg-canvas">
-      <div className="flex flex-col items-center gap-5">
-        <div className="h-14 w-14 rounded-lg skeleton-shimmer" />
-        <div className="space-y-2 text-center">
-          <div className="mx-auto h-3 w-32 skeleton-shimmer" />
-          <div className="mx-auto h-2.5 w-48 skeleton-shimmer" />
+    <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-canvas">
+      <aside className="hidden w-[320px] shrink-0 flex-col gap-0.5 border-r border-hairline-soft/60 px-2 py-2 md:flex">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex items-center gap-3 rounded-md px-2.5 py-2.5">
+            <div className="h-9 w-9 shrink-0 rounded-lg skeleton-shimmer" />
+            <div className="flex-1 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-24 skeleton-shimmer" />
+                <div className="h-2.5 w-6 skeleton-shimmer" />
+              </div>
+              <div className="h-2.5 w-40 skeleton-shimmer" />
+            </div>
+          </div>
+        ))}
+      </aside>
+      <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl skeleton-shimmer" />
+          <div className="space-y-2 text-center">
+            <div className="mx-auto h-3 w-32 skeleton-shimmer" />
+            <div className="mx-auto h-2.5 w-48 skeleton-shimmer" />
+          </div>
         </div>
       </div>
     </div>
@@ -55,7 +72,9 @@ export default function ChannelsPage() {
     isMobile,
     mobileChatOpen,
     hasSelectedConversation: selectedConversation !== null,
+    conversationCount: conversationCount ?? 0,
   });
+  const showThreadList = shouldShowThreadList(conversationCount ?? 0);
   const showChannelsHeader = shouldShowChannelsHeader(pane);
 
   const reloadChannelStatus = useCallback(async () => {
@@ -69,8 +88,7 @@ export default function ChannelsPage() {
       setSelectedConversationId(null);
       setMobileChatOpen(false);
     } else {
-      // Allow the split view to render immediately; the list component
-      // will populate the actual conversation count.
+      // Render immediately; ChannelConversationList will refresh the count.
       setConversationCount((current) => current ?? 0);
     }
     setError(null);
@@ -169,7 +187,7 @@ export default function ChannelsPage() {
   }, [isMobile]);
 
   const renderThreadList = () => (
-    <aside className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden bg-sidebar-bg md:w-auto">
+    <aside className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-r border-hairline-soft/60 bg-sidebar-bg md:w-auto">
       <div className="px-4 py-3">
         <p className="label-mono text-steel">
           {t("channels.list.title")}
@@ -188,19 +206,13 @@ export default function ChannelsPage() {
     </aside>
   );
 
-  function renderContent() {
-    if (conversationCount === null) {
-      return <PageSkeleton />;
-    }
-    if (!telegramConfigured && !selectedConversation) {
-      return <ChannelsOnboarding onConfigureBot={() => setIsTelegramModalOpen(true)} />;
-    }
+  function renderChatView(conversation: ChannelConversation, options?: { showMobileBackBar?: boolean }) {
+    const providerLabel = getProviderLabel(conversation.provider);
+    const showMobileBackBar = options?.showMobileBackBar ?? false;
 
-    if (pane === "chat" && selectedConversation) {
-      const providerLabel = getProviderLabel(selectedConversation.provider);
-
-      return (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {showMobileBackBar && (
           <div className="flex shrink-0 items-center gap-2 border-b border-hairline-soft/60 bg-canvas px-3 py-2">
             <Button
               type="button"
@@ -213,26 +225,39 @@ export default function ChannelsPage() {
               {t("channels.mobile.backToThreads")}
             </Button>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-ink-deep">
-                {selectedConversation.display_name}
+              <p className="truncate text-body-sm-bold text-ink-deep">
+                {conversation.display_name}
               </p>
-              <p className="truncate text-xs text-steel">
+              <p className="truncate text-caption text-steel">
                 {providerLabel}
               </p>
             </div>
           </div>
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-            <ChannelChatView
-              key={selectedConversation.conversation_id}
-              conversation={selectedConversation}
-              hideTopBar
-            />
-          </div>
+        )}
+        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+          <ChannelChatView
+            key={conversation.conversation_id}
+            conversation={conversation}
+            hideTopBar
+          />
         </div>
-      );
+      </div>
+    );
+  }
+
+  function renderContent() {
+    if (conversationCount === null) {
+      return <PageSkeleton />;
+    }
+    if (!telegramConfigured && !selectedConversation) {
+      return <ChannelsOnboarding onConfigureBot={() => setIsTelegramModalOpen(true)} />;
     }
 
-    if (pane === "thread_list") {
+    if (pane === "chat" && selectedConversation) {
+      return renderChatView(selectedConversation, { showMobileBackBar: showThreadList });
+    }
+
+    if (pane === "thread_list" && showThreadList) {
       return (
         <div className="flex min-h-0 flex-1 overflow-hidden">
           {renderThreadList()}
@@ -240,21 +265,29 @@ export default function ChannelsPage() {
       );
     }
 
-    return (
-      <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:grid-cols-[320px_minmax(0,1fr)] md:grid-rows-1">
-        {renderThreadList()}
+    if (pane === "split" && showThreadList) {
+      return (
+        <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:grid-cols-[320px_minmax(0,1fr)] md:grid-rows-1">
+          {renderThreadList()}
 
-        <div className="min-h-0 min-w-0 overflow-hidden">
-          {selectedConversation ? (
-            <ChannelChatView
-              key={selectedConversation.conversation_id}
-              conversation={selectedConversation}
-              hideTopBar
-            />
-          ) : (
-            <ChannelsListening />
-          )}
+          <div className="min-h-0 min-w-0 overflow-hidden">
+            {selectedConversation ? (
+              renderChatView(selectedConversation)
+            ) : (
+              <ChannelsListening />
+            )}
+          </div>
         </div>
+      );
+    }
+
+    return (
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+        {selectedConversation ? (
+          renderChatView(selectedConversation)
+        ) : (
+          <ChannelsListening />
+        )}
       </div>
     );
   }
@@ -264,6 +297,7 @@ export default function ChannelsPage() {
       {showChannelsHeader && (
         <ChannelPageHeader
           telegramConfigured={telegramConfigured}
+          conversationCount={conversationCount}
           onOpenSettings={() => setIsTelegramModalOpen(true)}
         />
       )}
@@ -277,7 +311,7 @@ export default function ChannelsPage() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {error && (
-          <div className="mx-4 mt-4 rounded-lg border border-critical-strong bg-critical-strong/5 px-4 py-2.5 text-sm text-critical">
+          <div className="mx-4 mt-4 rounded-lg border border-critical-strong bg-critical-strong/5 px-4 py-2.5 text-body-sm text-critical">
             {error}
           </div>
         )}

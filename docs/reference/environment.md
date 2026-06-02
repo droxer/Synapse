@@ -27,6 +27,7 @@ Configure the backend via **`backend/.env`**. See **`backend/.env.example`** for
 
 ## Runtime notes
 
+- `PORT` in `backend/.env` sets the uvicorn listen port (default `8000`). The Next.js dev proxy reads the same value automatically; set `BACKEND_URL` in `web/.env.local` only when the backend is on another host.
 - `SANDBOX_PROVIDER` is resolved in `api/builders.py`. The current builder accepts `boxlite` and `e2b`; a local provider implementation exists in the codebase but is not selected by `_build_sandbox_provider()`.
 - `SEARCH_PROVIDER` is resolved in `api/builders.py`. The builder registers exactly one `web_search` tool: Tavily when set to `tavily`, Exa when set to `exa`.
 - `SKILLS_ENABLED` controls discovery, registry initialization, prompt catalog injection, and activation-tool registration.

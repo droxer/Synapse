@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
+import { resolveBackendUrl } from "@/lib/backend-url";
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
+const BACKEND_URL = resolveBackendUrl();
 const PROXY_SECRET = process.env.PROXY_SECRET ?? "";
 const BACKEND_API_KEY = process.env.API_KEY ?? "";
 

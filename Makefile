@@ -11,17 +11,28 @@ SANDBOX_TAGS_browser := v3
 .PHONY: backend web dev install install-backend install-web build-web build-sandbox push-sandbox migrate clean test lint format evals pre-commit lint-web test-web audit-design-tokens desktop build-desktop generate-favicons
 
 # Start both backend and web concurrently
+# Optional: make dev PORT=9000
+PORT ?=
+
 dev: install
 	@echo "Starting backend and web..."
 	$(MAKE) -j2 backend web
 
-# Backend (FastAPI + uvicorn)
+# Backend (FastAPI + uvicorn). Reads PORT from backend/.env unless overridden.
 backend:
+ifdef PORT
+	cd backend && PORT=$(PORT) uv run python -m api.main
+else
 	cd backend && uv run python -m api.main
+endif
 
-# Web (Vite dev server)
+# Web (Next.js dev server). Proxy follows BACKEND_URL or PORT from backend/.env.
 web:
+ifdef PORT
+	cd web && BACKEND_URL=http://127.0.0.1:$(PORT) npm run dev
+else
 	cd web && npm run dev
+endif
 
 # Install all dependencies
 install: install-backend install-web

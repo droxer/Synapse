@@ -319,7 +319,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### Frontend can't reach backend
 
-The frontend proxies `/api/*` requests to `http://127.0.0.1:8000`. Make sure the backend is running on port 8000. If you changed the backend port, update `web/next.config.ts`.
+The frontend proxies `/api/*` requests to the backend URL derived from `backend/.env` `PORT` (default `8000`). Override with `BACKEND_URL` in `web/.env.local`, or run `make dev PORT=<port>`.
 
 ---
 
