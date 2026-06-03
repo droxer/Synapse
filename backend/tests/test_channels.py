@@ -27,7 +27,7 @@ from agent.state.models import (
     UserModel,
 )
 from agent.state.repository import ConversationRepository, UserPromptRepository
-from api.channels.provider import TelegramProvider
+from api.channels.provider import DiscordProvider, TelegramProvider
 from api.channels.repository import ChannelRepository
 from api.channels.responder import ChannelResponder
 from api.channels.router import ChannelRouter
@@ -519,6 +519,96 @@ class TestTelegramBotConfig:
         assert updated.enabled is False
 
 
+class TestDiscordBotConfig:
+    """Tests for per-user Discord bot configuration persistence."""
+
+    @pytest.mark.asyncio
+    async def test_upsert_and_find_discord_bot_config(
+        self, repo: ChannelRepository, session: AsyncSession
+    ) -> None:
+        user = await _make_user(session)
+
+        config = await repo.upsert_discord_bot_config(
+            session,
+            user_id=user.id,
+            bot_token="discord-token",
+            bot_username="Synapse Bot",
+            bot_user_id="123456789",
+            status="active",
+        )
+
+        assert config.user_id == user.id
+        assert config.bot_username == "Synapse Bot"
+        assert config.bot_user_id == "123456789"
+        assert config.status == "active"
+        assert config.enabled is True
+
+        found = await repo.get_discord_bot_config_for_user(session, user.id)
+        assert found is not None
+        assert found.id == config.id
+        assert found.bot_token == "discord-token"
+
+    @pytest.mark.asyncio
+    async def test_update_discord_bot_config_status(
+        self, repo: ChannelRepository, session: AsyncSession
+    ) -> None:
+        user = await _make_user(session)
+        config = await repo.upsert_discord_bot_config(
+            session,
+            user_id=user.id,
+            bot_token="discord-token",
+            bot_username="Synapse Bot",
+            bot_user_id="987654321",
+            status="active",
+        )
+
+        updated = await repo.update_discord_bot_config_status(
+            session,
+            config.id,
+            status="error",
+            last_error="gateway failed",
+            enabled=True,
+        )
+
+        assert updated is not None
+        assert updated.status == "error"
+        assert updated.last_error == "gateway failed"
+        assert updated.enabled is True
+
+    @pytest.mark.asyncio
+    async def test_discord_account_lookup_uses_discord_config_id(
+        self, repo: ChannelRepository, session: AsyncSession
+    ) -> None:
+        user = await _make_user(session)
+        config = await repo.upsert_discord_bot_config(
+            session,
+            user_id=user.id,
+            bot_token="discord-token",
+            bot_username="Synapse Bot",
+            bot_user_id="111111",
+            status="active",
+        )
+        account = await repo.create_account(
+            session,
+            user_id=user.id,
+            provider="discord",
+            provider_user_id="discord_user",
+            provider_chat_id="dm_channel",
+            discord_bot_config_id=config.id,
+        )
+
+        found = await repo.find_account_by_provider(
+            session,
+            "discord",
+            "discord_user",
+            discord_bot_config_id=config.id,
+        )
+
+        assert found is not None
+        assert found.id == account.id
+        assert found.discord_bot_config_id == config.id
+
+
 # ---------------------------------------------------------------------------
 # TelegramProvider tests (no network)
 # ---------------------------------------------------------------------------
@@ -769,6 +859,124 @@ class TestTelegramBotApiHelpers:
         client.post.assert_awaited_once()
 
 
+class TestDiscordProvider:
+    """DiscordProvider normalizes DM messages and sends through discord.py."""
+
+    @pytest.fixture
+    def provider(self) -> DiscordProvider:
+        with patch("api.channels.provider.httpx.AsyncClient", return_value=MagicMock()):
+            return DiscordProvider(bot_token="discord-token")
+
+    @pytest.mark.asyncio
+    async def test_parse_inbound_dm_text(self, provider: DiscordProvider) -> None:
+        message = SimpleNamespace(
+            id=42,
+            content="hello",
+            guild=None,
+            author=SimpleNamespace(
+                id=100,
+                bot=False,
+                global_name="Alice",
+                display_name="Alice D",
+                name="alice",
+            ),
+            channel=SimpleNamespace(id=200),
+            attachments=[],
+        )
+
+        inbound = await provider.parse_inbound(message)
+
+        assert inbound is not None
+        assert inbound.provider == "discord"
+        assert inbound.provider_user_id == "100"
+        assert inbound.provider_chat_id == "200"
+        assert inbound.provider_message_id == "42"
+        assert inbound.text == "hello"
+        assert inbound.display_name == "Alice"
+        assert inbound.is_command is False
+
+    @pytest.mark.asyncio
+    async def test_parse_inbound_discord_start_commands(
+        self, provider: DiscordProvider
+    ) -> None:
+        for text in ("!start abc123", "/start abc123"):
+            message = SimpleNamespace(
+                id=43,
+                content=text,
+                guild=None,
+                author=SimpleNamespace(id=100, bot=False, name="alice"),
+                channel=SimpleNamespace(id=200),
+                attachments=[],
+            )
+
+            inbound = await provider.parse_inbound(message)
+
+            assert inbound is not None
+            assert inbound.is_command is True
+            assert inbound.command == "start"
+            assert inbound.command_args == "abc123"
+
+    @pytest.mark.asyncio
+    async def test_parse_inbound_ignores_bot_and_guild_messages(
+        self, provider: DiscordProvider
+    ) -> None:
+        bot_message = SimpleNamespace(
+            author=SimpleNamespace(id=1, bot=True),
+            guild=None,
+        )
+        guild_message = SimpleNamespace(
+            author=SimpleNamespace(id=1, bot=False),
+            guild=SimpleNamespace(id=2),
+        )
+
+        assert await provider.parse_inbound(bot_message) is None
+        assert await provider.parse_inbound(guild_message) is None
+
+    @pytest.mark.asyncio
+    async def test_parse_inbound_attachment(self, provider: DiscordProvider) -> None:
+        message = SimpleNamespace(
+            id=44,
+            content="see attached",
+            guild=None,
+            author=SimpleNamespace(id=100, bot=False, name="alice"),
+            channel=SimpleNamespace(id=200),
+            attachments=[
+                SimpleNamespace(
+                    url="https://cdn.discordapp.com/report.pdf",
+                    filename="report.pdf",
+                    content_type="application/pdf",
+                )
+            ],
+        )
+
+        inbound = await provider.parse_inbound(message)
+
+        assert inbound is not None
+        assert inbound.file_id == "https://cdn.discordapp.com/report.pdf"
+        assert inbound.file_name == "report.pdf"
+        assert inbound.file_mime_type == "application/pdf"
+
+    @pytest.mark.asyncio
+    async def test_send_text_splits_to_discord_limit(self) -> None:
+        sent_messages = []
+
+        async def send(content: str):
+            sent = SimpleNamespace(id=f"msg_{len(sent_messages)}")
+            sent_messages.append(content)
+            return sent
+
+        channel = SimpleNamespace(send=AsyncMock(side_effect=send))
+        client = SimpleNamespace(get_channel=MagicMock(return_value=channel))
+        provider = DiscordProvider(bot_token="discord-token", client=client)  # type: ignore[arg-type]
+
+        last_id = await provider.send_text("200", "x" * 2001)
+
+        assert len(sent_messages) == 2
+        assert len(sent_messages[0]) == 2000
+        assert len(sent_messages[1]) == 1
+        assert last_id == "msg_1"
+
+
 # ---------------------------------------------------------------------------
 # InboundMessage schema tests
 # ---------------------------------------------------------------------------
@@ -825,17 +1033,58 @@ class TestChannelStatusSerialization:
         payload = channels_routes._serialize_status(  # noqa: SLF001
             settings_enabled=True,
             bot_config=config,
+            discord_config=None,
             linked=True,
+            discord_linked=False,
             display_name="Alice",
+            discord_display_name=None,
         )
 
         telegram = payload["providers"]["telegram"]
+        discord_status = payload["providers"]["discord"]
         assert telegram["configured"] is False
         assert telegram["linked"] is False
         assert telegram["enabled"] is False
         assert telegram["webhook_status"] == "not_configured"
         assert "bot_username" not in telegram
         assert "display_name" not in telegram
+        assert discord_status["configured"] is False
+        assert discord_status["linked"] is False
+        assert discord_status["status"] == "not_configured"
+
+    def test_discord_status_serializes_config_and_link(self) -> None:
+        user_id = uuid.uuid4()
+        config = channels_routes.DiscordBotConfigRecord(
+            id=uuid.uuid4(),
+            user_id=user_id,
+            bot_token="discord-secret-token",
+            bot_username="Synapse Bot",
+            bot_user_id="123456",
+            status="active",
+            last_error=None,
+            last_verified_at=None,
+            enabled=True,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+
+        payload = channels_routes._serialize_status(  # noqa: SLF001
+            settings_enabled=True,
+            bot_config=None,
+            discord_config=config,
+            linked=False,
+            discord_linked=True,
+            display_name=None,
+            discord_display_name="Alice",
+        )
+
+        discord_status = payload["providers"]["discord"]
+        assert discord_status["configured"] is True
+        assert discord_status["linked"] is True
+        assert discord_status["enabled"] is True
+        assert discord_status["status"] == "active"
+        assert discord_status["bot_username"] == "Synapse Bot"
+        assert discord_status["display_name"] == "Alice"
 
 
 class TestChannelWebhookRoutes:

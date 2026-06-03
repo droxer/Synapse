@@ -56,7 +56,7 @@ function CallbackContent() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
-      <div className="surface-panel w-full max-w-md px-6 py-8 text-center">
+      <div className="surface-panel w-full max-w-[28rem] px-6 py-8 text-center">
         <div className="flex flex-col items-center gap-4">
           <Logo size={48} tone="auto" className="rounded-lg" />
           {status === "loading" && (

@@ -16,7 +16,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     >
       <body className="font-sans antialiased bg-canvas text-ink-deep">
         <div className="flex h-screen w-screen items-center justify-center">
-          <div className="flex w-full max-w-md flex-col items-center gap-4 px-6 text-center">
+          <div className="flex w-full max-w-[28rem] flex-col items-center gap-4 px-6 text-center">
             <h1 className="w-full text-heading-sm text-ink-deep">
               Something went wrong
             </h1>

@@ -5,8 +5,30 @@ import { ChannelProviderIcon } from "./ChannelProviderIcon";
 import { useTranslation } from "@/i18n";
 import { channelsFadeIn } from "../lib/motion";
 
-export function ChannelsListening() {
+interface ChannelsListeningProps {
+  onOpenTelegram: () => void;
+  onOpenDiscord: () => void;
+}
+
+export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsListeningProps) {
   const { t } = useTranslation();
+  const providers = [
+    {
+      provider: "telegram",
+      title: t("channels.listening.openTelegram"),
+      hint: t("channels.listening.openTelegramHintPrefix"),
+      command: "hello",
+      onOpen: onOpenTelegram,
+    },
+    {
+      provider: "discord",
+      title: t("channels.listening.openDiscord"),
+      hint: t("channels.listening.openDiscordHintPrefix"),
+      command: "hello",
+      onOpen: onOpenDiscord,
+    },
+  ] as const;
+
   return (
     <div className="relative h-full w-full min-w-0 overflow-hidden bg-canvas">
       {/* Atmosphere: faint radial wash */}
@@ -38,8 +60,9 @@ export function ChannelsListening() {
             <div className="mx-auto mb-6 relative flex h-20 w-20 items-center justify-center">
               <span className="absolute inset-0 rounded-2xl bg-accent-emerald/10 animate-ping [animation-duration:2.4s]" />
               <span className="absolute inset-[10%] rounded-2xl bg-accent-emerald/5 animate-ping [animation-duration:2.4s] [animation-delay:0.6s]" />
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-hairline-soft bg-card shadow-sm">
+              <div className="relative flex h-14 w-24 items-center justify-center gap-2 rounded-2xl border border-hairline-soft bg-card shadow-sm">
                 <ChannelProviderIcon provider="telegram" size="lg" />
+                <ChannelProviderIcon provider="discord" size="lg" />
               </div>
             </div>
 
@@ -60,22 +83,34 @@ export function ChannelsListening() {
               {t("channels.listening.activeDescription")}
             </p>
 
-            <div className="mt-6 w-full rounded-xl border border-hairline-soft bg-card/80 p-4 backdrop-blur-sm">
-              <div className="flex items-start gap-3 text-left">
-                <div className="mt-0.5 shrink-0">
-                  <ChannelProviderIcon provider="telegram" size="sm" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-body-sm-bold text-ink-deep">
-                    {t("channels.listening.openTelegram")}
-                  </p>
-                  <p className="mt-0.5 text-caption text-steel">
-                    {t("channels.listening.openTelegramHintPrefix")}{" "}
-                    <code className="rounded bg-surface-soft px-1.5 py-0.5 font-mono text-caption text-ink-deep">
-                      hello
-                    </code>
-                  </p>
-                </div>
+            <div className="mt-6 grid w-full gap-3">
+              {providers.map((item) => (
+                <button
+                  key={item.provider}
+                  type="button"
+                  onClick={item.onOpen}
+                  className="w-full rounded-xl border border-hairline-soft bg-card/80 p-4 text-left backdrop-blur-sm transition-colors hover:border-hairline hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 shrink-0">
+                      <ChannelProviderIcon provider={item.provider} size="sm" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body-sm-bold text-ink-deep">
+                        {item.title}
+                      </p>
+                      <p className="mt-0.5 text-caption text-steel">
+                        {item.hint}{" "}
+                        <code className="rounded bg-surface-soft px-1.5 py-0.5 font-mono text-caption text-ink-deep">
+                          {item.command}
+                        </code>
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              <div className="rounded-xl border border-hairline-soft bg-surface-soft/70 px-4 py-3 text-caption text-steel">
+                {t("channels.listening.manageHint")}
               </div>
             </div>
           </motion.div>

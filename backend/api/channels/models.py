@@ -69,6 +69,39 @@ class TelegramBotConfigModel(Base):
     user: Mapped[UserModel] = relationship()
 
 
+class DiscordBotConfigModel(Base):
+    """Per-user Discord bot configuration."""
+
+    __tablename__ = "discord_bot_configs"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_discord_bot_configs_user"),
+        UniqueConstraint("bot_user_id", name="uq_discord_bot_configs_bot_user"),
+        Index("ix_discord_bot_configs_user_id", "user_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    bot_token: Mapped[str] = mapped_column(Text, nullable=False)
+    bot_username: Mapped[str] = mapped_column(String(200), nullable=False)
+    bot_user_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
+    )
+
+    user: Mapped[UserModel] = relationship()
+
+
 class ChannelAccountModel(Base):
     """Links an external IM account (e.g. Telegram user) to a Synapse user."""
 
@@ -81,6 +114,7 @@ class ChannelAccountModel(Base):
             name="uq_channel_account_provider_user",
         ),
         Index("ix_channel_accounts_bot_config_id", "bot_config_id"),
+        Index("ix_channel_accounts_discord_bot_config_id", "discord_bot_config_id"),
         Index("ix_channel_accounts_user_id", "user_id"),
         Index("ix_channel_accounts_provider_lookup", "provider", "provider_user_id"),
     )
@@ -91,6 +125,9 @@ class ChannelAccountModel(Base):
     )
     bot_config_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("telegram_bot_configs.id", ondelete="SET NULL"), nullable=True
+    )
+    discord_bot_config_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("discord_bot_configs.id", ondelete="SET NULL"), nullable=True
     )
     provider: Mapped[str] = mapped_column(String(20), nullable=False)  # "telegram"
     provider_user_id: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -108,6 +145,7 @@ class ChannelAccountModel(Base):
 
     user: Mapped[UserModel] = relationship()
     bot_config: Mapped[TelegramBotConfigModel | None] = relationship()
+    discord_bot_config: Mapped[DiscordBotConfigModel | None] = relationship()
     sessions: Mapped[list[ChannelSessionModel]] = relationship(
         back_populates="channel_account", cascade="all, delete-orphan"
     )
@@ -120,6 +158,7 @@ class ChannelSessionModel(Base):
     __table_args__ = (
         Index("ix_channel_sessions_account", "channel_account_id"),
         Index("ix_channel_sessions_bot_config", "bot_config_id"),
+        Index("ix_channel_sessions_discord_bot_config", "discord_bot_config_id"),
         Index("ix_channel_sessions_conversation", "conversation_id"),
         Index("ix_channel_sessions_provider_chat", "provider", "provider_chat_id"),
     )
@@ -130,6 +169,9 @@ class ChannelSessionModel(Base):
     )
     bot_config_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("telegram_bot_configs.id", ondelete="SET NULL"), nullable=True
+    )
+    discord_bot_config_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("discord_bot_configs.id", ondelete="SET NULL"), nullable=True
     )
     conversation_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
@@ -148,6 +190,7 @@ class ChannelSessionModel(Base):
         back_populates="sessions"
     )
     bot_config: Mapped[TelegramBotConfigModel | None] = relationship()
+    discord_bot_config: Mapped[DiscordBotConfigModel | None] = relationship()
     conversation: Mapped[ConversationModel] = relationship()
 
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { AlertCircle, Link as LinkIcon } from "lucide-react";
 import { useTranslation } from "@/i18n";
+import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import {
   AlertDialog,
@@ -14,13 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import {
   createLinkToken,
-  deleteTelegramBotConfig,
+  deleteDiscordBotConfig,
   getChannelStatus,
   listChannelAccounts,
-  saveTelegramBotConfig,
+  saveDiscordBotConfig,
   unlinkChannelAccount,
   type ChannelProviderStatus,
 } from "../api/channel-api";
@@ -49,13 +49,13 @@ interface LinkTokenData {
   expires_in_minutes: number;
 }
 
-interface TelegramLinkCardProps {
+interface DiscordLinkCardProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideCard?: boolean;
 }
 
-export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkCardProps = {}) {
+export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCardProps = {}) {
   const { t, locale } = useTranslation();
   const [status, setStatus] = useState<ChannelProviderStatus | null>(null);
   const [account, setAccount] = useState<ChannelAccount | null>(null);
@@ -86,10 +86,10 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
         getChannelStatus(),
         listChannelAccounts(),
       ]);
-      setStatus(statusRes.providers.telegram);
-      setAccount(accountsRes.accounts.find((item) => item.provider === "telegram") ?? null);
+      setStatus(statusRes.providers.discord);
+      setAccount(accountsRes.accounts.find((item) => item.provider === "discord") ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("channels.telegram.errorLoadStatus"));
+      setError(err instanceof Error ? err.message : t("channels.discord.errorLoadStatus"));
     } finally {
       setLoading(false);
     }
@@ -103,13 +103,13 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
     try {
       setActionLoading(true);
       setError(null);
-      await saveTelegramBotConfig(botTokenInput.trim());
+      await saveDiscordBotConfig(botTokenInput.trim());
       setBotTokenInput("");
       setIsEditingToken(false);
       setLinkToken(null);
       await fetchStatus();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("channels.telegram.errorSaveToken"));
+      setError(err instanceof Error ? err.message : t("channels.discord.errorSaveToken"));
     } finally {
       setActionLoading(false);
     }
@@ -119,12 +119,12 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
     try {
       setActionLoading(true);
       setError(null);
-      await deleteTelegramBotConfig();
+      await deleteDiscordBotConfig();
       setLinkToken(null);
       setAccount(null);
       await fetchStatus();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("channels.telegram.errorDisableBot"));
+      setError(err instanceof Error ? err.message : t("channels.discord.errorDisableBot"));
     } finally {
       setActionLoading(false);
     }
@@ -134,9 +134,9 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
     try {
       setActionLoading(true);
       setError(null);
-      setLinkToken(await createLinkToken("telegram"));
+      setLinkToken(await createLinkToken("discord"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("channels.telegram.errorGenerateToken"));
+      setError(err instanceof Error ? err.message : t("channels.discord.errorGenerateToken"));
     } finally {
       setActionLoading(false);
     }
@@ -151,7 +151,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
       setLinkToken(null);
       await fetchStatus();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("channels.telegram.errorUnlink"));
+      setError(err instanceof Error ? err.message : t("channels.discord.errorUnlink"));
     } finally {
       setActionLoading(false);
     }
@@ -165,7 +165,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
       copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError(t("channels.telegram.errorCopy"));
+      setError(t("channels.discord.errorCopy"));
     }
   };
 
@@ -181,23 +181,22 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
 
   const configured = status?.configured ?? false;
   const linked = status?.linked ?? false;
-  const webhookActive = status?.webhook_status === "active";
-  const canGenerateLinkToken = !!(configured && status?.enabled && webhookActive);
-  const botUsername = status?.bot_username?.replace(/^@/, "") ?? "";
+  const gatewayActive = status?.status === "active";
+  const canGenerateLinkToken = !!(configured && status?.enabled && gatewayActive);
   const cardStatus = linked
-    ? { label: t("channels.telegram.statusLinked"), tone: "ok" as const }
+    ? { label: t("channels.discord.statusLinked"), tone: "ok" as const }
     : configured
-      ? { label: t("channels.telegram.statusConfigured"), tone: "ok" as const }
-      : { label: t("channels.telegram.statusNotConfigured"), tone: "warn" as const };
+      ? { label: t("channels.discord.statusConfigured"), tone: "ok" as const }
+      : { label: t("channels.discord.statusNotConfigured"), tone: "warn" as const };
 
   return (
     <>
       {!hideCard && !loading && (
         <ProviderTriggerCard
-          provider="telegram"
-          title={t("channels.telegram.title")}
+          provider="discord"
+          title={t("channels.discord.title")}
           status={cardStatus}
-          subtitle={configured && status?.bot_username ? `@${botUsername}` : undefined}
+          subtitle={configured && status?.bot_username ? status.bot_username : undefined}
           onClick={() => setModalOpen(true)}
         />
       )}
@@ -217,15 +216,15 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
 
       {modalOpen && (
         <ProviderConfigShell
-          provider="telegram"
+          provider="discord"
           open={modalOpen}
-          title={t("channels.telegram.title")}
+          title={t("channels.discord.title")}
           description={
             loading
-              ? t("channels.telegram.loading")
+              ? t("channels.discord.loading")
               : configured && status?.bot_username
-                ? `@${botUsername}`
-                : t("channels.telegram.description")
+                ? status.bot_username
+                : t("channels.discord.description")
           }
           error={error}
           loading={loading}
@@ -238,35 +237,39 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
           {!configured && (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-body-sm-bold text-ink-deep" htmlFor="tg-bot-token">
-                  {t("channels.telegram.botTokenLabel")}
+                <label className="block text-body-sm-bold text-ink-deep" htmlFor="discord-bot-token">
+                  {t("channels.discord.botTokenLabel")}
                 </label>
                 <Input
-                  id="tg-bot-token"
+                  id="discord-bot-token"
                   type="password"
                   value={botTokenInput}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setBotTokenInput(e.target.value)}
                   onKeyDown={(e: ReactKeyboardEvent<HTMLInputElement>) => {
                     if (e.key === "Enter" && botTokenInput.trim() && !actionLoading) void handleSaveBot();
                   }}
-                  placeholder={t("channels.telegram.botTokenPlaceholder")}
+                  placeholder={t("channels.discord.botTokenPlaceholder")}
                   autoFocus
                 />
-                <p className="text-caption text-steel">{t("channels.telegram.botTokenHint")}</p>
+                <p className="text-caption text-steel">{t("channels.discord.botTokenHint")}</p>
               </div>
 
               <ProviderHelpAccordion
-                id="tg-help"
-                title={t("channels.telegram.helpTitle")}
+                id="discord-help"
+                title={t("channels.discord.helpTitle")}
                 steps={[
-                  t("channels.telegram.helpStep1"),
-                  t("channels.telegram.helpStep2"),
-                  t("channels.telegram.helpStep3"),
-                  t("channels.telegram.helpStep4"),
-                  t("channels.telegram.helpStep5"),
+                  t("channels.discord.helpStep1"),
+                  t("channels.discord.helpStep2"),
+                  t("channels.discord.helpStep3"),
+                  t("channels.discord.helpStep4"),
+                  t("channels.discord.helpStep5"),
                 ]}
                 open={helpOpen}
                 onToggle={() => setHelpOpen((p) => !p)}
+                externalLink={{
+                  href: "https://discord.com/developers/applications",
+                  label: t("channels.discord.openDeveloperPortal"),
+                }}
               />
 
               <Button
@@ -275,7 +278,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
                 onClick={handleSaveBot}
                 className="w-full"
               >
-                {actionLoading ? t("channels.telegram.verifyingButton") : t("channels.telegram.saveButton")}
+                {actionLoading ? t("channels.discord.verifyingButton") : t("channels.discord.saveButton")}
               </Button>
             </div>
           )}
@@ -283,14 +286,14 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
           {configured && status && (
             <div className="space-y-4">
               <ProviderBotInfoRow
-                displayName={`@${botUsername}`}
+                displayName={status.bot_username ?? ""}
                 maskedToken={status.masked_token ?? ""}
                 statusLabel={
-                  webhookActive
-                    ? t("channels.telegram.webhookActive")
-                    : t("channels.telegram.webhookNeedsAttention")
+                  gatewayActive
+                    ? t("channels.discord.gatewayActive")
+                    : t("channels.discord.gatewayNeedsAttention")
                 }
-                statusTone={webhookActive ? "ok" : "warn"}
+                statusTone={gatewayActive ? "ok" : "warn"}
               />
 
               {status.last_error && (
@@ -303,7 +306,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
               {isEditingToken && (
                 <div className="rounded-md border border-hairline-soft bg-surface-soft p-3 space-y-2">
                   <p className="text-body-sm-bold text-ink-deep">
-                    {t("channels.telegram.updateToken")}
+                    {t("channels.discord.updateToken")}
                   </p>
                   <Input
                     type="password"
@@ -313,7 +316,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
                       if (e.key === "Enter" && botTokenInput.trim() && !actionLoading) void handleSaveBot();
                       if (e.key === "Escape") { setBotTokenInput(""); setIsEditingToken(false); }
                     }}
-                    placeholder={t("channels.telegram.newTokenPlaceholder")}
+                    placeholder={t("channels.discord.newTokenPlaceholder")}
                     autoFocus
                   />
                   <div className="flex gap-2 pt-1">
@@ -323,7 +326,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
                       disabled={actionLoading || !botTokenInput.trim()}
                       onClick={handleSaveBot}
                     >
-                      {actionLoading ? t("channels.telegram.workingButton") : t("channels.telegram.updateToken")}
+                      {actionLoading ? t("channels.discord.workingButton") : t("channels.discord.updateToken")}
                     </Button>
                     <Button
                       type="button"
@@ -331,32 +334,22 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
                       size="sm"
                       onClick={() => { setBotTokenInput(""); setIsEditingToken(false); }}
                     >
-                      {t("channels.telegram.cancel")}
+                      {t("channels.discord.cancel")}
                     </Button>
                   </div>
                 </div>
               )}
 
-              {linkToken && botUsername && (
+              {linkToken && (
                 <ProviderTokenSnippet
                   command={`/start ${linkToken.token}`}
                   copied={copied}
                   expiresInMinutes={linkToken.expires_in_minutes}
                   onCopy={handleCopy}
-                  copyLabel={t("channels.telegram.copyButton")}
-                  copiedLabel={t("channels.telegram.copiedButton")}
-                  expiryLabel={t("channels.telegram.tokenExpiry", { minutes: linkToken.expires_in_minutes })}
-                  caption={
-                    <>
-                      {t("channels.telegram.linkInstructionsPre")}
-                      <strong className="text-ink-deep">@{botUsername}</strong>
-                      {t("channels.telegram.linkInstructionsPost")}
-                    </>
-                  }
-                  deepLink={{
-                    href: `https://t.me/${botUsername}?start=${linkToken.token}`,
-                    label: t("channels.listening.openTelegram"),
-                  }}
+                  copyLabel={t("channels.discord.copyButton")}
+                  copiedLabel={t("channels.discord.copiedButton")}
+                  expiryLabel={t("channels.discord.tokenExpiry", { minutes: linkToken.expires_in_minutes })}
+                  caption={t("channels.discord.linkInstructions")}
                 />
               )}
 
@@ -368,7 +361,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
                   className="w-full gap-1.5"
                 >
                   <LinkIcon className="h-4 w-4" />
-                  {actionLoading ? t("channels.telegram.workingButton") : t("channels.telegram.generateLinkToken")}
+                  {actionLoading ? t("channels.discord.workingButton") : t("channels.discord.generateLinkToken")}
                 </Button>
                 {!isEditingToken && (
                   <Button
@@ -378,7 +371,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
                     onClick={() => setIsEditingToken(true)}
                     className="w-full"
                   >
-                    {t("channels.telegram.updateToken")}
+                    {t("channels.discord.updateToken")}
                   </Button>
                 )}
               </div>
@@ -386,17 +379,17 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
               {!canGenerateLinkToken && (
                 <p className="flex items-start gap-1.5 text-caption text-accent-amber">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span>{t("channels.telegram.fixSetupHint")}</span>
+                  <span>{t("channels.discord.fixSetupHint")}</span>
                 </p>
               )}
 
               {linked && account && (
                 <ProviderLinkedAccountRow
                   displayName={account.display_name ?? account.provider_user_id}
-                  linkedAtLabel={t("channels.telegram.linkedAt", {
+                  linkedAtLabel={t("channels.discord.linkedAt", {
                     date: new Date(account.linked_at).toLocaleDateString(locale),
                   })}
-                  unlinkLabel={t("channels.telegram.unlinkChat")}
+                  unlinkLabel={t("channels.discord.unlinkChat")}
                   onUnlink={() => setConfirmAction("unlink")}
                   disabled={actionLoading}
                 />
@@ -404,8 +397,8 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
 
               <ProviderDangerZone
                 title={t("channels.dangerZone")}
-                description={t("channels.telegram.dangerZoneDescription")}
-                actionLabel={t("channels.telegram.disableBot")}
+                description={t("channels.discord.dangerZoneDescription")}
+                actionLabel={t("channels.discord.disableBot")}
                 onAction={() => setConfirmAction("disableBot")}
                 disabled={actionLoading}
               />
@@ -414,25 +407,18 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
         </ProviderConfigShell>
       )}
 
-      <AlertDialog
-        open={confirmAction !== null}
-        onOpenChange={(isOpen) => { if (!isOpen) setConfirmAction(null); }}
-      >
+      <AlertDialog open={confirmAction !== null} onOpenChange={(isOpen) => { if (!isOpen) setConfirmAction(null); }}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction === "unlink"
-                ? t("channels.telegram.unlinkConfirmTitle")
-                : t("channels.telegram.disableConfirmTitle")}
+              {confirmAction === "unlink" ? t("channels.discord.unlinkConfirmTitle") : t("channels.discord.disableConfirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction === "unlink"
-                ? t("channels.telegram.unlinkConfirmDescription")
-                : t("channels.telegram.disableConfirmDescription")}
+              {confirmAction === "unlink" ? t("channels.discord.unlinkConfirmDescription") : t("channels.discord.disableConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("channels.telegram.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("channels.discord.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -442,9 +428,7 @@ export function TelegramLinkCard({ open, onOpenChange, hideCard }: TelegramLinkC
                 else if (action === "disableBot") void handleDeleteBot();
               }}
             >
-              {confirmAction === "unlink"
-                ? t("channels.telegram.unlinkChat")
-                : t("channels.telegram.disableBot")}
+              {confirmAction === "unlink" ? t("channels.discord.unlinkChat") : t("channels.discord.disableBot")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

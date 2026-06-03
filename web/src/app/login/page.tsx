@@ -125,9 +125,9 @@ function LoginForm() {
   };
 
   return (
-    <main id="main" className="flex min-h-screen items-center justify-center bg-canvas px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="overflow-hidden rounded-xxxl border border-hairline-soft bg-canvas">
+    <main id="main" className="grid h-dvh overflow-y-auto bg-canvas px-4 py-8">
+      <div className="m-auto w-full max-w-[28rem]">
+        <div className="surface-overlay overflow-hidden">
           <div className="px-8 py-6 sm:px-9">
             <div className="flex items-center gap-3">
               <Logo size={56} tone="auto" className="rounded-lg" />
@@ -252,7 +252,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-canvas" role="status">
-          <div className="h-8 w-full max-w-md rounded-full skeleton-shimmer bg-surface-soft" />
+          <div className="h-8 w-full max-w-[28rem] rounded-full skeleton-shimmer bg-surface-soft" />
           <span className="sr-only">Loading...</span>
         </div>
       }

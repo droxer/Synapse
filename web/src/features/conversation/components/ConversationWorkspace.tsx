@@ -576,7 +576,7 @@ export function ConversationWorkspace({
                         title={t("conversation.waiting")}
                         description={t("conversation.emptyAssistantBody")}
                         dashed
-                        className="w-full max-w-md"
+                        className="w-full max-w-[28rem]"
                       />
                     </div>
                   )}

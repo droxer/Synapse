@@ -62,7 +62,7 @@ export function ArtifactPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-[48rem]">
         <DialogHeader>
           <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <span

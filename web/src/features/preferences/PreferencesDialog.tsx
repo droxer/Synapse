@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Sun, Globe, Brain, type LucideIcon } from "lucide-react";
+import { Zap, Sun, Globe, Brain, MessageCircle, type LucideIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,9 @@ import { TokenUsageTab } from "./components/TokenUsageTab";
 import { ThemeTab } from "./components/ThemeTab";
 import { LanguageTab } from "./components/LanguageTab";
 import { MemoryTab } from "./components/MemoryTab";
+import { ChannelsTab } from "./components/ChannelsTab";
+import { TelegramLinkCard } from "@/features/channels/components/TelegramLinkCard";
+import { DiscordLinkCard } from "@/features/channels/components/DiscordLinkCard";
 
 interface PreferencesDialogProps {
   readonly open: boolean;
@@ -25,11 +28,14 @@ interface MenuItem {
   readonly icon: LucideIcon;
 }
 
+type ProviderModal = null | "telegram" | "discord";
+
 const MENU_ITEMS: readonly MenuItem[] = [
   { id: "theme", labelKey: "preferences.tabs.theme", icon: Sun },
   { id: "language", labelKey: "preferences.tabs.language", icon: Globe },
   { id: "usage", labelKey: "preferences.tabs.tokenUsage", icon: Zap },
   { id: "memory", labelKey: "preferences.tabs.memory", icon: Brain },
+  { id: "channels", labelKey: "preferences.tabs.channels", icon: MessageCircle },
 ];
 
 const PANELS: Record<string, () => React.JSX.Element> = {
@@ -42,61 +48,100 @@ const PANELS: Record<string, () => React.JSX.Element> = {
 export function PreferencesDialog({ open, onOpenChange }: PreferencesDialogProps) {
   const { t } = useTranslation();
   const [activeId, setActiveId] = useState("theme");
+  const [providerModal, setProviderModal] = useState<ProviderModal>(null);
 
-  const ActivePanel = PANELS[activeId];
+  const openProviderSettings = (provider: Exclude<ProviderModal, null>) => {
+    setProviderModal(null);
+    onOpenChange(false);
+    window.setTimeout(() => setProviderModal(provider), 0);
+  };
+
+  const renderActivePanel = () => {
+    if (activeId === "channels") {
+      return (
+        <ChannelsTab
+          onOpenTelegram={() => openProviderSettings("telegram")}
+          onOpenDiscord={() => openProviderSettings("discord")}
+        />
+      );
+    }
+    const ActivePanel = PANELS[activeId];
+    return <ActivePanel />;
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(96vw,60rem)] max-w-[min(96vw,60rem)] sm:max-w-[min(96vw,60rem)] max-h-[min(92vh,calc(100dvh-2rem))] overflow-hidden p-0 gap-0">
-        <DialogTitle className="sr-only">{t("preferences.title")}</DialogTitle>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-[min(96vw,60rem)] max-w-[min(96vw,60rem)] sm:max-w-[min(96vw,60rem)] max-h-[min(92vh,calc(100dvh-2rem))] overflow-hidden p-0 gap-0">
+          <DialogTitle className="sr-only">{t("preferences.title")}</DialogTitle>
 
-        <div className="flex h-[min(86vh,48rem)] min-h-[28rem] w-full min-w-0 flex-col md:flex-row">
-          <nav
-            className="flex shrink-0 gap-1 overflow-x-auto border-b border-hairline-soft/60 bg-surface-soft p-2 md:w-56 md:flex-col md:gap-0.5 md:overflow-x-visible md:border-b-0 md:border-r md:p-3"
-            aria-label={t("preferences.title")}
-          >
-            <p className="label-mono hidden px-3 pb-3 pt-3 text-stone md:block">
-              {t("preferences.title")}
-            </p>
-            {MENU_ITEMS.map(({ id, labelKey, icon: Icon }) => {
-              const isActive = id === activeId;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-current={isActive ? "page" : undefined}
-                  onClick={() => setActiveId(id)}
-                  className={cn(
-                    "group relative flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-body-sm transition-colors duration-150",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40",
-                    isActive
-                      ? "bg-canvas text-ink-deep md:font-medium"
-                      : "text-steel hover:bg-canvas/60 hover:text-ink-deep",
-                  )}
-                >
-                  {isActive ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-cobalt md:inset-y-1.5 md:left-0 md:right-auto md:h-auto md:w-0.5"
-                    />
-                  ) : null}
-                  <Icon
+          <div className="flex h-[min(86vh,48rem)] min-h-[28rem] w-full min-w-0 flex-col md:flex-row">
+            <nav
+              className="flex shrink-0 gap-1 overflow-x-auto border-b border-hairline-soft/60 bg-surface-soft p-2 md:w-56 md:flex-col md:gap-0.5 md:overflow-x-visible md:border-b-0 md:border-r md:p-3"
+              aria-label={t("preferences.title")}
+            >
+              <p className="label-mono hidden px-3 pb-3 pt-3 text-stone md:block">
+                {t("preferences.title")}
+              </p>
+              {MENU_ITEMS.map(({ id, labelKey, icon: Icon }) => {
+                const isActive = id === activeId;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => setActiveId(id)}
                     className={cn(
-                      "h-4 w-4 shrink-0 transition-colors duration-150",
-                      isActive ? "text-cobalt" : "text-stone group-hover:text-steel",
+                      "group relative flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-body-sm transition-colors duration-150",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40",
+                      isActive
+                        ? "bg-canvas text-ink-deep md:font-medium"
+                        : "text-steel hover:bg-canvas/60 hover:text-ink-deep",
                     )}
-                  />
-                  <span className="whitespace-nowrap">{t(labelKey)}</span>
-                </button>
-              );
-            })}
-          </nav>
+                  >
+                    {isActive ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-cobalt md:inset-y-1.5 md:left-0 md:right-auto md:h-auto md:w-0.5"
+                      />
+                    ) : null}
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-colors duration-150",
+                        isActive ? "text-cobalt" : "text-stone group-hover:text-steel",
+                      )}
+                    />
+                    <span className="whitespace-nowrap">{t(labelKey)}</span>
+                  </button>
+                );
+              })}
+            </nav>
 
-          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-            <ActivePanel />
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+              {renderActivePanel()}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {providerModal === "telegram" && (
+        <TelegramLinkCard
+          hideCard
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setProviderModal(null);
+          }}
+        />
+      )}
+      {providerModal === "discord" && (
+        <DiscordLinkCard
+          hideCard
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setProviderModal(null);
+          }}
+        />
+      )}
+    </>
   );
 }

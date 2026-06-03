@@ -19,11 +19,13 @@ from api.channels.models import (
     ChannelLinkTokenModel,
     ChannelMessageLogModel,
     ChannelSessionModel,
+    DiscordBotConfigModel,
     TelegramBotConfigModel,
 )
 from api.channels.schemas import (
     ChannelAccountRecord,
     ChannelConversationRecord,
+    DiscordBotConfigRecord,
     ChannelLinkTokenRecord,
     ChannelMessageLogRecord,
     ChannelSessionRecord,
@@ -61,11 +63,28 @@ def _to_bot_config(model: TelegramBotConfigModel) -> TelegramBotConfigRecord:
     )
 
 
+def _to_discord_bot_config(model: DiscordBotConfigModel) -> DiscordBotConfigRecord:
+    return DiscordBotConfigRecord(
+        id=model.id,
+        user_id=model.user_id,
+        bot_token=model.bot_token,
+        bot_username=model.bot_username,
+        bot_user_id=model.bot_user_id,
+        status=model.status,
+        last_error=model.last_error,
+        last_verified_at=model.last_verified_at,
+        enabled=model.enabled,
+        created_at=model.created_at,
+        updated_at=model.updated_at,
+    )
+
+
 def _to_account(model: ChannelAccountModel) -> ChannelAccountRecord:
     return ChannelAccountRecord(
         id=model.id,
         user_id=model.user_id,
         bot_config_id=model.bot_config_id,
+        discord_bot_config_id=model.discord_bot_config_id,
         provider=model.provider,
         provider_user_id=model.provider_user_id,
         provider_chat_id=model.provider_chat_id,
@@ -81,6 +100,7 @@ def _to_session(model: ChannelSessionModel) -> ChannelSessionRecord:
         id=model.id,
         channel_account_id=model.channel_account_id,
         bot_config_id=model.bot_config_id,
+        discord_bot_config_id=model.discord_bot_config_id,
         conversation_id=model.conversation_id,
         provider=model.provider,
         provider_chat_id=model.provider_chat_id,
@@ -237,6 +257,112 @@ class ChannelRepository:
         await session.commit()
         return _to_bot_config(model)
 
+    # -- DiscordBotConfig --
+
+    async def upsert_discord_bot_config(
+        self,
+        session: AsyncSession,
+        *,
+        user_id: uuid.UUID,
+        bot_token: str,
+        bot_username: str,
+        bot_user_id: str,
+        status: str = "pending",
+        enabled: bool = True,
+        last_error: str | None = None,
+    ) -> DiscordBotConfigRecord:
+        stmt = select(DiscordBotConfigModel).where(
+            DiscordBotConfigModel.user_id == user_id
+        )
+        result = await session.execute(stmt)
+        model = result.scalar_one_or_none()
+
+        if model is None:
+            model = DiscordBotConfigModel(
+                id=uuid.uuid4(),
+                user_id=user_id,
+                bot_token=bot_token,
+                bot_username=bot_username,
+                bot_user_id=bot_user_id,
+                status=status,
+                last_error=last_error,
+                last_verified_at=_utcnow(),
+                enabled=enabled,
+            )
+            session.add(model)
+        else:
+            model.bot_token = bot_token
+            model.bot_username = bot_username
+            model.bot_user_id = bot_user_id
+            model.status = status
+            model.last_error = last_error
+            model.last_verified_at = _utcnow()
+            model.enabled = enabled
+            model.updated_at = _utcnow()
+
+        await session.flush()
+        await session.refresh(model)
+        await session.commit()
+        return _to_discord_bot_config(model)
+
+    async def get_discord_bot_config_for_user(
+        self, session: AsyncSession, user_id: uuid.UUID
+    ) -> DiscordBotConfigRecord | None:
+        stmt = select(DiscordBotConfigModel).where(
+            DiscordBotConfigModel.user_id == user_id
+        )
+        result = await session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _to_discord_bot_config(model) if model else None
+
+    async def get_discord_bot_config(
+        self, session: AsyncSession, config_id: uuid.UUID
+    ) -> DiscordBotConfigRecord | None:
+        stmt = select(DiscordBotConfigModel).where(
+            DiscordBotConfigModel.id == config_id
+        )
+        result = await session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _to_discord_bot_config(model) if model else None
+
+    async def list_enabled_discord_bot_configs(
+        self, session: AsyncSession
+    ) -> list[DiscordBotConfigRecord]:
+        stmt = select(DiscordBotConfigModel).where(
+            DiscordBotConfigModel.enabled.is_(True),
+            DiscordBotConfigModel.status == "active",
+        )
+        result = await session.execute(stmt)
+        return [_to_discord_bot_config(m) for m in result.scalars().all()]
+
+    async def update_discord_bot_config_status(
+        self,
+        session: AsyncSession,
+        config_id: uuid.UUID,
+        *,
+        status: str,
+        last_error: str | None = None,
+        enabled: bool | None = None,
+    ) -> DiscordBotConfigRecord | None:
+        stmt = select(DiscordBotConfigModel).where(
+            DiscordBotConfigModel.id == config_id
+        )
+        result = await session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if model is None:
+            return None
+
+        model.status = status
+        model.last_error = last_error
+        if enabled is not None:
+            model.enabled = enabled
+        model.updated_at = _utcnow()
+
+        await session.flush()
+        await session.refresh(model)
+        await session.commit()
+        return _to_discord_bot_config(model)
+
     # -- ChannelAccount --
 
     async def find_account_by_provider(
@@ -245,6 +371,7 @@ class ChannelRepository:
         provider: str,
         provider_user_id: str,
         bot_config_id: uuid.UUID | None = None,
+        discord_bot_config_id: uuid.UUID | None = None,
     ) -> ChannelAccountRecord | None:
         """Look up a channel account by provider identity."""
         stmt = select(ChannelAccountModel).where(
@@ -254,6 +381,10 @@ class ChannelRepository:
         )
         if bot_config_id is not None:
             stmt = stmt.where(ChannelAccountModel.bot_config_id == bot_config_id)
+        if discord_bot_config_id is not None:
+            stmt = stmt.where(
+                ChannelAccountModel.discord_bot_config_id == discord_bot_config_id
+            )
         result = await session.execute(stmt)
         model = result.scalar_one_or_none()
         return _to_account(model) if model else None
@@ -297,12 +428,14 @@ class ChannelRepository:
         provider_chat_id: str,
         display_name: str | None = None,
         bot_config_id: uuid.UUID | None = None,
+        discord_bot_config_id: uuid.UUID | None = None,
     ) -> ChannelAccountRecord:
         """Create or relink a channel account for the same provider identity."""
         existing_stmt = select(ChannelAccountModel).where(
             ChannelAccountModel.provider == provider,
             ChannelAccountModel.provider_user_id == provider_user_id,
             ChannelAccountModel.bot_config_id == bot_config_id,
+            ChannelAccountModel.discord_bot_config_id == discord_bot_config_id,
         )
         existing_result = await session.execute(existing_stmt)
         existing = existing_result.scalar_one_or_none()
@@ -323,6 +456,7 @@ class ChannelRepository:
             id=uuid.uuid4(),
             user_id=user_id,
             bot_config_id=bot_config_id,
+            discord_bot_config_id=discord_bot_config_id,
             provider=provider,
             provider_user_id=provider_user_id,
             provider_chat_id=provider_chat_id,
@@ -378,6 +512,7 @@ class ChannelRepository:
         provider: str,
         provider_chat_id: str,
         bot_config_id: uuid.UUID | None = None,
+        discord_bot_config_id: uuid.UUID | None = None,
     ) -> ChannelSessionRecord:
         """Create a new channel session (deactivates previous active session)."""
         # Deactivate any existing active session for this account
@@ -395,6 +530,7 @@ class ChannelRepository:
             id=uuid.uuid4(),
             channel_account_id=channel_account_id,
             bot_config_id=bot_config_id,
+            discord_bot_config_id=discord_bot_config_id,
             conversation_id=conversation_id,
             provider=provider,
             provider_chat_id=provider_chat_id,

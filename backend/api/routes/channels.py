@@ -19,11 +19,16 @@ from pydantic import BaseModel, Field
 from agent.logging import conversation_log_context
 from api.auth.middleware import AuthUser, common_dependencies, get_current_user
 from api.builders import _build_orchestrator
-from api.channels.provider import ChannelProvider, TelegramProvider
+from api.channels.discord_runtime import DiscordClientManager
+from api.channels.provider import ChannelProvider, DiscordProvider, TelegramProvider
 from api.channels.repository import ChannelRepository
 from api.channels.responder import ChannelResponder
 from api.channels.router import ChannelRouter
-from api.channels.schemas import InboundMessage, TelegramBotConfigRecord
+from api.channels.schemas import (
+    DiscordBotConfigRecord,
+    InboundMessage,
+    TelegramBotConfigRecord,
+)
 from agent.runtime.hooks import ConversationSessionContext
 from api.db_subscriber import create_db_subscriber
 from api.dependencies import AppState, get_app_state
@@ -37,6 +42,7 @@ router = APIRouter(prefix="/channels", tags=["channels"])
 
 _channel_repo: ChannelRepository | None = None
 _channel_router: ChannelRouter | None = None
+_discord_manager: DiscordClientManager | None = None
 _EVENT_QUEUE_MAXSIZE = 5000
 
 
@@ -51,6 +57,10 @@ class LinkTokenResponse(BaseModel):
 
 
 class TelegramBotConfigRequest(BaseModel):
+    bot_token: str = Field(min_length=10, max_length=512)
+
+
+class DiscordBotConfigRequest(BaseModel):
     bot_token: str = Field(min_length=10, max_length=512)
 
 
@@ -81,6 +91,34 @@ def _build_provider(bot_config: TelegramBotConfigRecord) -> TelegramProvider:
         bot_token=bot_config.bot_token,
         webhook_secret=bot_config.webhook_secret,
     )
+
+
+def _get_discord_manager(state: AppState) -> DiscordClientManager:
+    global _discord_manager
+    if _discord_manager is None:
+        _discord_manager = DiscordClientManager(
+            repo=_get_channel_repo(),
+            session_factory=state.db_session_factory,
+            handle_message=lambda provider, message, config_id: _handle_channel_message(
+                state,
+                _get_channel_router(state),
+                provider,
+                message,
+                bot_config_id=config_id,
+            ),
+        )
+    return _discord_manager
+
+
+async def start_discord_clients(state: AppState) -> None:
+    if not get_settings().CHANNELS_ENABLED:
+        return
+    await _get_discord_manager(state).start_all_enabled()
+
+
+async def stop_discord_clients() -> None:
+    if _discord_manager is not None:
+        await _discord_manager.stop_all()
 
 
 def _mask_token(token: str) -> str:
@@ -126,8 +164,11 @@ def _serialize_status(
     *,
     settings_enabled: bool,
     bot_config: TelegramBotConfigRecord | None,
+    discord_config: DiscordBotConfigRecord | None,
     linked: bool,
+    discord_linked: bool,
     display_name: str | None,
+    discord_display_name: str | None,
 ) -> dict[str, Any]:
     is_configured = bot_config is not None and bool(bot_config.enabled)
     provider: dict[str, Any] = {
@@ -145,7 +186,24 @@ def _serialize_status(
         provider["last_error"] = bot_config.last_error
     if is_configured and display_name:
         provider["display_name"] = display_name
-    return {"enabled": settings_enabled, "providers": {"telegram": provider}}
+    discord_configured = discord_config is not None and bool(discord_config.enabled)
+    discord_provider: dict[str, Any] = {
+        "configured": discord_configured,
+        "linked": discord_linked if discord_configured else False,
+        "enabled": bool(discord_config.enabled) if discord_config else False,
+        "status": discord_config.status if discord_configured else "not_configured",
+    }
+    if discord_configured and discord_config is not None:
+        discord_provider["bot_username"] = discord_config.bot_username
+        discord_provider["bot_user_id"] = discord_config.bot_user_id
+        discord_provider["masked_token"] = _mask_token(discord_config.bot_token)
+        discord_provider["last_error"] = discord_config.last_error
+    if discord_configured and discord_display_name:
+        discord_provider["display_name"] = discord_display_name
+    return {
+        "enabled": settings_enabled,
+        "providers": {"telegram": provider, "discord": discord_provider},
+    }
 
 
 @router.post("/telegram/webhook")
@@ -208,7 +266,10 @@ async def _handle_channel_message(
             db,
             message.provider,
             message.provider_user_id,
-            bot_config_id=bot_config_id,
+            bot_config_id=bot_config_id if message.provider == "telegram" else None,
+            discord_bot_config_id=bot_config_id
+            if message.provider == "discord"
+            else None,
         )
 
     if message.is_command or account is None:
@@ -287,7 +348,7 @@ async def _handle_channel_message(
             async with state.db_session_factory() as db:
                 await state.db_repo.create_conversation(
                     db,
-                    title=(message.text or "Telegram chat")[:80],
+                    title=(message.text or f"{message.provider.title()} chat")[:80],
                     conversation_id=conv_uuid,
                     user_id=user_id,
                 )
@@ -320,7 +381,12 @@ async def _handle_channel_message(
                     conversation_id=conv_uuid,
                     provider=message.provider,
                     provider_chat_id=message.provider_chat_id,
-                    bot_config_id=bot_config_id,
+                    bot_config_id=bot_config_id
+                    if message.provider == "telegram"
+                    else None,
+                    discord_bot_config_id=bot_config_id
+                    if message.provider == "discord"
+                    else None,
                 )
 
             emitter_for_turn = emitter
@@ -606,6 +672,78 @@ async def disable_telegram_bot_config(
     return {"status": "ok"}
 
 
+@router.post("/discord/config", dependencies=common_dependencies)
+async def save_discord_bot_config(
+    body: DiscordBotConfigRequest,
+    state: AppState = Depends(get_app_state),
+    auth_user: AuthUser | None = Depends(get_current_user),
+) -> dict[str, Any]:
+    _require_channels_enabled()
+    user_id = await _resolve_user_id_or_401(state, auth_user)
+    repo = _get_channel_repo()
+    provider = DiscordProvider(body.bot_token)
+
+    try:
+        profile = await provider.get_me()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid Discord bot token: {_format_exception_detail(exc)}",
+        ) from exc
+    finally:
+        await provider.close()
+
+    async with state.db_session_factory() as db:
+        config = await repo.upsert_discord_bot_config(
+            db,
+            user_id=user_id,
+            bot_token=body.bot_token,
+            bot_username=profile["bot_username"],
+            bot_user_id=profile["bot_user_id"],
+            status="active",
+            enabled=True,
+            last_error=None,
+        )
+
+    await _get_discord_manager(state).start_or_restart(config)
+
+    return {
+        "provider": "discord",
+        "bot_username": config.bot_username,
+        "bot_user_id": config.bot_user_id,
+        "masked_token": _mask_token(config.bot_token),
+        "status": config.status,
+        "enabled": config.enabled,
+    }
+
+
+@router.delete("/discord/config", dependencies=common_dependencies)
+async def disable_discord_bot_config(
+    state: AppState = Depends(get_app_state),
+    auth_user: AuthUser | None = Depends(get_current_user),
+) -> dict[str, str]:
+    _require_channels_enabled()
+    user_id = await _resolve_user_id_or_401(state, auth_user)
+    repo = _get_channel_repo()
+
+    async with state.db_session_factory() as db:
+        config = await repo.get_discord_bot_config_for_user(db, user_id)
+    if config is None:
+        raise HTTPException(status_code=404, detail="Discord bot config not found")
+
+    await _get_discord_manager(state).stop(config.id)
+    async with state.db_session_factory() as db:
+        await repo.update_discord_bot_config_status(
+            db,
+            config.id,
+            status="disabled",
+            last_error=None,
+            enabled=False,
+        )
+
+    return {"status": "ok"}
+
+
 @router.post(
     "/link-token", response_model=LinkTokenResponse, dependencies=common_dependencies
 )
@@ -617,16 +755,35 @@ async def create_link_token(
     _require_channels_enabled()
     user_id = await _resolve_user_id_or_401(state, auth_user)
     repo = _get_channel_repo()
+    provider_name = body.provider.lower()
+    if provider_name not in {"telegram", "discord"}:
+        raise HTTPException(status_code=400, detail="Unsupported channel provider")
 
     async with state.db_session_factory() as db:
-        config = await repo.get_telegram_bot_config_for_user(db, user_id)
-        if config is None or not config.enabled or config.webhook_status != "active":
-            raise HTTPException(
-                status_code=400,
-                detail="Configure and enable your Telegram bot before generating a link token",
-            )
+        if provider_name == "telegram":
+            config = await repo.get_telegram_bot_config_for_user(db, user_id)
+            if (
+                config is None
+                or not config.enabled
+                or config.webhook_status != "active"
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Configure and enable your Telegram bot before generating a link token",
+                )
+        else:
+            discord_config = await repo.get_discord_bot_config_for_user(db, user_id)
+            if (
+                discord_config is None
+                or not discord_config.enabled
+                or discord_config.status != "active"
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Configure and enable your Discord bot before generating a link token",
+                )
         token_record = await repo.create_link_token(
-            db, user_id=user_id, provider=body.provider
+            db, user_id=user_id, provider=provider_name
         )
 
     expires_at = (
@@ -737,11 +894,16 @@ async def channel_status(
 
     async with state.db_session_factory() as db:
         bot_config = await repo.get_telegram_bot_config_for_user(db, user_id)
+        discord_config = await repo.get_discord_bot_config_for_user(db, user_id)
         tg_account = await repo.find_account_by_user(db, user_id, "telegram")
+        discord_account = await repo.find_account_by_user(db, user_id, "discord")
 
     return _serialize_status(
         settings_enabled=get_settings().CHANNELS_ENABLED,
         bot_config=bot_config,
+        discord_config=discord_config,
         linked=tg_account is not None,
+        discord_linked=discord_account is not None,
         display_name=tg_account.display_name if tg_account else None,
+        discord_display_name=discord_account.display_name if discord_account else None,
     )

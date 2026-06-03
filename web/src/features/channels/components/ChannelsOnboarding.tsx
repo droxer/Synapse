@@ -8,9 +8,10 @@ import { channelsFadeIn } from "../lib/motion";
 
 interface ChannelsOnboardingProps {
   onConfigureBot: () => void;
+  onConfigureDiscord: () => void;
 }
 
-export function ChannelsOnboarding({ onConfigureBot }: ChannelsOnboardingProps) {
+export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: ChannelsOnboardingProps) {
   const { t } = useTranslation();
   const steps = [
     { label: t("channels.onboarding.step1.label"), sub: t("channels.onboarding.step1.sub") },
@@ -95,6 +96,15 @@ export function ChannelsOnboarding({ onConfigureBot }: ChannelsOnboardingProps) 
         >
           <ChannelProviderIcon provider="telegram" size="sm" />
           <span>{t("channels.onboarding.cta")}</span>
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onConfigureDiscord}
+          className="w-full gap-2"
+        >
+          <ChannelProviderIcon provider="discord" size="sm" />
+          <span>{t("channels.onboarding.discordCta")}</span>
         </Button>
       </motion.div>
     </div>

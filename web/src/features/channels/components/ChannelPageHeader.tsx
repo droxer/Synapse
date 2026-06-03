@@ -1,19 +1,19 @@
 "use client";
 
 import { useCallback } from "react";
-import { Settings, Search } from "lucide-react";
+import { Search, Settings } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
 import { useTranslation } from "@/i18n";
 
 interface ChannelPageHeaderProps {
-  telegramConfigured: boolean;
+  channelsConfigured: boolean;
   conversationCount: number | null;
   onOpenSettings: () => void;
 }
 
 export function ChannelPageHeader({
-  telegramConfigured,
+  channelsConfigured,
   conversationCount,
   onOpenSettings,
 }: ChannelPageHeaderProps) {
@@ -24,7 +24,7 @@ export function ChannelPageHeader({
     );
   }, []);
 
-  const showCount = telegramConfigured && conversationCount !== null && conversationCount > 0;
+  const showCount = channelsConfigured && conversationCount !== null && conversationCount > 0;
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-hairline-soft bg-canvas px-4">
@@ -37,7 +37,7 @@ export function ChannelPageHeader({
             <span className="text-ink-deep font-medium">{conversationCount}</span>
           </span>
         )}
-        {telegramConfigured && (
+        {channelsConfigured && (
           <span className="inline-flex items-center gap-1.5 text-caption text-steel">
             <span className="relative inline-flex h-1.5 w-1.5">
               <span className="absolute inset-0 rounded-full bg-accent-emerald/40 animate-ping" />
@@ -55,13 +55,13 @@ export function ChannelPageHeader({
               variant="ghost"
               size="icon"
               onClick={onOpenSettings}
-              aria-label={t("channels.header.telegramSettings")}
+              aria-label={t("channels.header.channelSettings")}
               className="h-8 w-8 text-steel hover:text-ink-deep"
             >
               <Settings className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>{t("channels.header.telegramSettings")}</TooltipContent>
+          <TooltipContent>{t("channels.header.channelSettings")}</TooltipContent>
         </Tooltip>
 
         <button

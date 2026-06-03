@@ -132,7 +132,7 @@ export function CommandPalette({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-50 bg-overlay"
+            className="fixed inset-0 z-[60] bg-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -146,7 +146,7 @@ export function CommandPalette({
             role="dialog"
             aria-modal="true"
             aria-label={t("command.ariaLabel")}
-            className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] sm:pt-[20vh]"
+            className="fixed inset-0 z-[70] flex items-start justify-center pt-[10vh] sm:pt-[20vh]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

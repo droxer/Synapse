@@ -1,10 +1,11 @@
 import { API_BASE } from "@/shared/constants";
 
-export interface TelegramProviderStatus {
+export interface ChannelProviderStatus {
   configured: boolean;
   linked: boolean;
   enabled: boolean;
   webhook_status: string;
+  status?: string;
   bot_username?: string;
   bot_user_id?: string;
   masked_token?: string;
@@ -15,7 +16,8 @@ export interface TelegramProviderStatus {
 export interface ChannelStatusResponse {
   enabled: boolean;
   providers: {
-    telegram: TelegramProviderStatus;
+    telegram: ChannelProviderStatus;
+    discord: ChannelProviderStatus;
   };
 }
 
@@ -25,6 +27,15 @@ export interface TelegramConfigResponse {
   bot_user_id: string;
   masked_token: string;
   webhook_status: string;
+  enabled: boolean;
+}
+
+export interface DiscordConfigResponse {
+  provider: string;
+  bot_username: string;
+  bot_user_id: string;
+  masked_token: string;
+  status: string;
   enabled: boolean;
 }
 
@@ -54,6 +65,28 @@ export async function deleteTelegramBotConfig(): Promise<void> {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Failed to delete Telegram bot config: ${res.status}`);
+}
+
+export async function saveDiscordBotConfig(
+  botToken: string,
+): Promise<DiscordConfigResponse> {
+  const res = await fetch(`${API_BASE}/channels/discord/config`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bot_token: botToken }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `Failed to save Discord bot config: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function deleteDiscordBotConfig(): Promise<void> {
+  const res = await fetch(`${API_BASE}/channels/discord/config`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`Failed to delete Discord bot config: ${res.status}`);
 }
 
 export async function createLinkToken(provider = "telegram"): Promise<{

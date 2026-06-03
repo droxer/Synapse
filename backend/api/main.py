@@ -162,8 +162,11 @@ def _create_app() -> FastAPI:
 
         # Start stale-conversation reaper
         asyncio.create_task(conversations._cleanup_stale_conversations(app_state))
+        await channels.start_discord_clients(app_state)
 
         yield
+
+        await channels.stop_discord_clients()
 
         # Shut down MCP clients
         for mcp_client in mcp_state.clients.values():

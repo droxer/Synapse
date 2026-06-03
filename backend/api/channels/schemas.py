@@ -31,12 +31,30 @@ class TelegramBotConfigRecord:
 
 
 @dataclass(frozen=True)
+class DiscordBotConfigRecord:
+    """Read-only per-user Discord bot configuration."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    bot_token: str
+    bot_username: str
+    bot_user_id: str
+    status: str
+    last_error: str | None
+    last_verified_at: datetime | None
+    enabled: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(frozen=True)
 class ChannelAccountRecord:
     """Read-only channel account record."""
 
     id: uuid.UUID
     user_id: uuid.UUID
     bot_config_id: uuid.UUID | None
+    discord_bot_config_id: uuid.UUID | None
     provider: str
     provider_user_id: str
     provider_chat_id: str
@@ -53,6 +71,7 @@ class ChannelSessionRecord:
     id: uuid.UUID
     channel_account_id: uuid.UUID
     bot_config_id: uuid.UUID | None
+    discord_bot_config_id: uuid.UUID | None
     conversation_id: uuid.UUID
     provider: str
     provider_chat_id: str

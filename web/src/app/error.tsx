@@ -12,7 +12,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
   const { t } = useTranslation();
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-canvas">
-      <div className="flex w-full max-w-md flex-col items-center gap-4 px-6 text-center">
+      <div className="flex w-full max-w-[28rem] flex-col items-center gap-4 px-6 text-center">
         <h1 className="w-full text-heading-sm text-ink-deep">
           {t("error.title")}
         </h1>

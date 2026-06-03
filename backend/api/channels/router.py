@@ -93,7 +93,10 @@ class ChannelRouter:
                 db,
                 message.provider,
                 message.provider_user_id,
-                bot_config_id=bot_config_id,
+                bot_config_id=bot_config_id if message.provider == "telegram" else None,
+                discord_bot_config_id=bot_config_id
+                if message.provider == "discord"
+                else None,
             )
 
         # -- Command handling --------------------------------------------------
@@ -184,7 +187,10 @@ class ChannelRouter:
                 db,
                 message.provider,
                 message.provider_user_id,
-                bot_config_id=bot_config_id,
+                bot_config_id=bot_config_id if message.provider == "telegram" else None,
+                discord_bot_config_id=bot_config_id
+                if message.provider == "discord"
+                else None,
             )
 
         if existing is not None:
@@ -220,20 +226,46 @@ class ChannelRouter:
                 )
                 return
 
-            bot_config = await self._repo.get_telegram_bot_config_for_user(
-                db, link_record.user_id
+            bot_config = (
+                await self._repo.get_telegram_bot_config_for_user(
+                    db, link_record.user_id
+                )
+                if message.provider == "telegram"
+                else None
+            )
+            discord_config = (
+                await self._repo.get_discord_bot_config_for_user(
+                    db, link_record.user_id
+                )
+                if message.provider == "discord"
+                else None
+            )
+            expected_config_id = (
+                bot_config.id
+                if bot_config is not None
+                else discord_config.id
+                if discord_config is not None
+                else None
             )
             if bot_config is None or not bot_config.enabled:
-                await provider.send_text(
-                    message.provider_chat_id,
-                    "This user has not enabled a Telegram bot yet. Finish setup in the Channels page first.",
-                )
-                return
+                if message.provider == "telegram":
+                    await provider.send_text(
+                        message.provider_chat_id,
+                        "This user has not enabled a Telegram bot yet. Finish setup in the Channels page first.",
+                    )
+                    return
+            if discord_config is None or not discord_config.enabled:
+                if message.provider == "discord":
+                    await provider.send_text(
+                        message.provider_chat_id,
+                        "This user has not enabled a Discord bot yet. Finish setup in the Channels page first.",
+                    )
+                    return
 
-            if bot_config.id != bot_config_id:
+            if expected_config_id != bot_config_id:
                 await provider.send_text(
                     message.provider_chat_id,
-                    "This link token belongs to a different Telegram bot. Open the bot configured in the Channels page and try again.",
+                    f"This link token belongs to a different {message.provider.title()} bot. Open the bot configured in the Channels page and try again.",
                 )
                 return
 
@@ -244,7 +276,10 @@ class ChannelRouter:
                 provider_user_id=message.provider_user_id,
                 provider_chat_id=message.provider_chat_id,
                 display_name=message.display_name,
-                bot_config_id=bot_config.id,
+                bot_config_id=bot_config.id if bot_config is not None else None,
+                discord_bot_config_id=discord_config.id
+                if discord_config is not None
+                else None,
             )
 
         logger.info(

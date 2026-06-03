@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { TelegramLinkCard } from "@/features/channels/components/TelegramLinkCard";
+import { DiscordLinkCard } from "@/features/channels/components/DiscordLinkCard";
 import { ChannelChatView } from "@/features/channels/components/ChannelChatView";
 import { ChannelsOnboarding } from "@/features/channels/components/ChannelsOnboarding";
 import { ChannelsListening } from "@/features/channels/components/ChannelsListening";
 import { ChannelPageHeader } from "@/features/channels/components/ChannelPageHeader";
 import { ChannelConversationList } from "@/features/channels/components/ChannelConversationList";
+import { ChannelIntegrationsDialog } from "@/features/channels/components/ChannelIntegrationsDialog";
 import { getProviderLabel } from "@/features/channels/components/ChannelProviderIcon";
 import { getChannelStatus } from "@/features/channels/api/channel-api";
 import type { ChannelConversation } from "@/features/channels/api/channel-api";
@@ -21,6 +23,7 @@ import {
   shouldShowThreadList,
 } from "@/features/channels/lib/channels-page-state";
 
+type ChannelModal = null | "integrations" | "telegram" | "discord";
 
 function PageSkeleton() {
   return (
@@ -58,8 +61,8 @@ export default function ChannelsPage() {
   const [conversations, setConversations] = useState<ChannelConversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [conversationCount, setConversationCount] = useState<number | null>(null);
-  const [telegramConfigured, setTelegramConfigured] = useState(false);
-  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+  const [channelsConfigured, setChannelsConfigured] = useState(false);
+  const [activeModal, setActiveModal] = useState<ChannelModal>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
@@ -80,9 +83,11 @@ export default function ChannelsPage() {
   const reloadChannelStatus = useCallback(async () => {
     const statusRes = await getChannelStatus();
     const telegramIsConfigured = statusRes.providers.telegram?.configured ?? false;
+    const discordIsConfigured = statusRes.providers.discord?.configured ?? false;
+    const anyProviderConfigured = telegramIsConfigured || discordIsConfigured;
 
-    setTelegramConfigured(telegramIsConfigured);
-    if (!telegramIsConfigured) {
+    setChannelsConfigured(anyProviderConfigured);
+    if (!anyProviderConfigured) {
       setConversations([]);
       setConversationCount(0);
       setSelectedConversationId(null);
@@ -129,8 +134,8 @@ export default function ChannelsPage() {
     };
   }, []);
 
-  function handleModalChange(val: boolean) {
-    setIsTelegramModalOpen(val);
+  function handleProviderModalChange(provider: "telegram" | "discord", val: boolean) {
+    setActiveModal(val ? provider : null);
     if (!val) {
       void reloadChannelStatus()
         .then(() => {
@@ -140,9 +145,14 @@ export default function ChannelsPage() {
     }
   }
 
+  function openProviderModal(provider: "telegram" | "discord") {
+    setActiveModal(null);
+    window.setTimeout(() => setActiveModal(provider), 0);
+  }
+
   const handleConversationsChange = useCallback(
     (nextConversations: ChannelConversation[]) => {
-      if (!telegramConfigured) {
+      if (!channelsConfigured) {
         setConversations([]);
         setConversationCount(0);
         setSelectedConversationId(null);
@@ -160,7 +170,7 @@ export default function ChannelsPage() {
       );
       setError(null);
     },
-    [telegramConfigured],
+    [channelsConfigured],
   );
 
   const handleConversationDeleted = useCallback(
@@ -249,8 +259,13 @@ export default function ChannelsPage() {
     if (conversationCount === null) {
       return <PageSkeleton />;
     }
-    if (!telegramConfigured && !selectedConversation) {
-      return <ChannelsOnboarding onConfigureBot={() => setIsTelegramModalOpen(true)} />;
+    if (!channelsConfigured && !selectedConversation) {
+      return (
+        <ChannelsOnboarding
+          onConfigureBot={() => setActiveModal("telegram")}
+          onConfigureDiscord={() => setActiveModal("discord")}
+        />
+      );
     }
 
     if (pane === "chat" && selectedConversation) {
@@ -274,7 +289,10 @@ export default function ChannelsPage() {
             {selectedConversation ? (
               renderChatView(selectedConversation)
             ) : (
-              <ChannelsListening />
+              <ChannelsListening
+                onOpenTelegram={() => setActiveModal("telegram")}
+                onOpenDiscord={() => setActiveModal("discord")}
+              />
             )}
           </div>
         </div>
@@ -286,7 +304,10 @@ export default function ChannelsPage() {
         {selectedConversation ? (
           renderChatView(selectedConversation)
         ) : (
-          <ChannelsListening />
+          <ChannelsListening
+            onOpenTelegram={() => setActiveModal("telegram")}
+            onOpenDiscord={() => setActiveModal("discord")}
+          />
         )}
       </div>
     );
@@ -296,18 +317,37 @@ export default function ChannelsPage() {
     <div className="flex h-full flex-col overflow-hidden bg-canvas">
       {showChannelsHeader && (
         <ChannelPageHeader
-          telegramConfigured={telegramConfigured}
+          channelsConfigured={channelsConfigured}
           conversationCount={conversationCount}
-          onOpenSettings={() => setIsTelegramModalOpen(true)}
+          onOpenSettings={() => setActiveModal("integrations")}
         />
       )}
 
-      {/* Modal-only: card is hidden, triggered from the header settings button */}
-      <TelegramLinkCard
-        hideCard
-        open={isTelegramModalOpen}
-        onOpenChange={handleModalChange}
-      />
+      {activeModal === "integrations" && (
+        <ChannelIntegrationsDialog
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setActiveModal(null);
+          }}
+          onOpenTelegram={() => openProviderModal("telegram")}
+          onOpenDiscord={() => openProviderModal("discord")}
+        />
+      )}
+
+      {activeModal === "telegram" && (
+        <TelegramLinkCard
+          hideCard
+          open
+          onOpenChange={(nextOpen) => handleProviderModalChange("telegram", nextOpen)}
+        />
+      )}
+      {activeModal === "discord" && (
+        <DiscordLinkCard
+          hideCard
+          open
+          onOpenChange={(nextOpen) => handleProviderModalChange("discord", nextOpen)}
+        />
+      )}
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {error && (

@@ -75,7 +75,7 @@ export function InputPrompt({
   }, [value, onSubmit]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center px-3 pb-3 sm:px-4 sm:pb-5">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center px-3 pb-3 sm:px-4 sm:pb-5">
       <div
         className="absolute inset-0 bg-overlay"
         aria-hidden="true"
@@ -86,7 +86,7 @@ export function InputPrompt({
         role="dialog"
         aria-modal="true"
         aria-labelledby="input-prompt-title"
-        className="surface-overlay relative z-10 w-full max-w-2xl animate-modal-in overflow-hidden p-0"
+        className="surface-overlay relative z-10 w-full max-w-[42rem] animate-modal-in overflow-hidden p-0"
       >
         <div className="border-l-2 border-l-border-active px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="mb-2.5 flex items-center gap-2.5">

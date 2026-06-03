@@ -40,7 +40,7 @@ export function AddEntityDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "overflow-hidden p-0 sm:max-w-2xl",
+          "overflow-hidden p-0 sm:max-w-[42rem]",
           "grid-cols-[minmax(0,1fr)]",
           contentClassName,
         )}
