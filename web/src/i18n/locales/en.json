@@ -1,6 +1,6 @@
 {
-  "welcome.heading": "What can I build for you?",
-  "welcome.subtitle": "Describe your task and let the agent handle the rest",
+  "welcome.heading": "Turn ideas into working software",
+  "welcome.subtitle": "Describe what you want to build. Synapse plans, codes, runs it in a secure sandbox, and streams every step back to you.",
   "welcome.suggestionsLabel": "Suggested starting points",
   "welcome.suggestion.prototype": "Prototype a feature",
   "welcome.suggestion.prototypePrompt": "Prototype a focused feature with polished UI, accessible interactions, edge cases, and tests.",

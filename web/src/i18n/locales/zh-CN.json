@@ -1,6 +1,6 @@
 {
-  "welcome.heading": "我能为你构建什么？",
-  "welcome.subtitle": "描述你的任务，让智能体来完成",
+  "welcome.heading": "把想法变成可运行的软件",
+  "welcome.subtitle": "描述你想构建的内容。Synapse 会规划、编写代码、在安全的沙盒中运行，并实时回传每一步进展。",
   "welcome.suggestionsLabel": "推荐起点",
   "welcome.suggestion.prototype": "原型一个功能",
   "welcome.suggestion.prototypePrompt": "原型一个聚焦的功能，包含精致 UI、无障碍交互、边界情况和测试。",
