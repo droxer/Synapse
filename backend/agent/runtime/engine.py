@@ -10,6 +10,7 @@ parts that genuinely differ (model, event surface, completion rules, metrics).
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
@@ -49,16 +50,18 @@ class LoopConfig:
     debug_logging: bool = False
 
 
-class LoopPolicy:
+class LoopPolicy(ABC):
     """Hooks describing how a runtime diverges from the shared loop.
 
     Runtime classes subclass this (alongside their own bases) and override only
-    the hooks they need; every hook has a behavior-neutral default.
+    the hooks they need; every hook has a behavior-neutral default. The single
+    required override is :attr:`loop_config`.
     """
 
     @property
+    @abstractmethod
     def loop_config(self) -> LoopConfig:
-        raise NotImplementedError
+        """Per-iteration knobs (model, event surface, limits) for this runtime."""
 
     def loop_cancel_requested(self) -> bool:
         """Whether the turn should stop before the next iteration."""
@@ -117,6 +120,9 @@ class AgentLoop:
         self._compaction_step = compaction_step
         self._skill_controller = skill_controller
         self._policy = policy
+        # Per-turn scratch for a skill activation requested mid-iteration. Safe
+        # as instance state because each runtime owns one AgentLoop and serializes
+        # run_turn (run-lock or single-shot task); it is reset at run_turn entry.
         self._pending_mid_turn_update: Any | None = None
 
     async def run_turn(
