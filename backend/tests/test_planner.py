@@ -103,7 +103,11 @@ class TestPlannerCompaction:
     ):
         monkeypatch.setattr(
             "agent.runtime.planner.get_settings",
-            lambda: SimpleNamespace(LITE_MODEL="test-model"),
+            lambda: SimpleNamespace(
+                LITE_MODEL="test-model",
+                PLANNING_MODEL="test-model",
+                AGENT_DEBUG_LOGGING=False,
+            ),
         )
         observer = _RecordingObserver()
         profile = _planner_profile()
@@ -119,11 +123,12 @@ class TestPlannerCompaction:
         )
         state = AgentState(messages=({"role": "user", "content": "plan this"},))
 
-        result = await planner._run_iteration(
+        result = await planner._loop._run_iteration(
             state,
-            tools=[],
-            model="test-model",
-            system_prompt="expanded prompt",
+            [],
+            "expanded prompt",
+            "expanded prompt",
+            False,
         )
 
         assert result.completed is True
@@ -136,7 +141,11 @@ class TestPlannerCompaction:
     ):
         monkeypatch.setattr(
             "agent.runtime.planner.get_settings",
-            lambda: SimpleNamespace(LITE_MODEL="test-model"),
+            lambda: SimpleNamespace(
+                LITE_MODEL="test-model",
+                PLANNING_MODEL="test-model",
+                AGENT_DEBUG_LOGGING=False,
+            ),
         )
         events: list[str] = []
         profile = _planner_profile(memory_flush=True)
@@ -165,10 +174,12 @@ class TestPlannerCompaction:
             conversation_hooks=hooks,
         )
 
-        result = await planner._run_iteration(
+        result = await planner._loop._run_iteration(
             state,
-            tools=[],
-            model="test-model",
+            [],
+            "base prompt",
+            "base prompt",
+            False,
         )
 
         assert result.completed is True

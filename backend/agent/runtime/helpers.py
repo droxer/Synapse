@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
 from loguru import logger
 
-from agent.llm.client import LLMResponse, ToolCall
+from agent.llm.client import LLMResponse, ToolCall, is_content_policy_error
 from agent.tools.base import ToolResult
 from agent.tools.executor import ToolExecutor
 from api.events import EventEmitter, EventType
@@ -16,6 +16,59 @@ from config.settings import get_settings
 
 if TYPE_CHECKING:
     from agent.runtime.orchestrator import AgentState
+
+
+def classify_turn_error(error: str) -> tuple[str, bool]:
+    """Map a terminal error message to an event ``(code, retryable)`` pair."""
+    retryable = "LLM call failed" in error
+    code = "llm_error" if retryable else "agent_error"
+    if is_content_policy_error(error):
+        return "content_policy", False
+    if "maximum iterations" in error.lower():
+        return "max_iterations", False
+    return code, retryable
+
+
+async def finalize_conversation_turn(
+    *,
+    state: AgentState,
+    cancel_event: asyncio.Event,
+    current_turn_messages: tuple[dict[str, Any], ...],
+    base_messages: tuple[dict[str, Any], ...],
+    emitter: EventEmitter,
+    artifact_ids: list[str],
+) -> tuple[str, AgentState]:
+    """Emit the terminal turn event and return ``(result_text, new_state)``.
+
+    Shared by the conversation-style runtimes (web orchestrator and planner),
+    which handle cancellation, error, and completion identically. The returned
+    state replaces the caller's state (only the cancel path rewinds it).
+    """
+    if cancel_event.is_set():
+        cancel_event.clear()
+        final_text = extract_final_text_from_messages(current_turn_messages)
+        await emitter.emit(EventType.TURN_CANCELLED, {"result": final_text})
+        return final_text, replace(
+            state,
+            messages=base_messages,
+            completed=False,
+            error=None,
+        )
+
+    if state.error:
+        code, retryable = classify_turn_error(state.error)
+        await emitter.emit(
+            EventType.TASK_ERROR,
+            {"error": state.error, "code": code, "retryable": retryable},
+        )
+        return f"Error: {state.error}", state
+
+    final_text = extract_final_text(state)
+    await emitter.emit(
+        EventType.TURN_COMPLETE,
+        {"result": final_text, "artifact_ids": artifact_ids},
+    )
+    return final_text, state
 
 
 @dataclass(frozen=True)

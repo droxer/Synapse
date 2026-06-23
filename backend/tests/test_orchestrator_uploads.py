@@ -513,10 +513,12 @@ async def test_run_iteration_uses_effective_prompt_for_compaction() -> None:
     )
     state = orchestrator._state.add_message({"role": "user", "content": "hello"})
 
-    result = await orchestrator._run_iteration(
+    result = await orchestrator._loop._run_iteration(
         state,
-        tools=[],
-        system_prompt="expanded prompt",
+        [],
+        "expanded prompt",
+        "expanded prompt",
+        False,
     )
 
     assert result.completed is True
