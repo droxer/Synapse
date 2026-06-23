@@ -4,23 +4,21 @@ from __future__ import annotations
 
 import asyncio
 import time
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Any, Literal
 
 from agent.context.profiles import CompactionProfile, resolve_compaction_profile
 from agent.llm.client import (
     AnthropicClient,
-    SystemPrompt,
-    format_llm_failure,
+    LLMResponse,
     render_system_prompt,
 )
 from agent.runtime.helpers import (
-    apply_response_to_state,
     extract_final_text,
-    process_tool_calls,
 )
 from agent.context.compaction import Observer
 from agent.context.compaction_step import CompactionStep
+from agent.runtime.engine import AgentLoop, LoopConfig, LoopPolicy
 from agent.runtime.orchestrator import AgentState
 from agent.runtime.system_prompt_sections import (
     build_memory_aware_system_prompt_sections,
@@ -30,8 +28,8 @@ from agent.runtime.prompting import PromptAssembly
 from agent.skills.loader import SkillRegistry
 from agent.tools.executor import ToolExecutor
 from agent.tools.registry import ToolRegistry
-from api.events import EventEmitter, EventType
-from config.settings import Settings, get_settings
+from api.events import EventEmitter
+from config.settings import get_settings
 from loguru import logger
 
 
@@ -168,7 +166,7 @@ def _build_system_prompt(
     )
 
 
-class TaskAgentRunner:
+class TaskAgentRunner(LoopPolicy):
     """Runs a focused sub-task using a ReAct loop."""
 
     def __init__(
@@ -252,8 +250,15 @@ class TaskAgentRunner:
         self._output_tokens = 0
         self._shared_tools = shared_tools
         self._shared_tools_fingerprint = shared_tools_fingerprint
-        self._pending_mid_turn_update: SkillActivation | None = None
         self._completed_via_task_complete = False
+        self._loop = AgentLoop(
+            client=claude_client,
+            emitter=event_emitter,
+            executor=tool_executor,
+            compaction_step=self._compaction_step,
+            skill_controller=self._skill_controller,
+            policy=self,
+        )
 
     def _increment_compaction_count(self) -> None:
         """Record that a context compaction ran (metrics)."""
@@ -345,7 +350,6 @@ class TaskAgentRunner:
         self._output_tokens = 0
         self._task_complete_summary = None
         self._handoff_request = None
-        self._pending_mid_turn_update = None
         self._completed_via_task_complete = False
 
     def _build_metrics(self, started_at: float) -> AgentRunMetrics:
@@ -361,7 +365,6 @@ class TaskAgentRunner:
 
     async def _execute_loop(self) -> str:
         """Run the ReAct loop until completion or error."""
-        settings = get_settings()
         state = AgentState().add_message(
             {"role": "user", "content": self._config.task_description},
         )
@@ -384,27 +387,12 @@ class TaskAgentRunner:
         prompt_assembly = activation.prompt_assembly
         tools = self._tools_for_registry(activation, cache_prompt)
 
-        while not state.completed and state.error is None:
-            state = state.increment_iteration()
-            self._iterations = state.iteration
-            state = await self._run_iteration(
-                state,
-                tools,
-                settings,
-                prompt_assembly.system_with_cache_control(cache_prompt),
-                prompt_assembly.rendered,
-            )
-
-            update = self._pending_mid_turn_update
-            self._pending_mid_turn_update = None
-            if update is None:
-                update = await self._skill_controller.check_mid_turn_from_messages(
-                    list(state.messages),
-                    cache_prompt=cache_prompt,
-                )
-            if update is not None:
-                prompt_assembly = update.prompt_assembly
-                tools = self._tools_for_registry(update, cache_prompt)
+        state = await self._loop.run_turn(
+            state=state,
+            prompt_assembly=prompt_assembly,
+            tools=tools,
+            cache_prompt=cache_prompt,
+        )
 
         if state.error:
             raise RuntimeError(state.error)
@@ -425,108 +413,45 @@ class TaskAgentRunner:
             return self._shared_tools
         return activation.tools
 
-    async def _run_iteration(
-        self,
-        state: AgentState,
-        tools: list[dict[str, Any]],
-        settings: Settings,
-        system_prompt: SystemPrompt,
-        system_prompt_text: str,
-    ) -> AgentState:
-        """Run a single iteration of the task agent loop."""
-        # Compact history before the LLM call if needed
-        compacted, did_compact = await self._compaction_step.maybe_compact(
-            state.messages,
-            system_prompt_text,
+    @property
+    def loop_config(self) -> LoopConfig:
+        settings = get_settings()
+        return LoopConfig(
+            max_iterations=self._max_iterations,
+            model=self._config.model or settings.TASK_MODEL,
+            emit_iteration_start=False,
+            emit_llm_response=False,
+            agent_id=self._agent_id,
+            debug_label="task_runner",
+            debug_logging=getattr(settings, "AGENT_DEBUG_LOGGING", False),
         )
-        if did_compact:
-            state = replace(state, messages=compacted)
 
-        if state.iteration > self._max_iterations:
-            return state.mark_error(
-                f"Exceeded maximum iterations ({self._max_iterations})",
-            )
+    def loop_on_iteration_begin(self, state: AgentState) -> None:
+        self._iterations = state.iteration
 
-        llm_model = self._config.model or settings.TASK_MODEL
-        debug_logging_enabled = getattr(settings, "AGENT_DEBUG_LOGGING", False)
-        try:
-            if debug_logging_enabled:
-                logger.debug(
-                    "task_runner_llm_call agent_id={} model={} iteration={} messages={} tools={}",
-                    self._agent_id,
-                    llm_model,
-                    state.iteration,
-                    len(state.messages),
-                    len(tools),
-                )
+    def loop_stop_processing(self) -> bool:
+        return (
+            self._task_complete_summary is not None
+            or self._handoff_request is not None
+        )
 
-            async def _on_text_delta(delta: str) -> None:
-                await self._emitter.emit(
-                    EventType.TEXT_DELTA,
-                    {"delta": delta, "agent_id": self._agent_id},
-                    iteration=state.iteration,
-                )
-
-            response = await self._client.create_message_stream(
-                system=system_prompt,
-                messages=list(state.messages),
-                tools=tools if tools else None,
-                model=llm_model,
-                on_text_delta=_on_text_delta,
-            )
-        except Exception as exc:
-            if debug_logging_enabled:
-                logger.debug(
-                    "task_runner_llm_exception agent_id={} model={} iteration={} error_type={}",
-                    self._agent_id,
-                    llm_model,
-                    state.iteration,
-                    type(exc).__name__,
-                )
-            logger.error("llm_call_failed model={} error={}", llm_model, exc)
-            return state.mark_error(format_llm_failure(exc))
-
-        state = apply_response_to_state(state, response)
+    async def loop_on_llm_usage(self, response: LLMResponse) -> None:
         self._input_tokens += response.usage.input_tokens
         self._output_tokens += response.usage.output_tokens
 
-        if not response.tool_calls:
-            return state.mark_completed()
-
-        async def _post_tool_callback(tc: Any, result: Any) -> None:
-            skill_name = self._skill_controller.requested_skill_name(tc.name, tc.input)
-            if skill_name is None or not result.success:
-                return
-            updated = await self._skill_controller.apply_mid_turn(
-                skill_name,
-                tool_id=tc.id,
-                messages=list(state.messages),
-                cache_prompt=getattr(get_settings(), "PROMPT_CACHE_ENABLED", False),
-            )
-            if updated is not None:
-                self._pending_mid_turn_update = updated
-
-        try:
-            tool_result = await process_tool_calls(
-                state=state,
-                tool_calls=response.tool_calls,
-                executor=self._executor,
-                emitter=self._emitter,
-                agent_id=self._agent_id,
-                stop_check=lambda: (
-                    self._task_complete_summary is not None
-                    or self._handoff_request is not None
-                ),
-                post_tool_callback=_post_tool_callback,
-            )
-        except Exception as exc:
-            return state.mark_error(str(exc))
-        state = tool_result.state
+    async def loop_on_tools_processed(
+        self,
+        state: AgentState,
+        response: LLMResponse,
+        tool_result: Any,
+    ) -> AgentState:
         self._tool_call_count += tool_result.processed_count
         for artifact_id in tool_result.artifact_ids:
             if artifact_id not in self._artifact_ids:
                 self._artifact_ids.append(artifact_id)
+        return state
 
+    async def loop_on_task_complete(self, state: AgentState) -> AgentState | None:
         if self._task_complete_summary is not None:
             return state.mark_completed(self._task_complete_summary)
 
@@ -541,4 +466,4 @@ class TaskAgentRunner:
             self._handoff_request = handoff_with_messages
             return state.mark_completed("Handing off to specialist agent.")
 
-        return state
+        return None

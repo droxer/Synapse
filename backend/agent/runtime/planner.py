@@ -14,25 +14,22 @@ from agent.llm.client import (
     AnthropicClient,
     LLMResponse,
     SystemPrompt,
-    format_llm_failure,
-    render_system_prompt,
 )
 from agent.runtime.hooks import (
     ConversationHooks,
     NoopConversationHooks,
 )
 from agent.runtime.helpers import (
-    apply_response_to_state,
     finalize_conversation_turn,
     find_last_user_message_index,
     get_last_user_message_text,
-    process_tool_calls,
 )
 from agent.context.compaction import Observer
 from agent.context.compaction_step import CompactionStep
+from agent.runtime.engine import AgentLoop, LoopConfig, LoopPolicy
 from agent.runtime.orchestrator import AgentState
 from agent.runtime.prompting import PromptAssembly
-from agent.runtime.skill_activation import SkillActivation, SkillActivationController
+from agent.runtime.skill_activation import SkillActivationController
 from agent.runtime.task_runner import TaskAgentConfig
 from agent.runtime.turn_attachments import (
     build_user_message_content,
@@ -254,7 +251,7 @@ class SubAgentManagerProtocol(Protocol):
         ...
 
 
-class PlannerOrchestrator:
+class PlannerOrchestrator(LoopPolicy):
     """Top-level orchestrator that decomposes requests into sub-agent tasks.
 
     Uses a planning model to reason about task decomposition and coordinates
@@ -367,11 +364,19 @@ class PlannerOrchestrator:
             hooks=self._conversation_hooks,
         )
 
+        self._loop = AgentLoop(
+            client=claude_client,
+            emitter=event_emitter,
+            executor=self._executor,
+            compaction_step=self._compaction_step,
+            skill_controller=self._skill_controller,
+            policy=self,
+        )
+
         # Persistent conversation state — appended to on each run() call
         self._state = AgentState(messages=initial_messages)
         self._run_lock = asyncio.Lock()
         self._turn_artifact_ids: list[str] = []
-        self._pending_mid_turn_update: SkillActivation | None = None
         self._current_turn_start_index = len(initial_messages)
         self._current_turn_base_messages = initial_messages
         self._explicit_planner_requested = False
@@ -485,7 +490,6 @@ class PlannerOrchestrator:
         if callable(reset_active_skill_directory):
             reset_active_skill_directory()
         self._task_complete_summary = None
-        self._pending_mid_turn_update = None
         self._current_turn_start_index = len(self._state.messages)
         self._current_turn_base_messages = self._state.messages
         explicit_planner = bool((turn_metadata or {}).get("explicit_planner"))
@@ -565,125 +569,62 @@ class PlannerOrchestrator:
         self._state = replace(self._state, completed=False, error=None, iteration=0)
         self._turn_artifact_ids = []
 
-        model = get_settings().PLANNING_MODEL
-
         try:
-            while not self._state.completed and self._state.error is None:
-                if self._cancel_event.is_set():
-                    break
-                iteration_prompt_assembly = prompt_assembly
-                if self._explicit_policy_reminder:
-                    iteration_prompt_assembly = (
-                        iteration_prompt_assembly.with_volatile_sections(
-                            self._explicit_policy_reminder
-                        )
-                    )
-                self._state = self._state.increment_iteration()
-                self._state = await self._run_iteration(
-                    self._state,
-                    tools,
-                    model,
-                    iteration_prompt_assembly.system_with_cache_control(cache_prompt),
-                    iteration_prompt_assembly.rendered,
-                )
-
-                update = self._pending_mid_turn_update
-                self._pending_mid_turn_update = None
-                if update is None:
-                    update = await self._skill_controller.check_mid_turn_from_messages(
-                        list(self._state.messages),
-                        cache_prompt=cache_prompt,
-                    )
-                if update is not None:
-                    prompt_assembly = update.prompt_assembly
-                    tools = update.tools
+            self._state = await self._loop.run_turn(
+                state=self._state,
+                prompt_assembly=prompt_assembly,
+                tools=tools,
+                cache_prompt=cache_prompt,
+            )
         finally:
             await self._cleanup_sub_agents()
 
         return await self._finalize(self._state)
 
-    async def _run_iteration(
+    @property
+    def loop_config(self) -> LoopConfig:
+        return LoopConfig(
+            max_iterations=self._max_iterations,
+            model=get_settings().PLANNING_MODEL,
+            debug_label="planner",
+            debug_logging=getattr(get_settings(), "AGENT_DEBUG_LOGGING", False),
+        )
+
+    def loop_cancel_requested(self) -> bool:
+        return self._cancel_event.is_set()
+
+    def loop_stop_processing(self) -> bool:
+        return self._task_complete_summary is not None
+
+    def loop_iteration_prompt(self, assembly: PromptAssembly) -> PromptAssembly:
+        if self._explicit_policy_reminder:
+            return assembly.with_volatile_sections(self._explicit_policy_reminder)
+        return assembly
+
+    async def loop_on_no_tool_calls(
+        self, state: AgentState, response: LLMResponse
+    ) -> AgentState:
+        if self._explicit_planner_completion_is_exempt(response.text):
+            self._explicit_policy_reminder = None
+            return state.mark_completed()
+        policy_state = await self._apply_explicit_planner_policy(
+            state,
+            trigger="inline_completion",
+        )
+        if policy_state is not None:
+            return policy_state
+        return state.mark_completed()
+
+    async def loop_on_tools_processed(
         self,
         state: AgentState,
-        tools: list[dict[str, Any]],
-        model: str,
-        system_prompt: SystemPrompt | None = None,
-        system_prompt_text: str | None = None,
+        response: LLMResponse,
+        tool_result: Any,
     ) -> AgentState:
-        """Run a single iteration of the planner ReAct loop."""
-        effective_system = system_prompt or self._system_prompt
-        effective_prompt = system_prompt_text or render_system_prompt(effective_system)
-
-        # Compact history before the LLM call if needed
-        compacted, did_compact = await self._compaction_step.maybe_compact(
-            state.messages,
-            effective_prompt,
-            iteration=state.iteration,
-        )
-        if did_compact:
-            state = replace(state, messages=compacted)
-
-        await self._emitter.emit(
-            EventType.ITERATION_START,
-            {"iteration": state.iteration},
-            iteration=state.iteration,
-        )
-
-        if state.iteration > self._max_iterations:
-            return state.mark_error(
-                f"Exceeded maximum iterations ({self._max_iterations})",
-            )
-
-        response, llm_error = await self._call_llm(
-            state, tools, model, effective_system, effective_prompt
-        )
-        if llm_error is not None:
-            return state.mark_error(llm_error)
-
-        await self._emit_llm_response(state, response)
-
-        state = apply_response_to_state(state, response)
-
-        if not response.tool_calls:
-            if self._explicit_planner_completion_is_exempt(response.text):
-                self._explicit_policy_reminder = None
-                return state.mark_completed()
-            policy_state = await self._apply_explicit_planner_policy(
-                state,
-                trigger="inline_completion",
-            )
-            if policy_state is not None:
-                return policy_state
-            return state.mark_completed()
-
-        async def _post_tool_callback(tc: Any, result: Any) -> None:
-            skill_name = self._skill_controller.requested_skill_name(tc.name, tc.input)
-            if skill_name is None or not result.success:
-                return
-            updated = await self._skill_controller.apply_mid_turn(
-                skill_name,
-                tool_id=tc.id,
-                messages=list(state.messages),
-                cache_prompt=getattr(get_settings(), "PROMPT_CACHE_ENABLED", False),
-            )
-            if updated is not None:
-                self._pending_mid_turn_update = updated
-
-        try:
-            tool_result = await process_tool_calls(
-                state=state,
-                tool_calls=response.tool_calls,
-                executor=self._executor,
-                emitter=self._emitter,
-                stop_check=lambda: self._task_complete_summary is not None,
-                cancel_check=lambda: self._cancel_event.is_set(),
-                post_tool_callback=_post_tool_callback,
-            )
-        except Exception as exc:
-            return state.mark_error(str(exc))
-        state = tool_result.state
         self._turn_artifact_ids.extend(tool_result.artifact_ids)
+        return state
 
+    async def loop_on_task_complete(self, state: AgentState) -> AgentState | None:
         if self._task_complete_summary is not None:
             policy_state = await self._apply_explicit_planner_policy(
                 state,
@@ -692,55 +633,7 @@ class PlannerOrchestrator:
             if policy_state is not None:
                 return policy_state
             return state.mark_completed(self._task_complete_summary)
-
-        return state
-
-    async def _call_llm(
-        self,
-        state: AgentState,
-        tools: list[dict[str, Any]],
-        model: str,
-        system_prompt: SystemPrompt | None = None,
-        system_prompt_text: str | None = None,
-    ) -> tuple[LLMResponse | None, str | None]:
-        """Call the LLM with streaming and return the response or an error."""
-        try:
-
-            async def _on_text_delta(delta: str) -> None:
-                await self._emitter.emit(
-                    EventType.TEXT_DELTA,
-                    {"delta": delta},
-                    iteration=state.iteration,
-                )
-
-            response = await self._client.create_message_stream(
-                system=system_prompt or self._system_prompt,
-                messages=list(state.messages),
-                tools=tools if tools else None,
-                model=model,
-                on_text_delta=_on_text_delta,
-            )
-            return response, None
-        except Exception as exc:
-            logger.exception("llm_call_failed_planning model={} error={}", model, exc)
-            return None, format_llm_failure(exc)
-
-    async def _emit_llm_response(
-        self,
-        state: AgentState,
-        response: LLMResponse,
-    ) -> None:
-        """Emit an LLM_RESPONSE event."""
-        await self._emitter.emit(
-            EventType.LLM_RESPONSE,
-            {
-                "text": response.text,
-                "tool_call_count": len(response.tool_calls),
-                "stop_reason": response.stop_reason,
-                "usage": response.usage,
-            },
-            iteration=state.iteration,
-        )
+        return None
 
     def _explicit_planner_completion_is_exempt(self, text: str) -> bool:
         if not self._explicit_planner_requested:

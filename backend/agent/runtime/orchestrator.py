@@ -10,9 +10,8 @@ from loguru import logger
 
 from agent.llm.client import (
     AnthropicClient,
+    LLMResponse,
     SystemPrompt,
-    format_llm_failure,
-    render_system_prompt,
 )
 from agent.runtime.prompting import PromptAssembly
 from agent.context.profiles import CompactionProfile, resolve_compaction_profile
@@ -22,19 +21,17 @@ from agent.runtime.hooks import (
     NoopConversationHooks,
 )
 from agent.runtime.helpers import (
-    apply_response_to_state,
     finalize_conversation_turn,
     find_last_user_message_index,
     get_last_user_message_text,
-    process_tool_calls,
 )
 from agent.runtime.message_chain import (
-    collect_message_chain_warnings,
     tool_calls_fingerprint,
 )
 from agent.context.compaction import Observer
 from agent.context.compaction_step import CompactionStep
-from agent.runtime.skill_activation import SkillActivation, SkillActivationController
+from agent.runtime.engine import AgentLoop, LoopConfig, LoopPolicy
+from agent.runtime.skill_activation import SkillActivationController
 from agent.runtime.turn_attachments import (
     build_user_message_content,
     upload_attachments_to_sandbox,
@@ -81,7 +78,7 @@ class AgentState:
         return replace(self, error=error)
 
 
-class AgentOrchestrator:
+class AgentOrchestrator(LoopPolicy):
     """Runs a single-agent ReAct loop until completion or max iterations."""
 
     def __init__(
@@ -160,9 +157,16 @@ class AgentOrchestrator:
         self._last_tool_batch_signature: str | None = None
         self._identical_tool_batch_count: int = 0
         self._turn_artifact_ids: list[str] = []
-        self._pending_mid_turn_update: SkillActivation | None = None
         self._current_turn_start_index = len(initial_messages)
         self._current_turn_base_messages = initial_messages
+        self._loop = AgentLoop(
+            client=claude_client,
+            emitter=event_emitter,
+            executor=tool_executor,
+            compaction_step=self._compaction_step,
+            skill_controller=self._skill_controller,
+            policy=self,
+        )
 
     async def on_task_complete(self, summary: str) -> None:
         """Callback for the task_complete tool."""
@@ -296,7 +300,6 @@ class AgentOrchestrator:
             reset_active_skill_directory()
         self._last_tool_batch_signature = None
         self._identical_tool_batch_count = 0
-        self._pending_mid_turn_update = None
         self._current_turn_start_index = len(self._state.messages)
         self._current_turn_base_messages = self._state.messages
 
@@ -366,28 +369,12 @@ class AgentOrchestrator:
         self._state = replace(self._state, completed=False, error=None, iteration=0)
         self._turn_artifact_ids = []
 
-        while not self._state.completed and self._state.error is None:
-            if self._cancel_event.is_set():
-                break
-            self._state = self._state.increment_iteration()
-            self._state = await self._run_iteration(
-                self._state,
-                tools,
-                prompt_assembly.system_with_cache_control(cache_prompt),
-                prompt_assembly.rendered,
-            )
-
-            update = self._pending_mid_turn_update
-            self._pending_mid_turn_update = None
-            if update is None:
-                # Check if activate_skill was invoked mid-turn (assistant scan)
-                update = await self._skill_controller.check_mid_turn_from_messages(
-                    list(self._state.messages),
-                    cache_prompt=cache_prompt,
-                )
-            if update is not None:
-                prompt_assembly = update.prompt_assembly
-                tools = update.tools
+        self._state = await self._loop.run_turn(
+            state=self._state,
+            prompt_assembly=prompt_assembly,
+            tools=tools,
+            cache_prompt=cache_prompt,
+        )
 
         logger.info("turn_complete iterations={}", self._state.iteration)
 
@@ -401,167 +388,33 @@ class AgentOrchestrator:
         )
         return final_text
 
-    async def _run_iteration(
+    @property
+    def loop_config(self) -> LoopConfig:
+        settings = get_settings()
+        return LoopConfig(
+            max_iterations=self._max_iterations,
+            thinking_budget=self._thinking_budget,
+            emit_thinking=True,
+            validate_message_chain=settings.VALIDATE_AGENT_MESSAGE_CHAIN,
+            debug_label="orchestrator",
+            debug_logging=getattr(settings, "AGENT_DEBUG_LOGGING", False),
+        )
+
+    def loop_cancel_requested(self) -> bool:
+        return self._cancel_event.is_set()
+
+    def loop_stop_processing(self) -> bool:
+        return self._task_complete_summary is not None
+
+    async def loop_on_tools_processed(
         self,
         state: AgentState,
-        tools: list[dict[str, Any]],
-        system_prompt: SystemPrompt | None = None,
-        system_prompt_text: str | None = None,
+        response: LLMResponse,
+        tool_result: Any,
     ) -> AgentState:
-        """Run a single iteration of the ReAct loop."""
-        effective_system = system_prompt or self._system_prompt
-        effective_prompt = system_prompt_text or render_system_prompt(effective_system)
-
-        settings = get_settings()
-        if settings.VALIDATE_AGENT_MESSAGE_CHAIN:
-            chain_warnings = collect_message_chain_warnings(state.messages)
-            for w in chain_warnings:
-                logger.warning("message_chain_warning detail={}", w)
-
-        # Compact message history before the LLM call if needed
-        compacted, did_compact = await self._compaction_step.maybe_compact(
-            state.messages,
-            effective_prompt,
-            iteration=state.iteration,
-        )
-        if did_compact:
-            logger.debug("compacting_message_history")
-            state = replace(state, messages=compacted)
-
-        logger.info("iteration={}/{}", state.iteration, self._max_iterations)
-
-        await self._emitter.emit(
-            EventType.ITERATION_START,
-            {"iteration": state.iteration},
-            iteration=state.iteration,
-        )
-
-        if state.iteration > self._max_iterations:
-            logger.warning("max_iterations_exceeded limit={}", self._max_iterations)
-            return state.mark_error(
-                f"Exceeded maximum iterations ({self._max_iterations})",
-            )
-
-        llm_model = getattr(self._client, "default_model", "<unknown>")
-        debug_logging_enabled = getattr(get_settings(), "AGENT_DEBUG_LOGGING", False)
-        try:
-            thinking_emitted_during_stream = False
-
-            async def _on_text_delta(delta: str) -> None:
-                await self._emitter.emit(
-                    EventType.TEXT_DELTA,
-                    {"delta": delta},
-                    iteration=state.iteration,
-                )
-
-            async def _on_thinking_ready(thinking: str) -> None:
-                nonlocal thinking_emitted_during_stream
-                if not thinking:
-                    return
-                thinking_emitted_during_stream = True
-                await self._emitter.emit(
-                    EventType.THINKING,
-                    {"thinking": thinking},
-                    iteration=state.iteration,
-                )
-
-            stream_kwargs = dict(
-                system=effective_system,
-                messages=list(state.messages),
-                tools=tools if tools else None,
-                on_text_delta=_on_text_delta,
-                thinking_budget=self._thinking_budget,
-            )
-            if debug_logging_enabled:
-                logger.debug(
-                    "orchestrator_llm_call model={} iteration={} messages={} tools={} thinking_budget={}",
-                    llm_model,
-                    state.iteration,
-                    len(state.messages),
-                    len(tools),
-                    self._thinking_budget,
-                )
-            try:
-                response = await self._client.create_message_stream(
-                    **stream_kwargs,
-                    on_thinking_ready=_on_thinking_ready,
-                )
-            except TypeError as exc:
-                if "on_thinking_ready" not in str(exc):
-                    raise
-                response = await self._client.create_message_stream(**stream_kwargs)
-        except Exception as exc:
-            if debug_logging_enabled:
-                logger.debug(
-                    "orchestrator_llm_exception model={} iteration={} error_type={}",
-                    llm_model,
-                    state.iteration,
-                    type(exc).__name__,
-                )
-            logger.error("llm_call_failed model={} error={}", llm_model, exc)
-            return state.mark_error(format_llm_failure(exc))
-
-        logger.info(
-            "llm_response model={} stop_reason={} tool_calls={} input_tokens={} output_tokens={}",
-            llm_model,
-            response.stop_reason,
-            len(response.tool_calls),
-            response.usage.input_tokens,
-            response.usage.output_tokens,
-        )
-
-        if response.thinking and not thinking_emitted_during_stream:
-            await self._emitter.emit(
-                EventType.THINKING,
-                {"thinking": response.thinking},
-                iteration=state.iteration,
-            )
-
-        await self._emitter.emit(
-            EventType.LLM_RESPONSE,
-            {
-                "text": response.text,
-                "tool_call_count": len(response.tool_calls),
-                "stop_reason": response.stop_reason,
-                "usage": response.usage,
-            },
-            iteration=state.iteration,
-        )
-
-        state = apply_response_to_state(state, response)
-
-        if not response.tool_calls:
-            return state.mark_completed()
-
-        async def _post_tool_callback(tc: Any, result: Any) -> None:
-            skill_name = self._skill_controller.requested_skill_name(tc.name, tc.input)
-            if skill_name is None or not result.success:
-                return
-            updated = await self._skill_controller.apply_mid_turn(
-                skill_name,
-                tool_id=tc.id,
-                messages=list(state.messages),
-                cache_prompt=getattr(get_settings(), "PROMPT_CACHE_ENABLED", False),
-            )
-            if updated is not None:
-                self._pending_mid_turn_update = updated
-
-        try:
-            tool_result = await process_tool_calls(
-                state=state,
-                tool_calls=response.tool_calls,
-                executor=self._executor,
-                emitter=self._emitter,
-                stop_check=lambda: self._task_complete_summary is not None,
-                cancel_check=lambda: self._cancel_event.is_set(),
-                post_tool_callback=_post_tool_callback,
-            )
-        except Exception as exc:
-            return state.mark_error(str(exc))
-        state = tool_result.state
         self._turn_artifact_ids.extend(tool_result.artifact_ids)
 
-        threshold = settings.STUCK_LOOP_TOOL_REPEAT_THRESHOLD
+        threshold = get_settings().STUCK_LOOP_TOOL_REPEAT_THRESHOLD
         if threshold > 0 and response.tool_calls:
             sig = tool_calls_fingerprint(response.tool_calls)
             if sig == self._last_tool_batch_signature:
@@ -586,9 +439,9 @@ class AgentOrchestrator:
                 state = self._append_text_guard_to_last_user_message(state, nudge)
                 self._identical_tool_batch_count = 0
                 self._last_tool_batch_signature = None
+        return state
 
-        # Check if task_complete tool was invoked during tool processing
+    async def loop_on_task_complete(self, state: AgentState) -> AgentState | None:
         if self._task_complete_summary is not None:
             return state.mark_completed(self._task_complete_summary)
-
-        return state
+        return None
