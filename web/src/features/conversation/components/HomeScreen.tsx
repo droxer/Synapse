@@ -145,7 +145,7 @@ export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScree
                   label={suggestion.label}
                   icon={SUGGESTION_ICONS[index]}
                   disabled={isLoading}
-                  aria-label={t("welcome.suggestion.actionHint")}
+                  aria-label={`${suggestion.label}: ${t("welcome.suggestion.actionHint")}`}
                   onClick={() => {
                     setDraftPrompt((current) => ({
                       id: (current?.id ?? 0) + 1,
