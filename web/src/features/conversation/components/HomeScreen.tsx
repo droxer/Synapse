@@ -62,7 +62,7 @@ export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScree
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: shouldReduceMotion ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] },
+      transition: { duration: shouldReduceMotion ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] as const },
     },
   };
 
