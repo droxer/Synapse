@@ -1102,6 +1102,13 @@ pre, code {
   box-shadow: var(--shadow-glow-subtle);
 }
 
+@utility surface-input-composer-welcome {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xxl);
+  background-color: var(--color-card);
+  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
+}
+
 /* ─── Touch targets (WCAG 2.5.8 — 44px minimum on coarse pointers) ─── */
 
 @media (hover: none) and (pointer: coarse) {

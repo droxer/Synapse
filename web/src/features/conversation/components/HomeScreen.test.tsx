@@ -13,12 +13,14 @@ jest.mock("framer-motion", () => ({
       animate: _animate,
       exit: _exit,
       transition: _transition,
+      variants: _variants,
       ...props
     }: React.HTMLAttributes<HTMLDivElement> & {
       initial?: unknown;
       animate?: unknown;
       exit?: unknown;
       transition?: unknown;
+      variants?: unknown;
     }) => <div {...props}>{children}</div>,
     section: ({
       children,
@@ -26,13 +28,45 @@ jest.mock("framer-motion", () => ({
       animate: _animate,
       exit: _exit,
       transition: _transition,
+      variants: _variants,
       ...props
     }: React.HTMLAttributes<HTMLElement> & {
       initial?: unknown;
       animate?: unknown;
       exit?: unknown;
       transition?: unknown;
+      variants?: unknown;
     }) => <section {...props}>{children}</section>,
+    p: ({
+      children,
+      initial: _initial,
+      animate: _animate,
+      exit: _exit,
+      transition: _transition,
+      variants: _variants,
+      ...props
+    }: React.HTMLAttributes<HTMLParagraphElement> & {
+      initial?: unknown;
+      animate?: unknown;
+      exit?: unknown;
+      transition?: unknown;
+      variants?: unknown;
+    }) => <p {...props}>{children}</p>,
+    h1: ({
+      children,
+      initial: _initial,
+      animate: _animate,
+      exit: _exit,
+      transition: _transition,
+      variants: _variants,
+      ...props
+    }: React.HTMLAttributes<HTMLHeadingElement> & {
+      initial?: unknown;
+      animate?: unknown;
+      exit?: unknown;
+      transition?: unknown;
+      variants?: unknown;
+    }) => <h1 {...props}>{children}</h1>,
     button: ({
       children,
       whileHover: _whileHover,
@@ -52,19 +86,25 @@ jest.mock("./ChatInput", () => ({
   ChatInput: () => <div data-testid="chat-input" />,
 }));
 
+jest.mock("./SuggestionPill", () => ({
+  __esModule: true,
+  SuggestionPill: ({ label }: { label: string }) => <span data-testid="suggestion-pill">{label}</span>,
+}));
+
 jest.mock("@/shared/components/ErrorBanner", () => ({
   __esModule: true,
   ErrorBanner: ({ message }: { message: string }) => <div>{message}</div>,
 }));
 
-const zhSubtitle = "描述你的任务，让智能体来完成";
+const zhSubtitle = "描述你想构建的内容。Synapse 会规划、编写代码、在安全的沙盒中运行，并实时回传每一步进展。";
 
 jest.mock("@/i18n", () => ({
   __esModule: true,
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
-        "welcome.heading": "我能为你构建什么？",
+        "sidebar.brand": "Synapse",
+        "welcome.heading": "把想法变成可运行的软件",
         "welcome.subtitle": zhSubtitle,
         "welcome.suggestionsLabel": "Suggested starting points",
         "welcome.suggestion.prototype": "Prototype a feature",
@@ -85,25 +125,32 @@ jest.mock("@/i18n", () => ({
 const { HomeScreen } = require("./HomeScreen");
 
 describe("HomeScreen", () => {
-  it("renders CJK welcome copy with block-centered utilities (not flex items-center)", () => {
-    const html = renderToStaticMarkup(
-      <HomeScreen onSubmitTask={jest.fn()} />,
-    );
+  it("renders the Studio Desk headline, eyebrow, and subtitle", () => {
+    const html = renderToStaticMarkup(<HomeScreen onSubmitTask={jest.fn()} />);
 
-    expect(html).toContain("我能为你构建什么？");
+    expect(html).toContain("Synapse");
+    expect(html).toContain("把想法变成可运行的软件");
     expect(html).toContain(zhSubtitle);
-    expect(html).toContain("cjk-safe-centered text-heading-lg");
-    expect(html).toContain("cjk-safe-centered-constrained text-body-md");
-    expect(html).not.toContain("flex-col items-center");
-    expect(html).not.toContain("items-center justify-center px-4");
   });
 
-  it("renders suggestion chips with pill touch targets", () => {
-    const html = renderToStaticMarkup(
-      <HomeScreen onSubmitTask={jest.fn()} />,
-    );
+  it("renders suggestion pills", () => {
+    const html = renderToStaticMarkup(<HomeScreen onSubmitTask={jest.fn()} />);
 
     expect(html).toContain("Prototype a feature");
-    expect(html).toContain("min-h-11");
+    expect(html).toContain("Improve this screen");
+    expect(html).toContain("Plan the build");
+  });
+
+  it("keeps text left-aligned inside the centered content block", () => {
+    const html = renderToStaticMarkup(<HomeScreen onSubmitTask={jest.fn()} />);
+
+    expect(html).toContain("text-left");
+    expect(html).not.toContain("cjk-safe-centered");
+  });
+
+  it("renders the composer", () => {
+    const html = renderToStaticMarkup(<HomeScreen onSubmitTask={jest.fn()} />);
+
+    expect(html).toContain('data-testid="chat-input"');
   });
 });
