@@ -185,7 +185,7 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
           className={cn(
             isWelcome ? "surface-input-composer-welcome" : "surface-input-composer",
             "relative focus-within:surface-input-composer-focus",
-            isDragOver && "border-dashed !border-muted-foreground bg-muted",
+            isDragOver && "border-dashed !border-charcoal bg-surface-soft",
           )}
         >
           {/* File & skill attachment shelf */}
@@ -235,7 +235,7 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
             autoFocus={autoFocus}
             aria-label={t("chat.inputLabel")}
             className={cn(
-              "w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground outline-none",
+              "w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm leading-relaxed text-ink-deep placeholder:text-steel outline-none",
               disabled && "opacity-50 cursor-not-allowed",
             )}
           />
@@ -251,7 +251,7 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                 aria-label={t("chat.attachFile")}
                 title={t("chat.attachFile")}
                 onClick={() => fileInputRef.current?.click()}
-                className="h-7 gap-1.5 rounded-lg px-2 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+                className="h-7 gap-1.5 rounded-lg px-2 text-xs font-medium text-steel transition-colors duration-150 hover:bg-surface-soft hover:text-ink-deep"
               >
                 <Plus className="h-3.5 w-3.5" />
               </Button>
@@ -271,10 +271,10 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                   size="sm"
                   aria-label={t("chat.planner")}
                   className={cn(
-                    "h-7 gap-1.5 rounded-lg border px-2 text-xs font-medium transition-colors duration-150 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
+                    "h-7 gap-1.5 rounded-lg border px-2 text-xs font-medium transition-colors duration-150 data-[state=on]:border-charcoal data-[state=on]:bg-cobalt data-[state=on]:text-on-cobalt",
                     usePlanner
-                      ? "hover:bg-primary/90 hover:text-primary-foreground"
-                      : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+                      ? "hover:bg-cobalt-deep hover:text-on-cobalt"
+                      : "border-transparent text-steel hover:bg-surface-soft hover:text-ink-deep",
                   )}
                   title={usePlanner ? t("chat.plannerActive") : t("chat.plannerHint")}
                 >
@@ -302,7 +302,7 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                     onClick={onCancel}
                     aria-label={t("chat.cancelExecution")}
                     title={t("chat.cancelExecution")}
-                    className="group h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15"
+                    className="group h-8 w-8 text-steel hover:bg-critical/10 hover:text-critical active:bg-critical-strong/15"
                   >
                     <Square
                       className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110"
@@ -327,8 +327,8 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                     title={hasContent ? t("chat.sendMessage") : t("chat.typeToSend")}
                     className={cn(
                       "h-8 w-8 rounded-lg transition-colors duration-200",
-                      hasContent && "bg-primary text-primary-foreground hover:bg-primary/90",
-                      !hasContent && "bg-transparent text-muted-foreground",
+                      hasContent && "bg-cobalt text-on-cobalt hover:bg-cobalt-deep",
+                      !hasContent && "bg-transparent text-steel",
                     )}
                   >
                     <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
