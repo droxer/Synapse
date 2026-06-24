@@ -36,7 +36,7 @@ export function SegmentedControl<TValue extends string>({
     <div
       role="group"
       aria-label={ariaLabel}
-      className={cn("inline-flex items-center gap-1 rounded-lg border border-hairline-soft bg-canvas p-1", className)}
+      className={cn("inline-flex items-center gap-1 rounded-lg border border-border bg-background p-1", className)}
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -54,10 +54,10 @@ export function SegmentedControl<TValue extends string>({
             }}
             className={cn(
               "touch-target inline-flex min-h-8 items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium transition-[color,background-color,border-color] duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               selected
-                ? cn("border-hairline-soft bg-surface-soft text-secondary-foreground", selectedOptionClassName)
-                : cn("border-transparent text-steel hover:bg-surface-soft hover:text-ink-deep", inactiveOptionClassName),
+                ? cn("border-border bg-muted text-secondary-foreground", selectedOptionClassName)
+                : cn("border-transparent text-muted-foreground hover:bg-muted hover:text-foreground", inactiveOptionClassName),
               option.disabled && "cursor-not-allowed opacity-60",
               optionClassName,
             )}

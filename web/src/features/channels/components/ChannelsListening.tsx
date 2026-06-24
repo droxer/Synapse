@@ -30,7 +30,7 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
   ] as const;
 
   return (
-    <div className="relative h-full w-full min-w-0 overflow-hidden bg-canvas">
+    <div className="relative h-full w-full min-w-0 overflow-hidden bg-background">
       {/* Atmosphere: faint radial wash */}
       <div
         aria-hidden
@@ -41,9 +41,9 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
         <div
           className="absolute left-1/2 top-1/2 h-[420px] w-[420px] max-w-[80vw] max-h-[80vh] -translate-x-1/2 -translate-y-1/2"
         >
-          <span className="absolute inset-0 rounded-full border border-hairline-soft/70" />
-          <span className="absolute inset-[14%] rounded-full border border-hairline-soft/50" />
-          <span className="absolute inset-[28%] rounded-full border border-hairline-soft/30" />
+          <span className="absolute inset-0 rounded-full border border-border/70" />
+          <span className="absolute inset-[14%] rounded-full border border-border/50" />
+          <span className="absolute inset-[28%] rounded-full border border-border/30" />
         </div>
       </div>
 
@@ -58,28 +58,28 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
             className="relative z-10 text-center"
           >
             <div className="mx-auto mb-6 relative flex h-20 w-20 items-center justify-center">
-              <span className="absolute inset-0 rounded-2xl bg-accent-emerald/10 animate-ping [animation-duration:2.4s]" />
-              <span className="absolute inset-[10%] rounded-2xl bg-accent-emerald/5 animate-ping [animation-duration:2.4s] [animation-delay:0.6s]" />
-              <div className="relative flex h-14 w-24 items-center justify-center gap-2 rounded-2xl border border-hairline-soft bg-card shadow-sm">
+              <span className="absolute inset-0 rounded-2xl bg-success/10 animate-ping [animation-duration:2.4s]" />
+              <span className="absolute inset-[10%] rounded-2xl bg-success/5 animate-ping [animation-duration:2.4s] [animation-delay:0.6s]" />
+              <div className="relative flex h-14 w-24 items-center justify-center gap-2 rounded-2xl border border-border bg-card shadow-sm">
                 <ChannelProviderIcon provider="telegram" size="lg" />
                 <ChannelProviderIcon provider="discord" size="lg" />
               </div>
             </div>
 
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-hairline-soft bg-card/80 px-3 py-1 backdrop-blur-sm">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 backdrop-blur-sm">
               <span className="relative inline-flex h-1.5 w-1.5">
-                <span className="absolute inset-0 rounded-full bg-accent-emerald/50 animate-ping" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-emerald" />
+                <span className="absolute inset-0 rounded-full bg-success/50 animate-ping" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
               </span>
-              <span className="text-caption-bold uppercase tracking-wider text-accent-emerald">
+              <span className="text-caption-bold uppercase tracking-wider text-success">
                 {t("channels.header.live")}
               </span>
             </div>
 
-            <h3 className="mt-3 text-subtitle-lg text-ink-deep">
+            <h3 className="mt-3 text-subtitle-lg text-foreground">
               {t("channels.listening.activeTitle")}
             </h3>
-            <p className="mt-1.5 text-body-sm text-steel">
+            <p className="mt-1.5 text-body-sm text-muted-foreground">
               {t("channels.listening.activeDescription")}
             </p>
 
@@ -89,19 +89,19 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
                   key={item.provider}
                   type="button"
                   onClick={item.onOpen}
-                  className="w-full rounded-xl border border-hairline-soft bg-card/80 p-4 text-left backdrop-blur-sm transition-colors hover:border-hairline hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                  className="w-full rounded-xl border border-border bg-card/80 p-4 text-left backdrop-blur-sm transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 shrink-0">
                       <ChannelProviderIcon provider={item.provider} size="sm" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-body-sm-bold text-ink-deep">
+                      <p className="text-body-sm-bold text-foreground">
                         {item.title}
                       </p>
-                      <p className="mt-0.5 text-caption text-steel">
+                      <p className="mt-0.5 text-caption text-muted-foreground">
                         {item.hint}{" "}
-                        <code className="rounded bg-surface-soft px-1.5 py-0.5 font-mono text-caption text-ink-deep">
+                        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-caption text-foreground">
                           {item.command}
                         </code>
                       </p>
@@ -109,7 +109,7 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
                   </div>
                 </button>
               ))}
-              <div className="rounded-xl border border-hairline-soft bg-surface-soft/70 px-4 py-3 text-caption text-steel">
+              <div className="rounded-xl border border-border bg-muted/70 px-4 py-3 text-caption text-muted-foreground">
                 {t("channels.listening.manageHint")}
               </div>
             </div>

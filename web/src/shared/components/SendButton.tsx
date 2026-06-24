@@ -27,14 +27,14 @@ export function SendButton({ disabled = false, hasContent = false }: SendButtonP
       className={cn(
         "flex size-11 shrink-0 items-center justify-center rounded-full",
         "transition-colors transition-transform duration-200 ease-out",
-        "outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
+        "outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         hasContent
           ? [
-              "bg-cobalt text-on-cobalt",
-              "hover:bg-cobalt-deep",
+              "bg-primary text-primary-foreground",
+              "hover:bg-primary/90",
               "active:scale-95",
             ]
-          : "bg-transparent text-stone cursor-default",
+          : "bg-transparent text-text-subtle cursor-default",
       )}
     >
       <ArrowUp

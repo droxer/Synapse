@@ -1,4 +1,13 @@
 import { cn } from "@/shared/lib/utils";
+import {
+  LOGO_VARIANT_META,
+  logoPaletteForTone,
+  renderLogoGlyph,
+  type LogoTone,
+  type LogoVariant,
+} from "@/shared/components/logo-variants";
+
+export type { LogoTone, LogoVariant };
 
 interface LogoProps {
   size?: number;
@@ -10,32 +19,26 @@ interface LogoProps {
    * - on-dark: white container + black glyph
    * - neutral: dark-neutral container + white glyph
    */
-  tone?: "auto" | "on-light" | "on-dark" | "neutral";
+  tone?: LogoTone;
+  /** Logo mark geometry. Defaults to the diagonal synapse lockup. */
+  variant?: LogoVariant;
+  /** Pulse the synaptic cleft dot (Option C). */
+  animated?: boolean;
 }
 
 /**
  * Synapse product logo in strict monochrome lockups.
  */
-export function Logo({ size = 28, className, tone = "auto" }: LogoProps) {
-  const paletteByTone = {
-    auto: {
-      background: "var(--logo-bg, var(--logo-black, #0A0A0A))",
-      glyph: "var(--logo-glyph, var(--logo-white, #FFFFFF))",
-    },
-    "on-light": {
-      background: "var(--logo-black, #0A0A0A)",
-      glyph: "var(--logo-white, #FFFFFF)",
-    },
-    "on-dark": {
-      background: "var(--logo-white, #FFFFFF)",
-      glyph: "var(--logo-black, #0A0A0A)",
-    },
-    neutral: {
-      background: "var(--logo-neutral-700, #2B2B2B)",
-      glyph: "var(--logo-white, #FFFFFF)",
-    },
-  } as const;
-  const palette = paletteByTone[tone];
+export function Logo({
+  size = 28,
+  className,
+  tone = "auto",
+  variant = "diagonal",
+  animated = false,
+}: LogoProps) {
+  const palette = logoPaletteForTone(tone, variant);
+  const meta = LOGO_VARIANT_META[variant];
+  const showContainer = meta.hasContainer;
 
   return (
     <svg
@@ -47,19 +50,8 @@ export function Logo({ size = 28, className, tone = "auto" }: LogoProps) {
       className={cn("shrink-0", className)}
       aria-hidden="true"
     >
-      {/* Background rounded square */}
-      <rect width="128" height="128" rx="28" fill={palette.background} />
-
-      {/* Stylized "S" — three rails with alternating connectors */}
-      <rect x="26" y="24" width="76" height="18" rx="9" fill={palette.glyph} opacity="0.96" />
-      <rect x="84" y="33" width="18" height="30" rx="9" fill={palette.glyph} opacity="0.96" />
-      <rect x="26" y="54" width="76" height="18" rx="9" fill={palette.glyph} opacity="0.96" />
-      <rect x="26" y="63" width="18" height="30" rx="9" fill={palette.glyph} opacity="0.96" />
-      <rect x="26" y="86" width="76" height="18" rx="9" fill={palette.glyph} opacity="0.96" />
-
-      {/* Synapse node — small signal point on the top rail */}
-      <circle cx="95" cy="24" r="9" fill={palette.glyph} />
-      <circle cx="95" cy="24" r="3.5" fill={palette.background} opacity="0.9" />
+      {showContainer ? <rect width="128" height="128" rx="28" fill={palette.background} /> : null}
+      {renderLogoGlyph(variant, { palette, animated })}
     </svg>
   );
 }
@@ -67,6 +59,13 @@ export function Logo({ size = 28, className, tone = "auto" }: LogoProps) {
 /**
  * Favicon-friendly standalone version (for generating static assets).
  */
-export function LogoMark({ size = 48, className }: LogoProps) {
-  return <Logo size={size} className={className} />;
+export function LogoMark({ size = 48, className, variant, animated }: LogoProps) {
+  return (
+    <Logo
+      size={size}
+      className={className}
+      variant={variant}
+      animated={animated}
+    />
+  );
 }

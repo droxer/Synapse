@@ -1133,6 +1133,104 @@ async def test_prepare_conversation_runtime_restores_mcp_before_build(
     assert "restore" in order
 
 
+@pytest.mark.asyncio
+async def test_prepare_conversation_runtime_defers_slow_mcp_restore(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    order: list[str] = []
+    restore_release = asyncio.Event()
+    mcp_state = MCPState()
+    user_id = uuid.uuid4()
+
+    class _FakePersistentStore:
+        def __init__(self, *args, **kwargs) -> None:
+            del args, kwargs
+
+        async def load_all(self, limit: int = 100) -> list[dict[str, str]]:
+            del limit
+            return []
+
+    async def _fake_restore(
+        state: MCPState,
+        session_factory: object,
+        *,
+        conversation_id: str,
+        user_id: uuid.UUID,
+    ) -> None:
+        del state, session_factory, conversation_id, user_id
+        await restore_release.wait()
+        order.append("restore")
+
+    async def _fake_skill_registry(state: object, user_id: uuid.UUID) -> None:
+        del state, user_id
+        order.append("skills")
+
+    def _fake_build_orchestrator(*args, **kwargs) -> tuple[object, object]:
+        del args, kwargs
+        order.append("build")
+        return object(), object()
+
+    state = SimpleNamespace(
+        claude_client=object(),
+        db_session_factory=_noop_session_factory,
+        sandbox_provider=object(),
+        storage_backend=object(),
+        mcp_state=mcp_state,
+    )
+
+    monkeypatch.setattr(
+        conversation_routes,
+        "get_settings",
+        lambda: SimpleNamespace(INITIAL_CONVERSATION_MEMORY_LIMIT=7),
+    )
+    monkeypatch.setattr(
+        conversation_routes, "PersistentMemoryStore", _FakePersistentStore
+    )
+    monkeypatch.setattr(
+        conversation_routes,
+        "_restore_mcp_servers_background",
+        _fake_restore,
+    )
+    monkeypatch.setattr(
+        conversation_routes,
+        "_build_user_skill_registry",
+        _fake_skill_registry,
+    )
+    monkeypatch.setattr(
+        conversation_routes,
+        "_build_orchestrator",
+        _fake_build_orchestrator,
+    )
+    monkeypatch.setattr(
+        conversation_routes,
+        "_MCP_RESTORE_FAST_PATH_TIMEOUT_SECONDS",
+        0.01,
+    )
+
+    entry = ConversationEntry(
+        emitter=EventEmitter(),
+        event_queue=asyncio.Queue(),
+        orchestrator=None,
+        executor=None,
+        pending_callbacks={},
+    )
+
+    await conversation_routes._prepare_conversation_runtime(
+        state,
+        conversation_id=str(uuid.uuid4()),
+        conv_uuid=uuid.uuid4(),
+        user_id=user_id,
+        mode=ORCHESTRATOR_AGENT,
+        emitter=entry.emitter,
+        background_entry=entry,
+    )
+
+    assert order == ["skills", "build"]
+    restore_release.set()
+    await asyncio.gather(*entry.background_tasks)
+    assert order == ["skills", "build", "restore"]
+
+
 def _build_state_with_entry(
     conversation_id: str,
     entry: ConversationEntry,

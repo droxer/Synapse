@@ -130,15 +130,15 @@ export function ChannelConversationList({
 
   if (loadError) {
     return (
-      <div className="m-2 flex flex-col items-center gap-3 rounded-lg border border-critical-strong bg-critical-strong/5 px-4 py-8 text-center">
-        <p className="text-caption text-critical">{loadError}</p>
+      <div className="m-2 flex flex-col items-center gap-3 rounded-lg border border-destructive bg-destructive/5 px-4 py-8 text-center">
+        <p className="text-caption text-destructive">{loadError}</p>
         <button
           type="button"
           onClick={() => {
             setLoading(true);
             void fetchConversations();
           }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-critical-strong bg-critical/10 px-3 py-1.5 text-caption-bold text-critical transition-colors hover:bg-critical-strong/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          className="inline-flex items-center gap-1.5 rounded-md border border-destructive bg-destructive/10 px-3 py-1.5 text-caption-bold text-destructive transition-colors hover:bg-destructive/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <RefreshCw className="h-3 w-3" />
           {t("channels.list.retry")}
@@ -149,9 +149,9 @@ export function ChannelConversationList({
 
   if (conversations.length === 0) {
     return (
-      <div className="mx-2 mt-1 rounded-md border border-dashed border-hairline-soft bg-surface-soft px-3 py-4 text-center">
-        <p className="text-caption-bold text-steel">{t("channels.list.emptyTitle")}</p>
-        <p className="mt-0.5 text-micro leading-normal text-stone">
+      <div className="mx-2 mt-1 rounded-md border border-dashed border-border bg-muted px-3 py-4 text-center">
+        <p className="text-caption-bold text-muted-foreground">{t("channels.list.emptyTitle")}</p>
+        <p className="mt-0.5 text-micro leading-normal text-text-subtle">
           {t("channels.list.emptyHint")}
         </p>
       </div>
@@ -167,7 +167,7 @@ export function ChannelConversationList({
         className="space-y-0.5 px-2 py-1.5"
       >
         {actionError && (
-          <div className="mx-0.5 mb-2 rounded-md border border-critical-strong bg-critical-strong/5 px-3 py-2 text-caption text-critical">
+          <div className="mx-0.5 mb-2 rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-caption text-destructive">
             {actionError}
           </div>
         )}
@@ -186,46 +186,46 @@ export function ChannelConversationList({
               className={cn(
                 "group relative flex w-full items-center rounded-md text-left transition-colors duration-150",
                 isSelected
-                  ? "bg-surface-soft text-ink-deep"
-                  : "text-ink-deep hover:bg-sidebar-hover",
+                  ? "bg-muted text-foreground"
+                  : "text-foreground hover:bg-sidebar-hover",
                 deletingId === conv.conversation_id && "pointer-events-none opacity-50",
               )}
             >
               <button
                 type="button"
                 onClick={() => onSelect(conv)}
-                className="flex w-full flex-1 items-center gap-3 rounded-md px-2.5 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                className="flex w-full flex-1 items-center gap-3 rounded-md px-2.5 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <div
-                  className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-body-sm-bold text-on-cobalt shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                  className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-body-sm-bold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
                   style={{ background: `linear-gradient(135deg, ${providerColor}cc, ${providerColor})` }}
                 >
                   {initial}
                   {conv.session_active && (
                     <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-2.5 w-2.5">
-                      <span className="absolute inset-0 rounded-full bg-accent-emerald/40 animate-ping" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent-emerald ring-2 ring-sidebar-bg" />
+                      <span className="absolute inset-0 rounded-full bg-success/40 animate-ping" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success ring-2 ring-sidebar-bg" />
                     </span>
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="truncate text-body-sm-bold text-ink-deep">
+                    <span className="truncate text-body-sm-bold text-foreground">
                       {name}
                     </span>
                     {relTime && (
-                      <span className="shrink-0 tabular-nums text-micro font-medium text-stone">
+                      <span className="shrink-0 tabular-nums text-micro font-medium text-text-subtle">
                         {relTime}
                       </span>
                     )}
                   </div>
                   {conv.last_message ? (
-                    <p className="mt-0.5 truncate text-caption text-steel">
+                    <p className="mt-0.5 truncate text-caption text-muted-foreground">
                       {conv.last_message}
                     </p>
                   ) : (
-                    <p className="mt-0.5 truncate text-caption text-stone">
+                    <p className="mt-0.5 truncate text-caption text-text-subtle">
                       — {t("channels.list.newConversation")}
                     </p>
                   )}
@@ -239,7 +239,7 @@ export function ChannelConversationList({
                       type="button"
                       onClick={(e) => e.stopPropagation()}
                       aria-label={t("channels.list.deleteConversation")}
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-stone hover:bg-canvas hover:text-ink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-text-subtle hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" aria-hidden />
                     </button>

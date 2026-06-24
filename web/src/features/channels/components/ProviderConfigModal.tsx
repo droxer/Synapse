@@ -43,17 +43,17 @@ export function ProviderConfigShell({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-full sm:max-w-[28rem] rounded-lg border border-hairline-soft bg-canvas p-0 gap-0"
+        className="w-full sm:max-w-[28rem] rounded-lg border border-border bg-background p-0 gap-0"
       >
-        <div className="flex items-center gap-3.5 px-6 py-4 border-b border-hairline-soft/60">
+        <div className="flex items-center gap-3.5 px-6 py-4 border-b border-border/60">
           <ChannelProviderIcon
             provider={provider}
             size="lg"
             className="rounded-xl ring-1 ring-border"
           />
           <div className="min-w-0 flex-1">
-            <DialogTitle className="text-subtitle-lg text-ink-deep">{title}</DialogTitle>
-            <DialogDescription className="text-caption text-steel truncate">
+            <DialogTitle className="text-subtitle-lg text-foreground">{title}</DialogTitle>
+            <DialogDescription className="text-caption text-muted-foreground truncate">
               {description}
             </DialogDescription>
           </div>
@@ -61,7 +61,7 @@ export function ProviderConfigShell({
             type="button"
             onClick={onClose}
             aria-label={t("a11y.close")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-steel transition-colors hover:bg-surface-soft hover:text-ink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <X className="h-4 w-4" />
           </button>
@@ -71,7 +71,7 @@ export function ProviderConfigShell({
           {error && (
             <div
               role="alert"
-              className="flex items-start gap-2 rounded-md border border-critical-strong bg-critical-strong/5 px-3 py-2 text-body-sm text-critical"
+              className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive"
             >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span className="leading-snug">{error}</span>
@@ -107,19 +107,19 @@ export function ProviderBotInfoRow({
   statusTone,
 }: ProviderBotInfoRowProps) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-hairline-soft bg-card p-3">
+    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
       <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="text-body-sm-bold text-ink-deep tracking-tight truncate">{displayName}</p>
-        <p className="text-caption text-steel font-mono truncate">{maskedToken}</p>
+        <p className="text-body-sm-bold text-foreground tracking-tight truncate">{displayName}</p>
+        <p className="text-caption text-muted-foreground font-mono truncate">{maskedToken}</p>
       </div>
       <span
         className={
           statusTone === "ok"
-            ? "shrink-0 rounded-sm border border-hairline-soft bg-surface-soft px-1.5 py-0.5 text-micro font-medium uppercase text-steel"
-            : "shrink-0 inline-flex items-center gap-1 rounded-sm bg-accent-amber/10 px-1.5 py-0.5 text-micro font-medium uppercase text-accent-amber ring-1 ring-accent-amber/25"
+            ? "shrink-0 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-micro font-medium uppercase text-muted-foreground"
+            : "shrink-0 inline-flex items-center gap-1 rounded-sm bg-warning/10 px-1.5 py-0.5 text-micro font-medium uppercase text-warning ring-1 ring-warning/25"
         }
       >
-        {statusTone === "warn" && <span className="h-1 w-1 rounded-full bg-accent-amber" />}
+        {statusTone === "warn" && <span className="h-1 w-1 rounded-full bg-warning" />}
         {statusLabel}
       </span>
     </div>
@@ -145,13 +145,13 @@ export function ProviderHelpAccordion({
 }: ProviderHelpAccordionProps) {
   const panelId = `${id}-panel`;
   return (
-    <div className="rounded-md border border-hairline-soft overflow-hidden bg-surface-soft">
+    <div className="rounded-md border border-border overflow-hidden bg-muted">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex w-full items-center justify-between px-3 py-2 text-body-sm-bold text-steel transition-colors hover:text-ink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        className="flex w-full items-center justify-between px-3 py-2 text-body-sm-bold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <span className="flex items-center gap-2">
           <ExternalLink className="h-3.5 w-3.5" />
@@ -162,15 +162,15 @@ export function ProviderHelpAccordion({
       {open && (
         <div
           id={panelId}
-          className="border-t border-hairline-soft/60 px-4 py-3 space-y-2 leading-normal text-steel"
+          className="border-t border-border/60 px-4 py-3 space-y-2 leading-normal text-muted-foreground"
         >
           <ol className="space-y-2">
             {steps.map((step, idx) => (
               <li key={idx} className="flex items-start gap-2.5">
-                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-hairline-soft bg-canvas text-micro font-semibold text-steel">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border bg-background text-micro font-semibold text-muted-foreground">
                   {idx + 1}
                 </span>
-                <span className="text-caption text-ink-deep">{step}</span>
+                <span className="text-caption text-foreground">{step}</span>
               </li>
             ))}
           </ol>
@@ -179,7 +179,7 @@ export function ProviderHelpAccordion({
               href={externalLink.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-caption-bold text-cobalt hover:text-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 rounded-sm"
+              className="mt-1 inline-flex items-center gap-1 text-caption-bold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
             >
               {externalLink.label}
               <ExternalLink className="h-3 w-3" />
@@ -214,26 +214,26 @@ export function ProviderTokenSnippet({
   deepLink,
 }: ProviderTokenSnippetProps) {
   return (
-    <div className="rounded-lg border border-cobalt/30 bg-gradient-to-b from-cobalt/[0.04] to-transparent p-3 space-y-2.5">
+    <div className="rounded-lg border border-primary/30 bg-gradient-to-b from-primary/[0.04] to-transparent p-3 space-y-2.5">
       {caption && (
-        <p className="text-caption text-steel leading-snug px-0.5">{caption}</p>
+        <p className="text-caption text-muted-foreground leading-snug px-0.5">{caption}</p>
       )}
-      <div className="flex items-stretch rounded-md border border-hairline-soft overflow-hidden bg-canvas">
-        <code className="flex-1 min-w-0 px-3 py-2.5 font-mono text-caption text-ink-deep truncate">
+      <div className="flex items-stretch rounded-md border border-border overflow-hidden bg-background">
+        <code className="flex-1 min-w-0 px-3 py-2.5 font-mono text-caption text-foreground truncate">
           {command}
         </code>
         <button
           type="button"
           onClick={onCopy}
           aria-label={copied ? copiedLabel : copyLabel}
-          className="flex shrink-0 items-center justify-center gap-1.5 border-l border-hairline-soft bg-surface-soft px-3 py-2.5 text-caption-bold text-steel transition-colors hover:bg-card hover:text-ink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus/40"
+          className="flex shrink-0 items-center justify-center gap-1.5 border-l border-border bg-muted px-3 py-2.5 text-caption-bold text-muted-foreground transition-colors hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-ink-deep" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-3.5 w-3.5 text-foreground" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? copiedLabel : copyLabel}
         </button>
       </div>
       <div className="flex items-center justify-between gap-2 px-0.5">
-        <span className="inline-flex items-center gap-1 text-micro text-steel">
+        <span className="inline-flex items-center gap-1 text-micro text-muted-foreground">
           <Timer className="h-3 w-3" />
           {expiryLabel}
         </span>
@@ -242,7 +242,7 @@ export function ProviderTokenSnippet({
             href={deepLink.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-caption-bold text-cobalt hover:text-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 rounded-sm"
+            className="inline-flex items-center gap-1 text-caption-bold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
           >
             {deepLink.label}
             <ExternalLink className="h-3 w-3" />
@@ -269,19 +269,19 @@ export function ProviderLinkedAccountRow({
   disabled,
 }: ProviderLinkedAccountRowProps) {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-hairline-soft bg-card p-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-hairline-soft bg-surface-soft text-body-sm-bold text-steel">
+    <div className="flex items-center gap-3 rounded-md border border-border bg-card p-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-body-sm-bold text-muted-foreground">
         {displayName.charAt(0).toUpperCase()}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-body-sm-bold text-ink-deep truncate">{displayName}</p>
-        <p className="text-caption text-stone">{linkedAtLabel}</p>
+        <p className="text-body-sm-bold text-foreground truncate">{displayName}</p>
+        <p className="text-caption text-text-subtle">{linkedAtLabel}</p>
       </div>
       <button
         type="button"
         onClick={onUnlink}
         disabled={disabled}
-        className="shrink-0 rounded-md border border-hairline-soft bg-card px-2.5 py-1 text-caption-bold text-critical transition-colors hover:border-critical-strong hover:bg-critical-strong/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:opacity-50"
+        className="shrink-0 rounded-md border border-border bg-card px-2.5 py-1 text-caption-bold text-destructive transition-colors hover:border-destructive hover:bg-destructive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
       >
         {unlinkLabel}
       </button>
@@ -305,11 +305,11 @@ export function ProviderDangerZone({
   disabled,
 }: ProviderDangerZoneProps) {
   return (
-    <div className="rounded-md border border-dashed border-critical-strong/40 bg-critical-strong/[0.03] p-3">
+    <div className="rounded-md border border-dashed border-destructive/40 bg-destructive/[0.03] p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-caption-bold uppercase tracking-wider text-critical">{title}</p>
-          <p className="mt-0.5 text-caption text-steel leading-snug">{description}</p>
+          <p className="text-caption-bold uppercase tracking-wider text-destructive">{title}</p>
+          <p className="mt-0.5 text-caption text-muted-foreground leading-snug">{description}</p>
         </div>
         <Button
           type="button"
@@ -317,7 +317,7 @@ export function ProviderDangerZone({
           size="sm"
           disabled={disabled}
           onClick={onAction}
-          className="shrink-0 text-critical hover:bg-critical-strong/10 hover:text-critical"
+          className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           {actionLabel}
         </Button>
@@ -328,7 +328,7 @@ export function ProviderDangerZone({
 
 export function ProviderHeaderSkeleton({ provider }: { provider: ProviderKey }) {
   return (
-    <div className="flex items-center gap-3.5 px-6 py-4 border-b border-hairline-soft/60">
+    <div className="flex items-center gap-3.5 px-6 py-4 border-b border-border/60">
       <ChannelProviderIcon provider={provider} size="lg" className="rounded-xl ring-1 ring-border opacity-60" />
       <div className="min-w-0 flex-1 space-y-1.5">
         <div className="h-3 w-24 skeleton-shimmer rounded" />
@@ -355,31 +355,31 @@ export function ProviderTriggerCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex w-full flex-col gap-2 overflow-hidden rounded-lg border border-hairline-soft bg-card p-3 text-left transition-[border-color,background-color] duration-200 ease-out hover:border-hairline hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      className="group relative flex w-full flex-col gap-2 overflow-hidden rounded-lg border border-border bg-card p-3 text-left transition-[border-color,background-color] duration-200 ease-out hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2.5 min-w-0">
           <ChannelProviderIcon provider={provider} size="md" />
           <div className="space-y-0.5 min-w-0">
-            <span className="text-body-sm-bold text-ink-deep block">{title}</span>
+            <span className="text-body-sm-bold text-foreground block">{title}</span>
             <span
               className={
                 status.tone === "ok"
-                  ? "inline-flex items-center gap-1.5 rounded-sm border border-hairline-soft bg-surface-soft px-1.5 py-0.5 text-micro font-medium uppercase text-steel"
-                  : "inline-flex items-center gap-1 rounded-sm bg-accent-amber/10 px-1.5 py-0.5 text-micro font-medium uppercase text-accent-amber ring-1 ring-accent-amber/25"
+                  ? "inline-flex items-center gap-1.5 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-micro font-medium uppercase text-muted-foreground"
+                  : "inline-flex items-center gap-1 rounded-sm bg-warning/10 px-1.5 py-0.5 text-micro font-medium uppercase text-warning ring-1 ring-warning/25"
               }
             >
-              {status.tone === "warn" && <span className="h-1 w-1 rounded-full bg-accent-amber" />}
+              {status.tone === "warn" && <span className="h-1 w-1 rounded-full bg-warning" />}
               {status.label}
             </span>
           </div>
         </div>
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-hairline-soft bg-canvas text-steel transition-colors group-hover:bg-surface-soft group-hover:text-ink-deep">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors group-hover:bg-muted group-hover:text-foreground">
           <ChevronDown className="h-3.5 w-3.5 -rotate-90" />
         </div>
       </div>
       {subtitle && (
-        <p className="text-caption text-steel truncate">{subtitle}</p>
+        <p className="text-caption text-muted-foreground truncate">{subtitle}</p>
       )}
     </button>
   );

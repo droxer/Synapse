@@ -48,7 +48,7 @@ export function ToolingCard({
         "transition-[border-color,background-color] duration-200 ease-out",
         disabled
           ? "opacity-90"
-          : "hover:border-charcoal hover:bg-surface-soft",
+          : "hover:border-border-strong hover:bg-muted",
         className,
       )}
     >
@@ -67,7 +67,7 @@ export function ToolingCard({
       <h3
         className={cn(
           "mt-3 text-sm font-semibold leading-snug",
-          disabled ? "text-steel" : "text-ink-deep",
+          disabled ? "text-muted-foreground" : "text-foreground",
         )}
       >
         {title}
@@ -92,7 +92,7 @@ export function ToolingCard({
         <Link
           href={href}
           aria-label={accessibleLabel}
-          className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {accessibleLabel ? <span className="sr-only">{accessibleLabel}</span> : null}
         </Link>

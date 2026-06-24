@@ -26,15 +26,15 @@ const PHASE_CONFIG: Record<
 > = {
   thinking: {
     icon: Brain,
-    dotClass: "bg-focus",
+    dotClass: "bg-ring",
   },
   writing: {
     icon: Pencil,
-    dotClass: "bg-surface-soft-foreground",
+    dotClass: "bg-muted-foreground",
   },
   using_tool: {
     icon: Wrench,
-    dotClass: "bg-focus",
+    dotClass: "bg-ring",
   },
 };
 
@@ -105,7 +105,7 @@ export function AssistantLoadingSkeleton({ phase }: AssistantLoadingSkeletonProp
       aria-label={t("assistant.ariaLoading", { label })}
     >
       {/* Phase indicator — flat inline label */}
-      <div className="mb-3 flex items-center gap-2 text-caption text-steel">
+      <div className="mb-3 flex items-center gap-2 text-caption text-muted-foreground">
         {activePhase === "thinking" || activePhase === "using_tool" ? (
           <motion.span
             animate={shouldReduceMotion ? {} : { opacity: [0.5, 1, 0.5] }}

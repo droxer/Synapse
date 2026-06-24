@@ -62,6 +62,11 @@ class UserModel(Base):
 
 class ConversationModel(Base):
     __tablename__ = "conversations"
+    __table_args__ = (
+        Index("ix_conversations_user_created", "user_id", "created_at"),
+        Index("ix_conversations_created", "created_at"),
+        Index("ix_conversations_updated", "updated_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -170,7 +175,10 @@ class UserPromptModel(Base):
 
 class ArtifactModel(Base):
     __tablename__ = "artifacts"
-    __table_args__ = (Index("ix_artifacts_conversation", "conversation_id"),)
+    __table_args__ = (
+        Index("ix_artifacts_conversation", "conversation_id"),
+        Index("ix_artifacts_conversation_created", "conversation_id", "created_at"),
+    )
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
     conversation_id: Mapped[uuid.UUID] = mapped_column(

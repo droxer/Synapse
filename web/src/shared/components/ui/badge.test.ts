@@ -1,43 +1,19 @@
 import { describe, expect, it } from "@jest/globals";
-
 import { badgeVariants } from "./badge";
 
-/**
- * DESIGN.md badge variants resolve to canonical short-name color utilities
- * (`bg-success`, `text-ink-deep`, …) generated from the @theme tokens.
- */
 describe("badgeVariants", () => {
-  it("default and success share the green success fill", () => {
-    for (const variant of ["default", "success"] as const) {
-      const classes = badgeVariants({ variant });
-      expect(classes).toContain("bg-success");
-      expect(classes).toContain("text-canvas");
-    }
+  it("neutral is the default muted chip", () => {
+    expect(badgeVariants({ variant: "neutral" })).toContain("bg-muted");
   });
-
-  it("promo-yellow uses warning yellow on ink-deep text", () => {
-    const classes = badgeVariants({ variant: "promo-yellow" });
-    expect(classes).toContain("bg-warning");
-    expect(classes).toContain("text-ink-deep");
+  it("intent variants use subtle tints with same-hue text", () => {
+    expect(badgeVariants({ variant: "success" })).toContain("text-success");
+    expect(badgeVariants({ variant: "danger" })).toContain("text-destructive");
+    expect(badgeVariants({ variant: "info" })).toContain("text-info");
+    expect(badgeVariants({ variant: "accent" })).toContain("text-primary");
   });
-
-  it("critical and destructive surface the red error tokens", () => {
-    expect(badgeVariants({ variant: "critical" })).toContain("bg-critical");
-    expect(badgeVariants({ variant: "destructive" })).toContain("bg-critical-strong");
-  });
-
-  it("link badges use cobalt text and no solid fill", () => {
-    const classes = badgeVariants({ variant: "link" });
-    expect(classes).toContain("text-cobalt");
-    expect(classes).not.toMatch(/\bbg-cobalt\b/);
-  });
-
-  it("every badge is pill-shaped (rounded-full) per DESIGN.md", () => {
-    for (const variant of [
-      "default", "success", "promo-yellow", "attention", "critical", "destructive",
-      "secondary", "outline", "ghost", "link",
-    ] as const) {
-      expect(badgeVariants({ variant })).toContain("rounded-full");
+  it("every badge stays pill-shaped", () => {
+    for (const v of ["neutral","success","warning","danger","info","accent","outline"] as const) {
+      expect(badgeVariants({ variant: v })).toContain("rounded-full");
     }
   });
 });

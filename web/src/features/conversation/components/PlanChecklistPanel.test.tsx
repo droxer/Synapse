@@ -75,7 +75,7 @@ describe("PlanChecklistPanel", () => {
     expect(html).toContain("Skipped step");
     expect(html).toContain("Replan step");
     expect(html).toContain("opacity-70");
-    expect(html).toContain("text-accent-amber");
+    expect(html).toContain("text-warning");
     expect(html).toContain("status-warn");
   });
 

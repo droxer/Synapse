@@ -27,21 +27,21 @@ export function ChannelPageHeader({
   const showCount = channelsConfigured && conversationCount !== null && conversationCount > 0;
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-hairline-soft bg-canvas px-4">
+    <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4">
       <div className="flex min-w-0 flex-1 items-baseline gap-2">
-        <h1 className="min-w-0 truncate text-subtitle text-ink-deep">
+        <h1 className="min-w-0 truncate text-subtitle text-foreground">
           {t("channels.title")}
         </h1>
         {showCount && (
-          <span className="inline-flex items-baseline gap-1 text-caption tabular-nums text-stone">
-            <span className="text-ink-deep font-medium">{conversationCount}</span>
+          <span className="inline-flex items-baseline gap-1 text-caption tabular-nums text-text-subtle">
+            <span className="text-foreground font-medium">{conversationCount}</span>
           </span>
         )}
         {channelsConfigured && (
-          <span className="inline-flex items-center gap-1.5 text-caption text-steel">
+          <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
             <span className="relative inline-flex h-1.5 w-1.5">
-              <span className="absolute inset-0 rounded-full bg-accent-emerald/40 animate-ping" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-emerald" />
+              <span className="absolute inset-0 rounded-full bg-success/40 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
             </span>
             {t("channels.header.live")}
           </span>
@@ -56,7 +56,7 @@ export function ChannelPageHeader({
               size="icon"
               onClick={onOpenSettings}
               aria-label={t("channels.header.channelSettings")}
-              className="h-8 w-8 text-steel hover:text-ink-deep"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -69,11 +69,11 @@ export function ChannelPageHeader({
           onClick={handleOpenCommandPalette}
           aria-label={t("channels.header.search")}
           data-slot="search-pill"
-          className="search-pill shrink-0 cursor-pointer outline-none hover:text-ink hover:border-hairline-soft focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          className="search-pill shrink-0 cursor-pointer outline-none hover:text-foreground hover:border-border focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Search className="h-4 w-4" />
           <span className="hidden sm:inline">{t("channels.header.search")}</span>
-          <kbd className="hidden rounded-full bg-canvas px-2 py-0.5 font-mono text-caption-bold text-steel sm:inline">
+          <kbd className="hidden rounded-full bg-background px-2 py-0.5 font-mono text-caption-bold text-muted-foreground sm:inline">
             ⌘K
           </kbd>
         </button>

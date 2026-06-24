@@ -22,8 +22,8 @@ import {
 } from "@/shared/lib/tooling-ui-styles";
 
 /** Tool / panel markdown: body tone + spacing; links and code use MarkdownRenderer defaults. */
-export const PROSE_CLASSES = "text-sm leading-relaxed text-steel";
-export const TOOL_OUTPUT_MARKDOWN_CLASSES = "[&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_code]:rounded [&_code]:bg-surface-soft [&_code]:px-1 [&_code]:py-0.5";
+export const PROSE_CLASSES = "text-sm leading-relaxed text-muted-foreground";
+export const TOOL_OUTPUT_MARKDOWN_CLASSES = "[&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5";
 export const OUTPUT_COLLAPSE_THRESHOLD = 500;
 export const OUTPUT_CARD_BASE_CLASSES = OUTPUT_SURFACE_ROOT_CLASSES;
 export const OUTPUT_CARD_BODY_CLASSES = OUTPUT_SURFACE_BODY_CLASSES;
@@ -33,9 +33,9 @@ export const OUTPUT_HEADER_ROW_CLASSES = OUTPUT_SURFACE_HEADER_CLASSES;
 export const OUTPUT_HEADER_LABEL_CLASSES = OUTPUT_SURFACE_LABEL_CLASSES;
 export const OUTPUT_META_TEXT_CLASSES = OUTPUT_SURFACE_META_CLASSES;
 export const OUTPUT_SCROLL_AREA_CLASSES = "min-h-0 max-h-64 overflow-auto overscroll-contain pr-1";
-export const EVENT_ROW_BASE_CLASSES = `surface-panel ${TOOLING_ACTIVITY_ROW_CLASSES}`;
+export const EVENT_ROW_BASE_CLASSES = TOOLING_ACTIVITY_ROW_CLASSES;
 export { ACTIVITY_META_BADGE_CLASSES as EVENT_META_BADGE_CLASSES } from "@/shared/lib/activity-meta-badge";
-export const EVENT_LEFT_RAIL_CLASSES = "border-l border-hairline-soft/60 pl-3";
+export const EVENT_LEFT_RAIL_CLASSES = "pl-3";
 export const SKILL_TOOL_NAMES = new Set(["activate_skill", "load_skill"]);
 
 export type ActivityEntryKind = "tool" | "skill" | "neutral";
@@ -56,29 +56,25 @@ export function getToolCallVisualClasses(tone: ToolCallTone): {
   readonly row: string;
   readonly rowHover: string;
   readonly text: string;
-  readonly doneBadge: string;
 } {
   switch (tone) {
     case "error":
       return {
-        row: "surface-panel border-critical-strong/60 bg-card",
+        row: "border border-destructive/40 bg-destructive/5",
         rowHover: ACTIVITY_ROW_HOVER,
-        text: "text-critical",
-        doneBadge: "status-pill status-error",
+        text: "text-destructive",
       };
     case "complete":
       return {
-        row: "surface-panel bg-card",
+        row: "border border-transparent bg-transparent",
         rowHover: ACTIVITY_ROW_HOVER,
-        text: "text-ink-deep",
-        doneBadge: "status-pill status-neutral",
+        text: "text-foreground",
       };
     default:
       return {
-        row: "surface-panel bg-card",
+        row: "border border-transparent bg-transparent",
         rowHover: ACTIVITY_ROW_HOVER,
-        text: "text-ink-deep",
-        doneBadge: "status-pill status-neutral",
+        text: "text-foreground",
       };
   }
 }

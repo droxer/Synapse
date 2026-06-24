@@ -8,9 +8,10 @@ ORM models never leak beyond this module.
 from __future__ import annotations
 
 import uuid
+from collections import defaultdict
 from datetime import datetime, timezone
 
-from sqlalchemy import column, func, select, table, update
+from sqlalchemy import column, func, inspect, select, table, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agent.state.models import (
@@ -169,6 +170,21 @@ def _to_artifact(model: ArtifactModel) -> ArtifactRecord:
 class ConversationRepository:
     """Async repository for conversation persistence backed by PostgreSQL."""
 
+    _channel_sessions_table_available: dict[int, bool] = {}
+
+    async def _has_channel_sessions_table(self, session: AsyncSession) -> bool:
+        bind = session.get_bind()
+        cache_key = id(bind)
+        cached = self._channel_sessions_table_available.get(cache_key)
+        if cached is not None:
+            return cached
+        conn = await session.connection()
+        exists = await conn.run_sync(
+            lambda sync_conn: inspect(sync_conn).has_table("channel_sessions")
+        )
+        self._channel_sessions_table_available[cache_key] = exists
+        return exists
+
     async def _touch_conversation(
         self,
         session: AsyncSession,
@@ -218,12 +234,13 @@ class ConversationRepository:
         search: str | None = None,
         user_id: uuid.UUID | None = None,
     ) -> tuple[list[ConversationRecord], int]:
-        # Subquery to exclude conversations owned by a channel session
-        _channel_sessions = table("channel_sessions", column("conversation_id"))
-        _channel_conv_ids = select(_channel_sessions.c.conversation_id)
+        exclude_channel_conversations = await self._has_channel_sessions_table(session)
 
         count_stmt = select(func.count()).select_from(ConversationModel)
-        count_stmt = count_stmt.where(~ConversationModel.id.in_(_channel_conv_ids))
+        if exclude_channel_conversations:
+            _channel_sessions = table("channel_sessions", column("conversation_id"))
+            _channel_conv_ids = select(_channel_sessions.c.conversation_id)
+            count_stmt = count_stmt.where(~ConversationModel.id.in_(_channel_conv_ids))
         if user_id is not None:
             count_stmt = count_stmt.where(ConversationModel.user_id == user_id)
         if search:
@@ -232,11 +249,12 @@ class ConversationRepository:
 
         stmt = (
             select(ConversationModel)
-            .where(~ConversationModel.id.in_(_channel_conv_ids))
-            .order_by(ConversationModel.created_at.desc())
+            .order_by(ConversationModel.created_at.desc(), ConversationModel.id.desc())
             .limit(limit)
             .offset(offset)
         )
+        if exclude_channel_conversations:
+            stmt = stmt.where(~ConversationModel.id.in_(_channel_conv_ids))
         if user_id is not None:
             stmt = stmt.where(ConversationModel.user_id == user_id)
         if search:
@@ -413,7 +431,6 @@ class ConversationRepository:
             timestamp=timestamp or datetime.now(timezone.utc),
         )
         session.add(model)
-        await self._touch_conversation(session, conversation_id)
         await session.commit()
 
     async def get_events(
@@ -439,6 +456,54 @@ class ConversationRepository:
             stmt = stmt.limit(limit).offset(offset)
         result = await session.execute(stmt)
         return [_to_event(m) for m in result.scalars().all()]
+
+    async def get_events_for_run(
+        self,
+        session: AsyncSession,
+        conversation_id: uuid.UUID,
+        run_id: str,
+    ) -> list[EventRecord]:
+        """Return the contiguous event range belonging to a public API run."""
+        start_stmt = (
+            select(EventModel)
+            .where(
+                EventModel.conversation_id == conversation_id,
+                EventModel.event_type == "turn_start",
+                EventModel.data["run_id"].as_string() == run_id,
+            )
+            .order_by(EventModel.id.asc())
+            .limit(1)
+        )
+        start_result = await session.execute(start_stmt)
+        start_event = start_result.scalar_one_or_none()
+        if start_event is None:
+            return []
+
+        next_start_stmt = (
+            select(EventModel.id)
+            .where(
+                EventModel.conversation_id == conversation_id,
+                EventModel.event_type == "turn_start",
+                EventModel.id > start_event.id,
+            )
+            .order_by(EventModel.id.asc())
+            .limit(1)
+        )
+        next_start_result = await session.execute(next_start_stmt)
+        next_start_id = next_start_result.scalar_one_or_none()
+
+        events_stmt = (
+            select(EventModel)
+            .where(
+                EventModel.conversation_id == conversation_id,
+                EventModel.id >= start_event.id,
+            )
+            .order_by(EventModel.id.asc())
+        )
+        if next_start_id is not None:
+            events_stmt = events_stmt.where(EventModel.id < next_start_id)
+        events_result = await session.execute(events_stmt)
+        return [_to_event(m) for m in events_result.scalars().all()]
 
     async def get_latest_events(
         self,
@@ -561,22 +626,34 @@ class ConversationRepository:
         conv_result = await session.execute(conv_stmt)
         conversations = conv_result.scalars().all()
 
-        # For each conversation, load its artifacts
-        records: list[ConversationArtifactsRecord] = []
-        for conv in conversations:
+        conversation_ids = [conv.id for conv in conversations]
+        artifacts_by_conversation: dict[uuid.UUID, list[ArtifactRecord]] = defaultdict(
+            list
+        )
+        if conversation_ids:
             art_stmt = (
                 select(ArtifactModel)
-                .where(ArtifactModel.conversation_id == conv.id)
-                .order_by(ArtifactModel.created_at.desc())
+                .where(ArtifactModel.conversation_id.in_(conversation_ids))
+                .order_by(
+                    ArtifactModel.conversation_id.asc(),
+                    ArtifactModel.created_at.desc(),
+                    ArtifactModel.id.desc(),
+                )
             )
             art_result = await session.execute(art_stmt)
-            artifacts = tuple(_to_artifact(a) for a in art_result.scalars().all())
+            for artifact in art_result.scalars().all():
+                artifacts_by_conversation[artifact.conversation_id].append(
+                    _to_artifact(artifact)
+                )
+
+        records: list[ConversationArtifactsRecord] = []
+        for conv in conversations:
             records.append(
                 ConversationArtifactsRecord(
                     conversation_id=conv.id,
                     conversation_title=conv.title,
                     conversation_created_at=conv.created_at,
-                    artifacts=artifacts,
+                    artifacts=tuple(artifacts_by_conversation.get(conv.id, ())),
                 )
             )
 

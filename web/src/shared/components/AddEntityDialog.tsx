@@ -45,10 +45,10 @@ export function AddEntityDialog({
           contentClassName,
         )}
       >
-        <div className="w-full min-w-0 border-b border-hairline-soft/60 bg-surface-soft/30 px-5 py-4 sm:px-6">
+        <div className="w-full min-w-0 border-b border-border/60 bg-muted/30 px-5 py-4 sm:px-6">
           <DialogHeader className="w-full min-w-0 gap-2 pr-8">
             <div className="flex w-full min-w-0 items-center gap-3">
-              <div className="chip-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-canvas">
+              <div className="chip-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background">
                 {icon}
               </div>
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">

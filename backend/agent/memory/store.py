@@ -496,8 +496,8 @@ class PersistentMemoryStore:
                     desc(MemoryFactEntry.updated_at), desc(MemoryFactEntry.confidence)
                 )
             )
-            if not terms:
-                stmt = stmt.limit(max(limit * 8, 50))
+            candidate_limit = max(limit * 64, 256) if terms else max(limit * 8, 50)
+            stmt = stmt.limit(candidate_limit)
             result = await session.execute(stmt)
             rows = result.scalars().all()
             ranked = []

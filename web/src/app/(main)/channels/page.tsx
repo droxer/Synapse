@@ -27,8 +27,8 @@ type ChannelModal = null | "integrations" | "telegram" | "discord";
 
 function PageSkeleton() {
   return (
-    <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-canvas">
-      <aside className="hidden w-[320px] shrink-0 flex-col gap-0.5 border-r border-hairline-soft/60 px-2 py-2 md:flex">
+    <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background">
+      <aside className="hidden w-[320px] shrink-0 flex-col gap-0.5 border-r border-border/60 px-2 py-2 md:flex">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex items-center gap-3 rounded-md px-2.5 py-2.5">
             <div className="h-9 w-9 shrink-0 rounded-lg skeleton-shimmer" />
@@ -197,9 +197,9 @@ export default function ChannelsPage() {
   }, [isMobile]);
 
   const renderThreadList = () => (
-    <aside className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-r border-hairline-soft/60 bg-sidebar-bg md:w-auto">
+    <aside className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-r border-border/60 bg-sidebar-bg md:w-auto">
       <div className="px-4 py-3">
-        <p className="label-mono text-steel">
+        <p className="label-mono text-muted-foreground">
           {t("channels.list.title")}
         </p>
       </div>
@@ -223,22 +223,22 @@ export default function ChannelsPage() {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {showMobileBackBar && (
-          <div className="flex shrink-0 items-center gap-2 border-b border-hairline-soft/60 bg-canvas px-3 py-2">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border/60 bg-background px-3 py-2">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setMobileChatOpen(false)}
-              className="gap-1.5 text-steel hover:text-ink-deep"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               {t("channels.mobile.backToThreads")}
             </Button>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-body-sm-bold text-ink-deep">
+              <p className="truncate text-body-sm-bold text-foreground">
                 {conversation.display_name}
               </p>
-              <p className="truncate text-caption text-steel">
+              <p className="truncate text-caption text-muted-foreground">
                 {providerLabel}
               </p>
             </div>
@@ -314,7 +314,7 @@ export default function ChannelsPage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-canvas">
+    <div className="flex h-full flex-col overflow-hidden bg-background">
       {showChannelsHeader && (
         <ChannelPageHeader
           channelsConfigured={channelsConfigured}
@@ -351,7 +351,7 @@ export default function ChannelsPage() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {error && (
-          <div className="mx-4 mt-4 rounded-lg border border-critical-strong bg-critical-strong/5 px-4 py-2.5 text-body-sm text-critical">
+          <div className="mx-4 mt-4 rounded-lg border border-destructive bg-destructive/5 px-4 py-2.5 text-body-sm text-destructive">
             {error}
           </div>
         )}

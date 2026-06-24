@@ -5,66 +5,49 @@ import { Slot } from "radix-ui"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * DESIGN.md button system — all variants are pill-shaped (rounded.full = 100px).
+ * Design-system button primitives — teal `primary` is the only brand fill.
  *
- * - `default` (commerce primary): cobalt fill, white text. Send/Run/Submit/Continue.
- * - `marketing` (marketing primary): black pill, white text. Landing/login CTAs.
- * - `secondary`: outlined ghost with 2px ink-deep border.
- * - `ghost`: transparent with a 1px hairline-soft border, tertiary affordance.
- * - `destructive`: critical-strong fill.
- * - `link`: inline text link, cobalt.
- * - `pill-tab` / `pill-tab-active`: category-nav chip.
+ * Variants:
+ * - `default`: teal primary fill (`bg-primary`), white foreground. Use for primary actions.
+ * - `secondary`: subtle surface (`bg-secondary`) with a visible border. Use for secondary actions.
+ * - `ghost`: transparent with muted hover. Use for low-emphasis actions.
+ * - `destructive`: danger token fill (`bg-destructive`). Use for irreversible actions.
+ * - `link`: primary-coloured inline text link, no solid fill.
+ *
+ * Text buttons use `rounded-md`. Round icon buttons (e.g. avatar menu) should
+ * pass `className="rounded-full"` at the call site.
  */
 const buttonVariants = cva(
   [
-    // Layout + typography (matches `text-button-md`: 14px / 700 / -0.14px)
     "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap cursor-pointer",
-    "rounded-full font-bold text-button-md",
+    "rounded-md font-medium text-label",
     "transition-[color,background-color,border-color,box-shadow,opacity] duration-150 ease-out",
-    // Focus
-    "outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
-    // Disabled + invalid ring (filled variants have no border to colour)
-    "disabled:pointer-events-none aria-invalid:ring-critical-strong/40",
-    // SVG sizing
+    "outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-destructive/40",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   ].join(" "),
   {
     variants: {
       variant: {
-        default:
-          "bg-cobalt text-on-cobalt hover:bg-cobalt-deep active:bg-cobalt-deep disabled:bg-disabled-text disabled:text-canvas",
-        marketing:
-          "bg-ink-button text-on-ink-button hover:bg-charcoal active:bg-charcoal disabled:bg-disabled-text disabled:text-canvas",
-        destructive:
-          "bg-critical-strong text-canvas hover:bg-critical focus-visible:ring-critical-strong/40 disabled:bg-critical-strong/70",
-        secondary:
-          "bg-transparent text-ink-deep border-2 border-ink-deep hover:bg-ink-deep hover:text-canvas aria-invalid:border-critical-strong disabled:border-hairline disabled:text-disabled-text",
-        ghost:
-          "bg-transparent text-ink-deep border border-hairline-soft hover:bg-surface-soft hover:border-hairline aria-invalid:border-critical-strong disabled:text-disabled-text",
-        link:
-          "text-cobalt underline-offset-4 hover:text-cobalt-deep hover:underline disabled:text-cobalt/60 disabled:no-underline rounded-sm tracking-normal",
-        "pill-tab":
-          "bg-canvas text-ink border border-hairline hover:border-ink-deep",
-        "pill-tab-active":
-          "bg-ink-deep text-canvas border border-transparent",
+        default: "bg-primary text-primary-foreground hover:bg-accent-hover active:bg-accent-active",
+        secondary: "bg-secondary text-foreground border border-border hover:bg-muted hover:border-border-strong",
+        ghost: "bg-transparent text-foreground hover:bg-muted",
+        destructive: "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/40",
+        link: "text-primary underline-offset-4 hover:text-accent-hover hover:underline rounded-sm",
       },
       size: {
-        // 14 px label · 14×30 padding — DESIGN.md `button-primary`/`button-buy-cta`
-        default: "h-11 px-[30px] py-[14px] has-[>svg]:px-7",
-        sm: "h-9 px-[22px] py-2.5 has-[>svg]:px-5",
-        xs: "h-7 px-3 py-1 text-caption-bold gap-1 has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-3",
-        lg: "h-12 px-9 py-4 text-body-md-bold has-[>svg]:px-7",
-        tab: "h-8 px-4 py-1.5",
-        icon: "size-11 rounded-full",
-        "icon-xs": "size-6 rounded-full [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8 rounded-full",
-        "icon-lg": "size-12 rounded-full",
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 px-3 py-1.5 has-[>svg]:px-2.5",
+        xs: "h-7 px-2.5 py-1 text-caption gap-1 has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-3",
+        lg: "h-10 px-5 py-2.5 text-body has-[>svg]:px-4",
+        tab: "h-8 px-3 py-1.5",
+        icon: "size-9 rounded-md",
+        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-8 rounded-md",
+        "icon-lg": "size-10 rounded-md",
       },
     },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
+    defaultVariants: { variant: "default", size: "default" },
   }
 )
 

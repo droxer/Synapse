@@ -50,15 +50,22 @@ async def upload_attachments_to_sandbox(
         safe_name = safe_attachment_filename(att.filename)
         remote_path = f"{upload_dir}/{safe_name}"
         try:
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=f"_{safe_name}"
-            ) as tmp:
-                tmp.write(att.data)
-                tmp_path = tmp.name
-            try:
-                await session.upload_file(tmp_path, remote_path)
-            finally:
-                os.unlink(tmp_path)
+            local_path = getattr(att, "local_path", None)
+            if local_path:
+                try:
+                    await session.upload_file(local_path, remote_path)
+                finally:
+                    _cleanup_temp_upload(local_path)
+            else:
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=f"_{safe_name}"
+                ) as tmp:
+                    tmp.write(att.data)
+                    tmp_path = tmp.name
+                try:
+                    await session.upload_file(tmp_path, remote_path)
+                finally:
+                    os.unlink(tmp_path)
             verify_result = await session.exec(f"test -f {shlex.quote(remote_path)}")
             if not verify_result.success:
                 raise RuntimeError(f"Uploaded file was not found at '{remote_path}'")
@@ -83,6 +90,18 @@ async def upload_attachments_to_sandbox(
             ) from exc
 
     return tuple(uploaded_paths)
+
+
+def _cleanup_temp_upload(path: str) -> None:
+    """Remove upload spool files created by the API parser."""
+    tmp_root = os.path.realpath(tempfile.gettempdir())
+    candidate = os.path.realpath(path)
+    if not candidate.startswith(tmp_root + os.sep):
+        return
+    try:
+        os.unlink(candidate)
+    except FileNotFoundError:
+        return
 
 
 def build_user_message_content(

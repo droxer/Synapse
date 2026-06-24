@@ -3,37 +3,24 @@ import * as React from "react"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * DESIGN.md card variants:
- * - `product-feature` (default): white, 32px radius, 32px pad, hairline-soft border.
- * - `feature-photo`: 32px radius, no chrome — image fills the surface.
- * - `promo-strip`: ink-deep bg, 32px radius, 64px pad — dark hero blocks.
- * - `icon-feature`: 16px radius, 24px pad — 3/4-up reassurance tiles.
- * - `checkout-summary`: 16px radius, 24px pad, subtle elevation — purchase rail.
- * - `why-buy-tile`: 16px radius, 32×24 pad — marketing benefit tile.
- * - `warranty`: surface-soft bg, 24px radius — promo callout.
- * - `panel` (legacy compat): keeps the prior `surface-panel` chrome for existing call sites.
+ * Card variants — surfaces separate by tonal fill, not borders (lighter look).
+ * Cards are white on the slightly-grey page background, so no hairline border is needed.
+ * - `default`: primary card surface, borderless, separated by fill.
+ * - `sunken`: recessed card with muted background, borderless.
+ * - `interactive`: borderless card that lifts with a subtle shadow on hover.
+ * - `outlined`: opt-in bordered card for when a card sits on a same-tone surface (e.g. inside a white dialog).
+ * - `panel`: alias of default for backward compatibility.
  */
-type CardVariant =
-  | "product-feature"
-  | "feature-photo"
-  | "promo-strip"
-  | "icon-feature"
-  | "checkout-summary"
-  | "why-buy-tile"
-  | "warranty"
-  | "panel"
+type CardVariant = "default" | "sunken" | "interactive" | "outlined" | "panel"
 
 const cardVariantClass: Record<CardVariant, string> = {
-  "product-feature": "card-product-feature flex flex-col gap-6",
-  "feature-photo": "card-feature-photo relative overflow-hidden",
-  "promo-strip": "card-promo-strip flex flex-col gap-4",
-  "icon-feature": "card-icon-feature flex flex-col gap-4",
-  "checkout-summary": "card-checkout-summary flex flex-col gap-4",
-  "why-buy-tile": "card-why-buy-tile flex flex-col gap-3",
-  "warranty": "card-warranty flex flex-col gap-3",
-  /* `panel` is the bridge variant for dense in-app surfaces that haven't moved to a
-     photographic card yet. 24px radius, hairline-soft border, canvas fill. */
-  "panel": "flex flex-col gap-6 py-6 rounded-xxl border border-hairline-soft bg-canvas text-ink-deep",
+  default: "flex flex-col gap-6 py-6 rounded-lg bg-card text-card-foreground",
+  sunken: "flex flex-col gap-6 py-6 rounded-lg bg-muted text-card-foreground",
+  interactive:
+    "flex flex-col gap-6 py-6 rounded-lg bg-card text-card-foreground hover:shadow-sm",
+  outlined:
+    "flex flex-col gap-6 py-6 rounded-lg border border-border bg-card text-card-foreground",
+  panel: "flex flex-col gap-6 py-6 rounded-lg bg-card text-card-foreground",
 }
 
 function Card({
@@ -72,8 +59,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      // `text-subtitle-lg` role — 18 / 700 / 1.44
-      className={cn("text-subtitle-lg text-ink-deep", className)}
+      className={cn("text-title text-foreground", className)}
       {...props}
     />
   )
@@ -83,8 +69,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      // `text-body-sm` role — 14 / 400 / -0.14px
-      className={cn("text-body-sm text-steel", className)}
+      className={cn("text-body text-text-muted", className)}
       {...props}
     />
   )

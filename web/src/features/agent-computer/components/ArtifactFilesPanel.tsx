@@ -2,13 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ChevronRight,
-  Clock3,
   Download,
-  FolderOpen,
-  Layers3,
-  LayoutGrid,
-  List,
+  Eye,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -17,7 +12,6 @@ import { ArtifactPreviewDialog } from "@/features/agent-computer/components/Arti
 import { formatFileSize, fileCategoryColor, fileCategory } from "@/features/agent-computer/lib/artifact-helpers";
 import { BrandFileTypeIcon } from "@/shared/components/file-type-icons/BrandFileTypeIcon";
 import { buildArtifactUrl } from "@/shared/components/ArtifactExplorer/artifactExplorerUtils";
-import { SegmentedControl } from "@/shared/components/SegmentedControl";
 import { Button } from "@/shared/components/ui/button";
 import {
   AlertDialog,
@@ -34,14 +28,8 @@ import { formatRelativeDate } from "@/shared/lib/format-relative-date";
 import { cn } from "@/shared/lib/utils";
 import { useAppStore } from "@/shared/stores";
 import type { ArtifactInfo } from "@/shared/types";
-import type { FolderNode } from "@/shared/components/ArtifactExplorer/artifactExplorerUtils";
-import type { ViewMode } from "@/features/library/types";
 import {
-  buildTaskArtifactTree,
-  findFolderNode,
-  hasNestedArtifactPaths,
   normalizeTaskArtifacts,
-  splitRecentArtifacts,
   type TaskArtifactItem,
 } from "./ArtifactFilesPanel.utils";
 
@@ -54,65 +42,12 @@ interface ArtifactFilesPanelProps {
   readonly conversationId: string | null;
 }
 
-type PanelView = "recent" | "path";
-
-function readStoredArtifactPanelViewMode(): ViewMode {
-  try {
-    const stored = localStorage.getItem("artifact-panel:viewMode");
-    if (stored === "list" || stored === "grid") return stored;
-  } catch {
-    // localStorage unavailable
-  }
-  return "grid";
-}
-
-function PreviewVisual({ artifact, conversationId }: {
-  readonly artifact: TaskArtifactItem;
-  readonly conversationId?: string | null;
-}) {
-  const { bg, icon } = fileCategoryColor(artifact.contentType, artifact.name);
-  const artifactUrl = buildArtifactUrl(artifact, conversationId);
-
-  if (artifact.contentType.startsWith("image/") && artifactUrl) {
-    return (
-      <div className="h-36 overflow-hidden rounded-xl border border-hairline-soft bg-surface-soft">
-        <img
-          src={artifactUrl}
-          alt={artifact.name}
-          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("relative flex h-36 items-end overflow-hidden rounded-xl border border-hairline-soft px-4 py-3", bg)}>
-      <BrandFileTypeIcon
-        name={artifact.name}
-        contentType={artifact.contentType}
-        className={cn("absolute right-4 top-4 h-10 w-10 opacity-15", icon)}
-      />
-      <div className="relative space-y-1">
-        <p className="label-mono text-steel">
-          {artifact.contentType.startsWith("image/") ? "Image" : artifact.contentType === "text/html" ? "HTML" : "Preview"}
-        </p>
-        <div className="flex flex-col gap-1">
-          <span className="h-1.5 w-28 rounded-sm bg-border-strong" />
-          <span className="h-1.5 w-16 rounded-sm bg-border" />
-          <span className="h-1.5 w-20 rounded-sm bg-border" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ArtifactMeta({ artifact }: { readonly artifact: TaskArtifactItem }) {
   const { t, locale } = useTranslation();
   const meta = artifact.createdAt ? formatRelativeDate(artifact.createdAt, locale) : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-steel">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
       <span>{formatFileSize(artifact.size, t)}</span>
       <span aria-hidden="true">•</span>
       <span>{fileCategory(artifact.contentType, t)}</span>
@@ -145,14 +80,21 @@ function ArtifactActions({
   return (
     <div className="flex items-center gap-1.5">
       {artifact.isPreviewable ? (
-        <Button size="sm" variant="secondary" onClick={() => onPreview(artifact)}>
-          {t("artifacts.preview")}
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label={t("artifacts.preview")}
+          className="border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+          onClick={() => onPreview(artifact)}
+        >
+          <Eye className="h-4 w-4" />
         </Button>
       ) : null}
       <Button
         size="icon-sm"
         variant="ghost"
         aria-label={t("artifacts.downloadFile")}
+        className="border-transparent text-muted-foreground hover:border-border hover:text-foreground"
         onClick={() => {
           if (url) downloadFile(url, artifact.name);
         }}
@@ -164,7 +106,7 @@ function ArtifactActions({
           size="icon-sm"
           variant="ghost"
           aria-label={t("explorer.deleteFileLabel", { name: artifact.name })}
-          className="text-steel hover:text-critical"
+          className="border-transparent text-muted-foreground hover:border-border hover:text-destructive"
           onClick={() => onDelete([artifact.id])}
         >
           <Trash2 className="h-4 w-4" />
@@ -174,7 +116,7 @@ function ArtifactActions({
   );
 }
 
-function RecentArtifactCard({
+function ArtifactListRow({
   artifact,
   conversationId,
   canDelete,
@@ -190,74 +132,47 @@ function RecentArtifactCard({
   readonly isFresh: boolean;
 }) {
   const { t } = useTranslation();
+  const { bg, icon } = fileCategoryColor(artifact.contentType, artifact.name);
+  const fileIcon = (
+    <BrandFileTypeIcon
+      name={artifact.name}
+      contentType={artifact.contentType}
+      className={cn("h-5 w-5", icon)}
+    />
+  );
 
   return (
-    <article className="group surface-panel rounded-xl p-3 transition-colors hover:border-hairline">
-      <button type="button" className="w-full text-left" onClick={() => onPreview(artifact)}>
-        <PreviewVisual artifact={artifact} conversationId={conversationId} />
-      </button>
-      <div className="mt-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-medium text-ink-deep">{artifact.name}</p>
-            {isFresh ? (
-              <span className="status-pill status-ok">
-                {t("artifacts.new")}
-              </span>
-            ) : null}
-          </div>
-          <ArtifactMeta artifact={artifact} />
-          {artifact.directory ? (
-            <p className="mt-1 truncate text-xs text-steel">{artifact.directory}</p>
+    <div className="group flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/70">
+      {artifact.isPreviewable ? (
+        <button
+          type="button"
+          aria-label={t("artifacts.preview")}
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors",
+            bg,
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          )}
+          onClick={() => onPreview(artifact)}
+        >
+          {fileIcon}
+        </button>
+      ) : (
+        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md", bg)}>
+          {fileIcon}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="truncate text-sm font-medium text-foreground">{artifact.name}</p>
+          {isFresh ? (
+            <span className="shrink-0 text-micro font-medium text-success">
+              {t("artifacts.new")}
+            </span>
           ) : null}
         </div>
-        <ArtifactActions
-          artifact={artifact}
-          conversationId={conversationId}
-          canDelete={canDelete}
-          onPreview={onPreview}
-          onDelete={onDelete}
-        />
-      </div>
-    </article>
-  );
-}
-
-function CompactArtifactRow({
-  artifact,
-  conversationId,
-  canDelete,
-  onPreview,
-  onDelete,
-}: {
-  readonly artifact: TaskArtifactItem;
-  readonly conversationId: string | null;
-  readonly canDelete: boolean;
-  readonly onPreview: (artifact: TaskArtifactItem) => void;
-  readonly onDelete: (artifactIds: readonly string[]) => void;
-}) {
-  const { bg, icon } = fileCategoryColor(artifact.contentType, artifact.name);
-
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-hairline-soft bg-card px-3 py-2.5">
-      <button
-        type="button"
-        className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-lg", bg)}
-        onClick={() => {
-          if (artifact.isPreviewable) onPreview(artifact);
-        }}
-      >
-        <BrandFileTypeIcon
-          name={artifact.name}
-          contentType={artifact.contentType}
-          className={cn("h-5 w-5", icon)}
-        />
-      </button>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-ink-deep">{artifact.name}</p>
         <ArtifactMeta artifact={artifact} />
         {artifact.directory ? (
-          <p className="truncate text-xs text-steel">{artifact.directory}</p>
+          <p className="truncate text-xs text-muted-foreground">{artifact.directory}</p>
         ) : null}
       </div>
       <ArtifactActions
@@ -271,55 +186,6 @@ function CompactArtifactRow({
   );
 }
 
-function FolderBreadcrumbs({
-  currentPath,
-  onSelectPath,
-}: {
-  readonly currentPath: string;
-  readonly onSelectPath: (path: string) => void;
-}) {
-  const { t } = useTranslation();
-  const segments = currentPath === "/" ? [] : currentPath.split("/").filter(Boolean);
-  const crumbs = [{ label: t("artifacts.pathRoot"), path: "/" }];
-  let running = "";
-  for (const segment of segments) {
-    running = running ? `${running}/${segment}` : segment;
-    crumbs.push({ label: segment, path: running });
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-1 text-xs text-steel">
-      {crumbs.map((crumb, index) => (
-        <div key={crumb.path} className="flex items-center gap-1">
-          {index > 0 ? <ChevronRight className="h-3.5 w-3.5" /> : null}
-          <button type="button" className="hover:text-ink-deep" onClick={() => onSelectPath(crumb.path)}>
-            {crumb.label}
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PathFolderButton({
-  folder,
-  onOpen,
-}: {
-  readonly folder: FolderNode;
-  readonly onOpen: (path: string) => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="flex items-center gap-2 rounded-xl border border-hairline-soft bg-card px-3 py-2 text-sm text-left transition-colors hover:border-hairline hover:bg-card"
-      onClick={() => onOpen(folder.path)}
-    >
-      <FolderOpen className="h-4 w-4 text-steel" />
-      <span className="truncate">{folder.name}</span>
-    </button>
-  );
-}
-
 export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesPanelProps) {
   const { t } = useTranslation();
   const filteredArtifacts = useSessionFilteredArtifacts(artifacts);
@@ -327,36 +193,11 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
     () => normalizeTaskArtifacts(filteredArtifacts),
     [filteredArtifacts],
   );
-  const { previewable, compact } = useMemo(
-    () => splitRecentArtifacts(normalizedArtifacts),
-    [normalizedArtifacts],
-  );
-  const canBrowseByPath = useMemo(
-    () => hasNestedArtifactPaths(normalizedArtifacts),
-    [normalizedArtifacts],
-  );
-  const pathTree = useMemo(
-    () => buildTaskArtifactTree(normalizedArtifacts),
-    [normalizedArtifacts],
-  );
 
-  const [view, setView] = useState<PanelView>("recent");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [deleteTargetIds, setDeleteTargetIds] = useState<readonly string[] | null>(null);
-  const [currentPath, setCurrentPath] = useState<string>("/");
   const [freshArtifactIds, setFreshArtifactIds] = useState<ReadonlySet<string>>(new Set());
   const previousFingerprintByIdRef = useRef<ReadonlyMap<string, string>>(new Map());
-
-  useEffect(() => {
-    setViewMode(readStoredArtifactPanelViewMode());
-  }, []);
-
-  useEffect(() => {
-    if (!canBrowseByPath && view === "path") {
-      setView("recent");
-    }
-  }, [canBrowseByPath, view]);
 
   useEffect(() => {
     const nextIds = new Set(normalizedArtifacts.map((artifact) => artifact.id));
@@ -396,11 +237,6 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
     [selectedArtifact, conversationId],
   );
 
-  const currentFolder = useMemo(
-    () => findFolderNode(pathTree, currentPath) ?? pathTree,
-    [pathTree, currentPath],
-  );
-
   const performDelete = useCallback(async (ids: readonly string[]): Promise<boolean> => {
     if (!conversationId || ids.length === 0) return false;
     try {
@@ -427,24 +263,15 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
     if (ok) setDeleteTargetIds(null);
   }, [deleteTargetIds, performDelete]);
 
-  const handleSetViewMode = useCallback((mode: ViewMode) => {
-    setViewMode(mode);
-    try {
-      localStorage.setItem("artifact-panel:viewMode", mode);
-    } catch {
-      // localStorage unavailable
-    }
-  }, []);
-
   if (normalizedArtifacts.length === 0) {
     return (
       <div className="flex h-full items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-xl border border-dashed border-hairline-soft bg-card p-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-surface-soft">
-            <Sparkles className="h-5 w-5 text-steel" />
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md bg-muted">
+            <Sparkles className="h-5 w-5 text-muted-foreground" />
           </div>
-          <p className="mt-4 text-sm font-medium text-ink-deep">{t("artifacts.noFiles")}</p>
-          <p className="mt-1 text-xs text-steel">{t("library.noArtifactsHint")}</p>
+          <p className="mt-3 text-sm font-medium text-foreground">{t("artifacts.noFiles")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("library.noArtifactsHint")}</p>
         </div>
       </div>
     );
@@ -452,155 +279,34 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
 
   return (
     <>
-      <div className="flex h-full flex-col overflow-y-auto bg-canvas px-4 py-3 sm:px-5">
-        <div className="surface-panel rounded-xl p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 label-mono text-steel">
-                <Layers3 className="h-3.5 w-3.5" />
-                <span>{t("artifacts.recentOutputs")}</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-steel">
-                <span className="font-medium text-ink-deep">
-                  {normalizedArtifacts.length === 1
-                    ? t("artifacts.fileCount", { count: normalizedArtifacts.length })
-                    : t("artifacts.filesCount", { count: normalizedArtifacts.length })}
-                </span>
-                {freshArtifactIds.size > 0 ? (
-                  <span className="status-pill status-ok">
-                    {t("artifacts.newSinceOpen", { count: freshArtifactIds.size })}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <SegmentedControl<ViewMode>
-                ariaLabel={t("library.title")}
-                value={viewMode}
-                onValueChange={handleSetViewMode}
-                options={[
-                  {
-                    value: "grid",
-                    label: t("library.viewGrid"),
-                    icon: <LayoutGrid aria-hidden="true" className="h-4 w-4" />,
-                  },
-                  {
-                    value: "list",
-                    label: t("library.viewList"),
-                    icon: <List aria-hidden="true" className="h-4 w-4" />,
-                  },
-                ]}
-              />
-              {canBrowseByPath ? (
-                <SegmentedControl<PanelView>
-                  ariaLabel={t("artifacts.recentOutputs")}
-                  value={view}
-                  onValueChange={setView}
-                  options={[
-                    { value: "recent", label: t("artifacts.recentOutputs") },
-                    { value: "path", label: t("artifacts.browseByPath") },
-                  ]}
-                />
-              ) : null}
-            </div>
-          </div>
+      <div className="flex h-full flex-col overflow-y-auto bg-background px-3 py-3 sm:px-4">
+        <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-2">
+          <span className="label-mono text-muted-foreground">{t("artifacts.recentOutputs")}</span>
+          <span className="text-sm font-medium text-foreground">
+            {normalizedArtifacts.length === 1
+              ? t("artifacts.fileCount", { count: normalizedArtifacts.length })
+              : t("artifacts.filesCount", { count: normalizedArtifacts.length })}
+          </span>
+          {freshArtifactIds.size > 0 ? (
+            <span className="text-micro font-medium text-success">
+              {t("artifacts.newSinceOpen", { count: freshArtifactIds.size })}
+            </span>
+          ) : null}
         </div>
 
-        {view === "recent" ? (
-          <div className="mt-4 space-y-5">
-            {previewable.length > 0 ? (
-              <section className="space-y-3">
-                <div className="flex items-center gap-2 label-mono text-steel">
-                  <Clock3 className="h-3.5 w-3.5" />
-                  <span>{t("artifacts.previewReady")}</span>
-                </div>
-                {viewMode === "list" ? (
-                  <div className="space-y-2">
-                    {previewable.map((artifact) => (
-                      <CompactArtifactRow
-                        key={artifact.id}
-                        artifact={artifact}
-                        conversationId={conversationId}
-                        canDelete={Boolean(conversationId)}
-                        onPreview={(item) => setSelectedFileId(item.id)}
-                        onDelete={(ids) => setDeleteTargetIds(ids)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-                    {previewable.map((artifact) => (
-                      <RecentArtifactCard
-                        key={artifact.id}
-                        artifact={artifact}
-                        conversationId={conversationId}
-                        canDelete={Boolean(conversationId)}
-                        onPreview={(item) => setSelectedFileId(item.id)}
-                        onDelete={(ids) => setDeleteTargetIds(ids)}
-                        isFresh={freshArtifactIds.has(artifact.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            ) : null}
-
-            {compact.length > 0 ? (
-              <section className="space-y-3">
-                <div className="flex items-center gap-2 label-mono text-steel">
-                  <FolderOpen className="h-3.5 w-3.5" />
-                  <span>{t("artifacts.otherOutputs")}</span>
-                </div>
-                <div className="space-y-2">
-                  {compact.map((artifact) => (
-                    <CompactArtifactRow
-                      key={artifact.id}
-                      artifact={artifact}
-                      conversationId={conversationId}
-                      canDelete={Boolean(conversationId)}
-                      onPreview={(item) => setSelectedFileId(item.id)}
-                      onDelete={(ids) => setDeleteTargetIds(ids)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-          </div>
-        ) : (
-          <div className="mt-4 space-y-4">
-            <FolderBreadcrumbs currentPath={currentFolder.path || "/"} onSelectPath={setCurrentPath} />
-            {currentFolder.subFolders.length > 0 ? (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {currentFolder.subFolders.map((folder) => (
-                  <PathFolderButton key={folder.id} folder={folder} onOpen={setCurrentPath} />
-                ))}
-              </div>
-            ) : null}
-            {currentFolder.items.length > 0 ? (
-              <div className="space-y-2">
-                {currentFolder.items.map((item) => {
-                  const artifact = normalizedArtifacts.find((entry) => entry.id === item.id);
-                  if (!artifact) return null;
-                  return (
-                    <CompactArtifactRow
-                      key={artifact.id}
-                      artifact={artifact}
-                      conversationId={conversationId}
-                      canDelete={Boolean(conversationId)}
-                      onPreview={(entry) => setSelectedFileId(entry.id)}
-                      onDelete={(ids) => setDeleteTargetIds(ids)}
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
-            {currentFolder.subFolders.length === 0 && currentFolder.items.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-hairline-soft px-4 py-8 text-center text-sm text-steel">
-                {t("artifacts.folderEmpty")}
-              </div>
-            ) : null}
-          </div>
-        )}
+        <div className="divide-y divide-border/70">
+          {normalizedArtifacts.map((artifact) => (
+            <ArtifactListRow
+              key={artifact.id}
+              artifact={artifact}
+              conversationId={conversationId}
+              canDelete={Boolean(conversationId)}
+              onPreview={(item) => setSelectedFileId(item.id)}
+              onDelete={(ids) => setDeleteTargetIds(ids)}
+              isFresh={freshArtifactIds.has(artifact.id)}
+            />
+          ))}
+        </div>
       </div>
 
       <ArtifactPreviewDialog

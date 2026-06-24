@@ -49,7 +49,7 @@ function ProviderTile({
     <button
       type="button"
       onClick={onOpen}
-      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-lg border border-hairline-soft bg-card p-4 text-left transition-[border-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-hairline hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-lg border border-border bg-card p-4 text-left transition-[border-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       style={{
         ["--tile-brand" as string]: brand,
       }}
@@ -69,7 +69,7 @@ function ProviderTile({
         <ChannelProviderIcon provider={provider} size="lg" className="rounded-xl ring-1 ring-border" />
         {(configured || linked) && (
           <span
-            className="inline-flex items-center gap-1 rounded-full border border-hairline-soft bg-surface-soft px-2 py-0.5 text-micro font-medium uppercase text-steel"
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-micro font-medium uppercase text-muted-foreground"
             title={stateLabel}
           >
             <Check className="h-3 w-3" style={{ color: brand }} />
@@ -77,24 +77,24 @@ function ProviderTile({
           </span>
         )}
         {!configured && !linked && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-accent-amber/10 px-2 py-0.5 text-micro font-medium uppercase text-accent-amber ring-1 ring-accent-amber/25">
-            <span className="h-1 w-1 rounded-full bg-accent-amber" />
+          <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-micro font-medium uppercase text-warning ring-1 ring-warning/25">
+            <span className="h-1 w-1 rounded-full bg-warning" />
             {stateLabel}
           </span>
         )}
       </div>
 
       <div className="space-y-1">
-        <p className="text-subtitle-lg text-ink-deep tracking-tight">
+        <p className="text-subtitle-lg text-foreground tracking-tight">
           {t(`channels.${provider}.title`)}
         </p>
-        <p className="text-caption text-steel leading-snug">
+        <p className="text-caption text-muted-foreground leading-snug">
           {t(`channels.integrations.${provider}ValueProp`)}
         </p>
       </div>
 
       {status?.bot_username && (
-        <p className="-mt-1 truncate text-caption text-stone font-mono">
+        <p className="-mt-1 truncate text-caption text-text-subtle font-mono">
           {provider === "telegram" ? "@" : ""}
           {status.bot_username.replace(/^@/, "")}
         </p>
@@ -115,7 +115,7 @@ function ProviderTile({
 
 function ProviderTileSkeleton() {
   return (
-    <div className="rounded-lg border border-hairline-soft bg-card p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="h-10 w-10 rounded-xl skeleton-shimmer" />
         <div className="h-5 w-20 rounded-full skeleton-shimmer" />
@@ -183,7 +183,7 @@ export function ChannelIntegrationsDialog({
           {error && (
             <div
               role="alert"
-              className="rounded-md border border-critical-strong bg-critical-strong/5 px-3 py-2 text-body-sm text-critical"
+              className="rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive"
             >
               {error}
             </div>

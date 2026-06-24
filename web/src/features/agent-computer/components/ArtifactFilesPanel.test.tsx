@@ -50,7 +50,7 @@ jest.mock("@/features/agent-computer/components/ArtifactPreviewDialog", () => ({
 const { ArtifactFilesPanel } = require("./ArtifactFilesPanel");
 
 describe("ArtifactFilesPanel", () => {
-  it("renders recent outputs newest-first and exposes path browsing when nested paths exist", () => {
+  it("renders one newest-first artifact list without mode controls", () => {
     const html = renderToStaticMarkup(
       <ArtifactFilesPanel
         conversationId="conv-1"
@@ -75,14 +75,16 @@ describe("ArtifactFilesPanel", () => {
       />,
     );
 
-    expect(html).toContain("Browse by path");
-    expect(html).toContain("Grid view");
-    expect(html).toContain("List view");
-    expect(html).toContain("/api/conversations/conv-1/artifacts/new");
+    expect(html).not.toContain("Browse by path");
+    expect(html).not.toContain("Grid view");
+    expect(html).not.toContain("List view");
+    expect(html).toContain("2 files generated");
+    expect(html).toContain("outputs");
+    expect(html).toContain("Download file");
     expect(html.indexOf("preview.png")).toBeLessThan(html.indexOf("notes.md"));
   });
 
-  it("hides path browsing when all artifacts are flat", () => {
+  it("renders flat artifacts in the same compact list", () => {
     const html = renderToStaticMarkup(
       <ArtifactFilesPanel
         conversationId="conv-1"
@@ -102,7 +104,7 @@ describe("ArtifactFilesPanel", () => {
     expect(html).toContain("1 file generated");
   });
 
-  it("renders docx artifacts in the preview-ready section", () => {
+  it("keeps preview actions for previewable artifacts", () => {
     const html = renderToStaticMarkup(
       <ArtifactFilesPanel
         conversationId="conv-1"
@@ -127,7 +129,7 @@ describe("ArtifactFilesPanel", () => {
       />,
     );
 
-    expect(html).toContain("Preview-ready outputs");
+    expect(html).not.toContain("Preview-ready outputs");
     expect(html).toContain("palantir-ontology-report.docx");
     expect(html).toContain("Preview");
   });

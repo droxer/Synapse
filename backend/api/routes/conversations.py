@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import re
+import tempfile
 import time
 import uuid
 from typing import Any
@@ -29,6 +30,7 @@ from api.models import (
     MAX_FILES_PER_MESSAGE,
     MessageRequest,
     UserInputRequest,
+    VISION_MIME_TYPES,
 )
 from api.auth import AuthUser, common_dependencies, get_current_user
 from agent.context.compaction import Observer
@@ -69,6 +71,7 @@ _MAX_TOTAL_UPLOAD_SIZE_MB = 50
 _UPLOAD_READ_CHUNK_SIZE = 1024 * 1024
 _MCP_RESTORE_MAX_CONCURRENT = 3
 _MCP_RESTORE_SEMAPHORE = asyncio.Semaphore(_MCP_RESTORE_MAX_CONCURRENT)
+_MCP_RESTORE_FAST_PATH_TIMEOUT_SECONDS = 0.75
 
 router = APIRouter(dependencies=common_dependencies)
 
@@ -172,6 +175,28 @@ def _track_background_task(
             logger.warning("conversation_background_task_failed error={}", exc)
 
     task.add_done_callback(_cleanup)
+
+
+async def _await_fast_mcp_restore(
+    task: asyncio.Task[None],
+    *,
+    conversation_id: str,
+    timeout: float | None = None,
+) -> bool:
+    """Wait briefly for MCP restore without letting it dominate turn startup."""
+    effective_timeout = (
+        _MCP_RESTORE_FAST_PATH_TIMEOUT_SECONDS if timeout is None else timeout
+    )
+    try:
+        await asyncio.wait_for(asyncio.shield(task), timeout=effective_timeout)
+        return True
+    except asyncio.TimeoutError:
+        logger.info(
+            "conversation_runtime_mcp_restore_deferred id={} timeout_ms={}",
+            conversation_id,
+            int(effective_timeout * 1000),
+        )
+        return False
 
 
 def _new_turn_id(idempotency_key: str | None = None) -> str:
@@ -345,6 +370,7 @@ async def _prepare_conversation_runtime(
     mode: str,
     emitter: EventEmitter,
     memory_limit: int | None = None,
+    background_entry: ConversationEntry | None = None,
 ) -> tuple[Any, Any]:
     started_at = time.perf_counter()
     settings = get_settings()
@@ -377,17 +403,18 @@ async def _prepare_conversation_runtime(
                 user_id=user_id,
             )
         )
+        if background_entry is not None:
+            _track_background_task(background_entry, mcp_restore_task)
 
-    if mcp_restore_task is None:
-        session_resources, user_skill_registry = await asyncio.gather(
-            session_task,
-            skill_task,
-        )
-    else:
-        session_resources, user_skill_registry, _ = await asyncio.gather(
-            session_task,
-            skill_task,
+    session_resources, user_skill_registry = await asyncio.gather(
+        session_task,
+        skill_task,
+    )
+    mcp_restore_completed = False
+    if mcp_restore_task is not None:
+        mcp_restore_completed = await _await_fast_mcp_restore(
             mcp_restore_task,
+            conversation_id=conversation_id,
         )
     persistent_store, memory_entries = _memory_resources_from_session_hooks(
         session_resources
@@ -402,7 +429,7 @@ async def _prepare_conversation_runtime(
         user_skill_registry is not None,
         mcp_enabled,
     )
-    if mcp_enabled:
+    if mcp_enabled and mcp_restore_completed:
         logger.info("conversation_runtime_mcp_restore_completed id={}", conversation_id)
 
     if mode == ORCHESTRATOR_PLANNER:
@@ -507,6 +534,7 @@ async def _bootstrap_and_run_initial_turn(
             user_id=effective_user_id,
             mode=initial_mode,
             emitter=entry.emitter,
+            background_entry=entry,
         )
         entry.orchestrator = orchestrator
         entry.executor = executor
@@ -604,37 +632,6 @@ async def _parse_uploads(files: list[UploadFile]) -> tuple[FileAttachment, ...]:
     max_filename_len = 255  # Most filesystems limit to 255 chars
 
     for f in files:
-        chunks: list[bytes] = []
-        file_bytes = 0
-        while True:
-            chunk = await f.read(_UPLOAD_READ_CHUNK_SIZE)
-            if not chunk:
-                break
-            file_bytes += len(chunk)
-            total_bytes += len(chunk)
-            if file_bytes > max_bytes:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"File '{f.filename}' exceeds {MAX_FILE_SIZE_MB}MB limit",
-                )
-            if total_bytes > max_total_bytes:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "Uploaded files exceed "
-                        f"{_MAX_TOTAL_UPLOAD_SIZE_MB}MB aggregate limit"
-                    ),
-                )
-            chunks.append(chunk)
-        data = b"".join(chunks)
-
-        # Check for empty files
-        if len(data) == 0:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File '{f.filename}' is empty",
-            )
-
         safe_name = _sanitize_filename(f.filename or "unnamed")
 
         # Check filename length after sanitization
@@ -644,12 +641,63 @@ async def _parse_uploads(files: list[UploadFile]) -> tuple[FileAttachment, ...]:
                 detail=f"File name exceeds {max_filename_len} characters",
             )
 
+        content_type = f.content_type or "application/octet-stream"
+        should_keep_bytes = content_type in VISION_MIME_TYPES
+        chunks: list[bytes] = []
+        file_bytes = 0
+        tmp_path: str | None = None
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{safe_name}")
+        try:
+            tmp_path = tmp.name
+            with tmp:
+                while True:
+                    chunk = await f.read(_UPLOAD_READ_CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    file_bytes += len(chunk)
+                    total_bytes += len(chunk)
+                    if file_bytes > max_bytes:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=(
+                                f"File '{f.filename}' exceeds "
+                                f"{MAX_FILE_SIZE_MB}MB limit"
+                            ),
+                        )
+                    if total_bytes > max_total_bytes:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=(
+                                "Uploaded files exceed "
+                                f"{_MAX_TOTAL_UPLOAD_SIZE_MB}MB aggregate limit"
+                            ),
+                        )
+                    tmp.write(chunk)
+                    if should_keep_bytes:
+                        chunks.append(chunk)
+        except Exception:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            raise
+
+        data = b"".join(chunks) if should_keep_bytes else b""
+
+        # Check for empty files
+        if file_bytes == 0:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            raise HTTPException(
+                status_code=400,
+                detail=f"File '{f.filename}' is empty",
+            )
+
         attachments.append(
             FileAttachment(
                 filename=safe_name,
-                content_type=f.content_type or "application/octet-stream",
+                content_type=content_type,
                 data=data,
-                size=len(data),
+                size=file_bytes,
+                local_path=tmp_path,
             )
         )
     return tuple(attachments)
@@ -945,12 +993,28 @@ async def _reconstruct_conversation(
     # Build a user-scoped skill registry for this conversation's owner
     user_skill_registry = await _build_user_skill_registry(state, convo.user_id)
     if convo.user_id is not None and state.mcp_state is not None:
-        await _restore_mcp_servers_background(
-            state.mcp_state,
-            state.db_session_factory,
-            conversation_id=conversation_id,
-            user_id=convo.user_id,
+        restore_task = asyncio.create_task(
+            _restore_mcp_servers_background(
+                state.mcp_state,
+                state.db_session_factory,
+                conversation_id=conversation_id,
+                user_id=convo.user_id,
+            )
         )
+        await _await_fast_mcp_restore(
+            restore_task,
+            conversation_id=conversation_id,
+        )
+        if not restore_task.done():
+            restore_task.add_done_callback(
+                lambda done: logger.warning(
+                    "conversation_reconstruct_mcp_restore_failed id={} error={}",
+                    conversation_id,
+                    done.exception(),
+                )
+                if not done.cancelled() and done.exception() is not None
+                else None
+            )
     initial_messages = await _load_initial_messages_for_conversation(
         state,
         convo,

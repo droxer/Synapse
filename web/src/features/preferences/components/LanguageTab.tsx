@@ -73,15 +73,15 @@ export function LanguageTab() {
               className={cn(
                 /* Block card — no flex-1/min-w-0 or minmax(0,1fr) on CJK labels. */
                 "group relative block w-full rounded-xl border p-5 text-left transition-[border-color,background-color,box-shadow,transform] duration-200 ease-out",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
-                "hover:-translate-y-0.5 hover:border-hairline hover:shadow-sm",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "hover:-translate-y-0.5 hover:border-border-strong hover:shadow-sm",
                 isActive
-                  ? "border-cobalt/35 bg-cobalt/5 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-cobalt)_18%,transparent)]"
-                  : "border-hairline-soft bg-canvas",
+                  ? "border-primary/35 bg-primary/5 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_18%,transparent)]"
+                  : "border-border bg-background",
               )}
             >
               {isActive ? (
-                <span className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-cobalt text-on-cobalt">
+                <span className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </span>
               ) : null}
@@ -91,17 +91,17 @@ export function LanguageTab() {
                 className={cn(
                   "block text-heading-md transition-colors duration-200",
                   isActive
-                    ? "text-cobalt/70"
-                    : "text-hairline group-hover:text-stone",
+                    ? "text-primary/70"
+                    : "text-border group-hover:text-text-subtle",
                 )}
               >
                 {meta.script}
               </span>
 
-              <span className="mt-4 block text-body-sm-bold text-ink-deep">
+              <span className="mt-4 block text-body-sm-bold text-foreground">
                 {meta.native}
               </span>
-              <span className="mt-1 block text-caption-bold text-steel">
+              <span className="mt-1 block text-caption-bold text-muted-foreground">
                 {meta.name}
               </span>
             </button>
@@ -113,18 +113,18 @@ export function LanguageTab() {
         aria-live="polite"
         className="surface-panel mt-8 overflow-hidden"
       >
-        <div className="border-b border-hairline-soft bg-surface-soft px-4 py-2.5">
-          <p className="label-mono text-stone">{t("preferences.language.preview")}</p>
+        <div className="border-b border-border bg-muted px-4 py-2.5">
+          <p className="label-mono text-text-subtle">{t("preferences.language.preview")}</p>
         </div>
         <div className="relative px-5 py-6 sm:px-6 sm:py-8">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,color-mix(in_srgb,var(--color-cobalt)_8%,transparent),transparent)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,color-mix(in_srgb,var(--color-primary)_8%,transparent),transparent)]"
           />
-          <p className="cjk-safe-centered relative text-heading-md text-ink-deep">
+          <p className="cjk-safe-centered relative text-heading-md text-foreground">
             {activeMeta.preview}
           </p>
-          <p className="cjk-safe-centered relative mt-3 text-caption-bold text-steel">
+          <p className="cjk-safe-centered relative mt-3 text-caption-bold text-muted-foreground">
             {activeMeta.native}
             <span aria-hidden="true"> · </span>
             Synapse

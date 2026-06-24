@@ -57,12 +57,12 @@ export function ProductPageHeader({
               {icon}
             </div>
             <div className="min-w-0">
-              <p className="label-mono text-stone">{eyebrow}</p>
-              <h1 className="mt-2 text-heading-sm text-ink-deep">
+              <p className="label-mono text-text-subtle">{eyebrow}</p>
+              <h1 className="mt-2 text-heading-sm text-foreground">
                 {title}
               </h1>
               {description ? (
-                <div className="mt-1 max-w-2xl text-body-sm text-steel">
+                <div className="mt-1 max-w-2xl text-body-sm text-muted-foreground">
                   {description}
                 </div>
               ) : null}
@@ -115,13 +115,13 @@ export function ProductSectionHeader({
     >
       <div className="min-w-0 flex-1">
         {eyebrow ? (
-          <p className="label-mono text-stone">{eyebrow}</p>
+          <p className="label-mono text-text-subtle">{eyebrow}</p>
         ) : null}
         {title ? (
-          <h2 className="text-body-sm-bold text-ink-deep">{title}</h2>
+          <h2 className="text-body-sm-bold text-foreground">{title}</h2>
         ) : null}
         {description ? (
-          <div className={cn("text-body-sm text-steel", eyebrow || title ? "mt-1" : undefined)}>
+          <div className={cn("text-body-sm text-muted-foreground", eyebrow || title ? "mt-1" : undefined)}>
             {description}
           </div>
         ) : null}
@@ -145,14 +145,14 @@ export function ProductStatCard({
   return (
     <div className={cn("card-icon-feature px-4 py-3", className)}>
       <div className="flex items-center gap-2">
-        {icon ? <span className="shrink-0 text-steel">{icon}</span> : null}
-        <span className="label-mono text-stone">{label}</span>
+        {icon ? <span className="shrink-0 text-muted-foreground">{icon}</span> : null}
+        <span className="label-mono text-text-subtle">{label}</span>
       </div>
-      <div className="mt-2 text-heading-sm text-ink-deep">
+      <div className="mt-2 text-heading-sm text-foreground">
         {value}
       </div>
       {description ? (
-        <div className="mt-1 text-caption-bold text-steel">{description}</div>
+        <div className="mt-1 text-caption-bold text-muted-foreground">{description}</div>
       ) : null}
     </div>
   );

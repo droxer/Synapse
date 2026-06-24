@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { MotionConfig } from "framer-motion";
+import { ThemeFavicon } from "@/shared/components/ThemeFavicon";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { I18nProvider } from "@/i18n";
 
@@ -28,6 +29,7 @@ export function Providers({ children }: ProvidersProps) {
     <SessionProvider>
       <DesktopModeDetector />
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeFavicon />
         <I18nProvider>
           <MotionConfig reducedMotion="user">
             <TooltipProvider delayDuration={300}>{children}</TooltipProvider>

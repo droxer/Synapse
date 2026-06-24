@@ -63,12 +63,12 @@ export function BrowserOutput({
   return (
     <OutputSurface>
       <OutputSurfaceHeader
-        icon={<Monitor className="h-3.5 w-3.5 text-steel" />}
+        icon={<Monitor className="h-3.5 w-3.5 text-muted-foreground" />}
         label={t("output.category.browser")}
         meta={isDone ? t("output.browser.done") : t("output.browser.incomplete")}
         action={
           hostname ? (
-            <span className="inline-flex items-center gap-1 text-micro text-stone">
+            <span className="inline-flex items-center gap-1 text-micro text-text-subtle">
               <ExternalLink className="h-2.5 w-2.5" />
               {hostname}
             </span>
@@ -90,8 +90,8 @@ export function BrowserOutput({
         {/* Step progress */}
         {maxSteps > 0 && (
           <div className="mb-2 flex items-center gap-2">
-            <Progress value={progressValue} className="h-1.5 flex-1" indicatorClassName="bg-focus" />
-            <span className="text-micro font-mono text-steel tabular-nums">
+            <Progress value={progressValue} className="h-1.5 flex-1" indicatorClassName="bg-ring" />
+            <span className="text-micro font-mono text-muted-foreground tabular-nums">
               {t("output.browser.steps", { completed: steps, total: maxSteps })}
             </span>
           </div>
@@ -102,10 +102,10 @@ export function BrowserOutput({
           {displayText.trim().length > 0 ? (
             <MarkdownRenderer content={displayText} className={TOOL_OUTPUT_MARKDOWN_CLASSES} />
           ) : (
-            <p className="text-sm text-steel">{t("conversation.waiting")}</p>
+            <p className="text-sm text-muted-foreground">{t("conversation.waiting")}</p>
           )}
           {isLong && !expanded && (
-            <span className="text-stone">{ELLIPSIS}</span>
+            <span className="text-text-subtle">{ELLIPSIS}</span>
           )}
         </OutputSurfaceInner>
 

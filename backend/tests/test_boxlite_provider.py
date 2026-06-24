@@ -60,13 +60,19 @@ def _build_exec(existing: set[str], *, fail_decode: bool = False):
         if parts[:2] == ["rm", "-f"]:
             staged.pop(parts[2], None)
             return ExecResult(stdout="", stderr="", exit_code=0)
+        if parts[:2] == [":", ">"]:
+            staged[parts[2]] = ""
+            return ExecResult(stdout="", stderr="", exit_code=0)
         if parts[0] == "printf":
             staged[parts[-1]] = staged.get(parts[-1], "") + parts[2]
             return ExecResult(stdout="", stderr="", exit_code=0)
         if command.startswith("base64 -d "):
             first = command.split("&&", 1)[0]
             decode_parts = shlex.split(first)
+            encoded_path = decode_parts[2]
             remote_path = decode_parts[-1]
+            if encoded_path not in staged:
+                return ExecResult(stdout="", stderr="No such file", exit_code=1)
             if not fail_decode:
                 existing.add(remote_path)
             return ExecResult(stdout="", stderr="", exit_code=0)
@@ -149,6 +155,28 @@ async def test_upload_file_falls_back_when_copy_in_is_silent(
         remote_path = "/home/user/uploads/fallback.bin"
         await session.upload_file(local_path, remote_path)
         assert remote_path in existing
+    finally:
+        os.unlink(local_path)
+
+
+@pytest.mark.asyncio
+async def test_upload_file_handles_empty_file_with_base64(
+    boxlite_provider_module: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    existing: set[str] = set()
+    copy_in = AsyncMock()
+
+    session = boxlite_provider_module.BoxliteSession(_FakeBox(copy_in))
+    monkeypatch.setattr(session, "exec", _build_exec(existing))
+
+    with tempfile.NamedTemporaryFile(delete=False) as fh:
+        local_path = fh.name
+
+    try:
+        remote_path = "/home/user/skills/pptx/scripts/__init__.py"
+        await session.upload_file(local_path, remote_path)
+        assert remote_path in existing
+        copy_in.assert_not_awaited()
     finally:
         os.unlink(local_path)
 

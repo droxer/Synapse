@@ -198,9 +198,9 @@ export function SkillsPage() {
   const displaySkills = filtered ?? skills;
 
   return (
-    <div className="flex h-full flex-col bg-canvas">
+    <div className="flex h-full flex-col bg-background">
       <ProductPageHeader
-        icon={<Lightbulb aria-hidden="true" className="h-5 w-5 text-steel" />}
+        icon={<Lightbulb aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
         eyebrow={t("skills.agentSkills")}
         title={t("skills.title")}
         description={t("skills.subtitle")}
@@ -350,7 +350,7 @@ export function SkillsPage() {
       <AddEntityDialog
         open={showForm}
         onOpenChange={(open) => { if (!open) { resetForm(); setDialogError(null); } }}
-        icon={<Lightbulb className="h-4 w-4 text-steel" />}
+        icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />}
         title={t("skills.installFormTitle")}
         description={t("skills.installFormDescription")}
       >
@@ -367,15 +367,15 @@ export function SkillsPage() {
               TOOLING_DROPZONE_CLASSES,
               "cursor-default",
               isDragging
-                ? "border-charcoal bg-surface-soft"
-                : "border-hairline-soft hover:border-hairline",
+                ? "border-border-strong bg-muted"
+                : "border-border hover:border-border-strong",
             )}
           >
-            <Upload className="h-6 w-6 text-steel" />
-            <p className="text-sm text-steel">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
               {isDragging ? t("skills.dropZoneActive") : t("skills.dropZone")}
             </p>
-            <p className="text-xs text-stone">{t("skills.dropZoneHint")}</p>
+            <p className="text-xs text-text-subtle">{t("skills.dropZoneHint")}</p>
             <div className="mt-2 flex items-center gap-2">
               <Button
                 type="button"
@@ -396,7 +396,7 @@ export function SkillsPage() {
                 {t("skills.chooseFolder")}
               </Button>
             </div>
-            <p className="mt-3 text-micro text-stone">{t("skills.gitComingSoon")}</p>
+            <p className="mt-3 text-micro text-text-subtle">{t("skills.gitComingSoon")}</p>
           </div>
 
           <input
@@ -430,11 +430,11 @@ export function SkillsPage() {
           />
 
           {selectedFiles && selectedFiles.length > 0 && (
-            <div className="flex items-center gap-2 rounded-md border border-hairline-soft bg-surface-soft px-3 py-2">
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
               {isFolderUpload
-                ? <FolderOpen className="h-3.5 w-3.5 text-steel" />
-                : <FileText className="h-3.5 w-3.5 text-steel" />}
-              <span className="flex-1 truncate text-xs text-ink-deep">
+                ? <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                : <FileText className="h-3.5 w-3.5 text-muted-foreground" />}
+              <span className="flex-1 truncate text-xs text-foreground">
                 {isFolderUpload
                   ? t("skills.selectedFolder", { name: folderName })
                   : t("skills.selectedFiles", { count: selectedFiles.length })}
@@ -447,7 +447,7 @@ export function SkillsPage() {
                   setIsFolderUpload(false);
                   setFolderName("");
                 }}
-                className="rounded-sm p-0.5 text-steel hover:text-ink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40"
+                className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -487,7 +487,7 @@ export function SkillsPage() {
             <AlertDialogCancel>{t("skills.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-critical text-white hover:bg-critical/90"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               {t("skills.uninstall")}
             </AlertDialogAction>

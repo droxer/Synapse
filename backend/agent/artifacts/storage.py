@@ -26,6 +26,10 @@ class StorageBackend(Protocol):
         """Persist *data* under *key* and return a retrieval identifier."""
         ...
 
+    async def save_file(self, key: str, source_path: str, content_type: str) -> str:
+        """Persist a local file under *key* without loading it into memory."""
+        ...
+
     async def get_url(self, key: str, content_type: str, filename: str) -> str:
         """Return a URL (or file path) for retrieving the artifact."""
         ...
@@ -71,6 +75,19 @@ class LocalStorageBackend:
         file_real = self._resolve_and_validate(key)
         await asyncio.to_thread(self._sync_save, file_real, data)
         logger.debug("local_storage_saved key={} size={}", key, len(data))
+        return key
+
+    def _sync_save_file(self, file_real: str, source_path: str) -> None:
+        os.makedirs(self._storage_dir, exist_ok=True)
+        if os.path.realpath(source_path) == file_real:
+            return
+        os.replace(source_path, file_real)
+
+    async def save_file(self, key: str, source_path: str, content_type: str) -> str:
+        del content_type
+        file_real = self._resolve_and_validate(key)
+        await asyncio.to_thread(self._sync_save_file, file_real, source_path)
+        logger.debug("local_storage_saved_file key={}", key)
         return key
 
     async def get_url(self, key: str, content_type: str, filename: str) -> str:
@@ -156,6 +173,20 @@ class R2StorageBackend:
     async def save(self, key: str, data: bytes, content_type: str) -> str:
         await asyncio.to_thread(self._sync_put_object, key, data, content_type)
         logger.debug("r2_storage_saved key={} size={}", key, len(data))
+        return key
+
+    def _sync_upload_file(self, key: str, source_path: str, content_type: str) -> None:
+        extra_args = {"ContentType": content_type}
+        self._client.upload_file(
+            source_path,
+            self._bucket_name,
+            key,
+            ExtraArgs=extra_args,
+        )
+
+    async def save_file(self, key: str, source_path: str, content_type: str) -> str:
+        await asyncio.to_thread(self._sync_upload_file, key, source_path, content_type)
+        logger.debug("r2_storage_saved_file key={}", key)
         return key
 
     def _sync_generate_presigned_url(

@@ -13,42 +13,42 @@ interface PlanChecklistPanelProps {
 function StepIndicator({ status }: { readonly status: PlanStep["status"] }) {
   if (status === "complete") {
     return (
-      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-accent-emerald/15 flex-shrink-0">
-        <Check className="h-2.5 w-2.5 text-accent-emerald" strokeWidth={2.5} />
+      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-success/15 flex-shrink-0">
+        <Check className="h-2.5 w-2.5 text-success" strokeWidth={2.5} />
       </span>
     );
   }
   if (status === "skipped") {
     return (
-      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-surface-soft flex-shrink-0">
-        <Minus className="h-2.5 w-2.5 text-steel" strokeWidth={2.5} />
+      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-muted flex-shrink-0">
+        <Minus className="h-2.5 w-2.5 text-muted-foreground" strokeWidth={2.5} />
       </span>
     );
   }
   if (status === "error") {
     return (
-      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-critical/10 flex-shrink-0">
-        <X className="h-2.5 w-2.5 text-critical" strokeWidth={2.5} />
+      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-destructive/10 flex-shrink-0">
+        <X className="h-2.5 w-2.5 text-destructive" strokeWidth={2.5} />
       </span>
     );
   }
   if (status === "replan_required") {
     return (
-      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-accent-amber/15 flex-shrink-0">
-        <AlertCircle className="h-2.5 w-2.5 text-accent-amber" strokeWidth={2.5} />
+      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-warning/15 flex-shrink-0">
+        <AlertCircle className="h-2.5 w-2.5 text-warning" strokeWidth={2.5} />
       </span>
     );
   }
   if (status === "running") {
     return (
       <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
-        <span className="h-1.5 w-1.5 rounded-full bg-focus animate-pulsing-dot-fade" />
+        <span className="h-1.5 w-1.5 rounded-full bg-ring animate-pulsing-dot-fade" />
       </span>
     );
   }
   return (
     <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
-      <span className="h-1 w-1 rounded-full bg-border-active" />
+      <span className="h-1 w-1 rounded-full bg-border-strong" />
     </span>
   );
 }
@@ -79,7 +79,7 @@ function StepRow({ step, index, t }: { readonly step: PlanStep; readonly index: 
       transition={{ duration: 0.14, ease: "easeOut", delay: index * 0.03 }}
       className={cn(
         "group relative flex items-start gap-2.5 px-3 py-2 rounded-md transition-colors",
-        isRunning && "bg-focus/[0.04]",
+        isRunning && "bg-ring/[0.04]",
         isSkipped && "opacity-70",
         !isRunning && !isComplete && !isSkipped && !isError && !isReplanRequired && "opacity-60",
       )}
@@ -88,11 +88,11 @@ function StepRow({ step, index, t }: { readonly step: PlanStep; readonly index: 
       <span
         className={cn(
           "absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full transition-colors",
-          isComplete && "bg-accent-emerald",
-          isSkipped && "bg-border-active",
-          isError && "bg-critical-strong",
-          isReplanRequired && "bg-accent-amber",
-          isRunning && "bg-focus",
+          isComplete && "bg-success",
+          isSkipped && "bg-border-strong",
+          isError && "bg-destructive",
+          isReplanRequired && "bg-warning",
+          isRunning && "bg-ring",
           !isRunning && !isComplete && !isSkipped && !isError && !isReplanRequired && "bg-border",
         )}
       />
@@ -103,25 +103,25 @@ function StepRow({ step, index, t }: { readonly step: PlanStep; readonly index: 
         <p
           className={cn(
             "text-sm leading-snug",
-            isComplete && "text-steel line-through decoration-muted-foreground/40",
-            isSkipped && "text-steel",
-            isError && "text-critical",
-            isReplanRequired && "text-accent-amber",
-            isRunning && "text-ink-deep font-medium",
-            !isRunning && !isComplete && !isSkipped && !isError && !isReplanRequired && "text-steel",
+            isComplete && "text-muted-foreground line-through decoration-muted-foreground/40",
+            isSkipped && "text-muted-foreground",
+            isError && "text-destructive",
+            isReplanRequired && "text-warning",
+            isRunning && "text-foreground font-medium",
+            !isRunning && !isComplete && !isSkipped && !isError && !isReplanRequired && "text-muted-foreground",
           )}
         >
           {name}
         </p>
         {description && !isComplete && !isSkipped && (
-          <p className="mt-0.5 text-caption text-stone leading-snug line-clamp-2">
+          <p className="mt-0.5 text-caption text-text-subtle leading-snug line-clamp-2">
             {description}
           </p>
         )}
         {isRunning && (
-          <div className="mt-1.5 h-0.5 w-full rounded-full overflow-hidden bg-focus/10">
+          <div className="mt-1.5 h-0.5 w-full rounded-full overflow-hidden bg-ring/10">
             <motion.div
-              className="h-full bg-focus/60 rounded-full"
+              className="h-full bg-ring/60 rounded-full"
               initial={{ x: "-100%" }}
               animate={{ x: "100%" }}
               transition={{ duration: 1.4, ease: "easeInOut", repeat: Infinity }}
@@ -132,7 +132,7 @@ function StepRow({ step, index, t }: { readonly step: PlanStep; readonly index: 
 
       {(isError || isReplanRequired) && (
         <span className="flex-shrink-0 mt-0.5">
-          <AlertCircle className={cn("h-3 w-3", isError ? "text-critical/70" : "text-accent-amber/70")} />
+          <AlertCircle className={cn("h-3 w-3", isError ? "text-destructive/70" : "text-warning/70")} />
         </span>
       )}
     </motion.li>
@@ -151,19 +151,19 @@ export function PlanChecklistPanel({ planSteps }: PlanChecklistPanelProps) {
   const progressPct = Math.round((resolvedCount / planSteps.length) * 100);
 
   return (
-    <div className="overflow-hidden rounded-xl bg-surface-soft/30">
+    <div className="overflow-hidden rounded-xl bg-muted/30">
       {/* Header */}
       <div className="flex items-center gap-3 px-3 py-2">
-        <span className="label-mono text-steel flex-1">
+        <span className="label-mono text-muted-foreground flex-1">
           {t("plan.title")}
         </span>
 
         {/* Progress bar */}
-        <div className="flex-1 max-w-[5rem] h-1 rounded-full bg-surface-soft overflow-hidden">
+        <div className="flex-1 max-w-[5rem] h-1 rounded-full bg-muted overflow-hidden">
           <motion.div
             className={cn(
               "h-full rounded-full transition-colors",
-              hasError ? "bg-accent-amber" : "bg-accent-emerald",
+              hasError ? "bg-warning" : "bg-success",
             )}
             initial={{ width: 0 }}
             animate={{ width: `${progressPct}%` }}

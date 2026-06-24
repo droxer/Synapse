@@ -76,18 +76,18 @@ export function ArtifactPreviewDialog({
             </span>
             <span className="min-w-0 flex-1 truncate">{artifact.name}</span>
             {ext && (
-              <span className="shrink-0 rounded bg-surface-soft px-1.5 py-0.5 font-mono text-micro uppercase text-steel">
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-micro uppercase text-muted-foreground">
                 {ext}
               </span>
             )}
             {artifact.size > 0 && (
-              <span className="shrink-0 text-xs text-steel">
+              <span className="shrink-0 text-xs text-muted-foreground">
                 {formatFileSize(artifact.size, t)}
               </span>
             )}
           </DialogTitle>
           {createdLabel && (
-            <p className="text-xs text-steel">{createdLabel}</p>
+            <p className="text-xs text-muted-foreground">{createdLabel}</p>
           )}
         </DialogHeader>
 
@@ -107,7 +107,7 @@ export function ArtifactPreviewDialog({
             <Button
               variant="secondary"
               size="sm"
-              className="text-critical hover:bg-surface-soft hover:text-critical"
+              className="text-destructive hover:bg-muted hover:text-destructive"
               onClick={onRequestDelete}
             >
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />

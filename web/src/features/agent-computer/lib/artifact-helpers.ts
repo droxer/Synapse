@@ -162,19 +162,19 @@ export function fileCategoryColor(contentType: string, name?: string): FileCateg
       case "php":
       case "rb":
       case "swift":
-        return { icon: "text-accent-emerald", bg: "bg-accent-emerald/10" };
+        return { icon: "text-success", bg: "bg-success/10" };
       case "csv":
       case "xlsx":
       case "xls":
       case "ods":
-        return { icon: "text-accent-amber", bg: "bg-accent-amber/10" };
+        return { icon: "text-warning", bg: "bg-warning/10" };
       case "pdf":
       case "zip":
       case "tar":
       case "gz":
       case "rar":
       case "7z":
-        return { icon: "text-accent-rose", bg: "bg-accent-rose/10" };
+        return { icon: "text-destructive", bg: "bg-destructive/10" };
       case "png":
       case "jpg":
       case "jpeg":
@@ -186,41 +186,41 @@ export function fileCategoryColor(contentType: string, name?: string): FileCateg
       case "wav":
       case "mp4":
       case "mkv":
-        return { icon: "text-accent-purple", bg: "bg-accent-purple/10" };
+        return { icon: "text-primary", bg: "bg-primary/10" };
     }
   }
 
   if (contentType.startsWith("image/"))
-    return { icon: "text-accent-purple", bg: "bg-accent-purple/10" };
+    return { icon: "text-primary", bg: "bg-primary/10" };
   if (contentType === "application/pdf")
-    return { icon: "text-accent-rose", bg: "bg-accent-rose/10" };
+    return { icon: "text-destructive", bg: "bg-destructive/10" };
   if (
     contentType.startsWith("text/x-") ||
     contentType === "text/javascript" ||
     contentType === "application/json"
   )
-    return { icon: "text-accent-emerald", bg: "bg-accent-emerald/10" };
+    return { icon: "text-success", bg: "bg-success/10" };
   if (contentType === "text/html")
-    return { icon: "text-accent-amber", bg: "bg-accent-amber/10" };
+    return { icon: "text-warning", bg: "bg-warning/10" };
   if (contentType === "text/csv" || contentType.includes("spreadsheet"))
-    return { icon: "text-accent-amber", bg: "bg-accent-amber/10" };
+    return { icon: "text-warning", bg: "bg-warning/10" };
   if (
     contentType.startsWith("text/") ||
     contentType.includes("wordprocessingml") ||
     contentType.includes("presentationml")
   )
-    return { icon: "text-user-accent", bg: "bg-user-accent/10" };
-  return { icon: "text-steel", bg: "bg-surface-soft" };
+    return { icon: "text-foreground", bg: "bg-foreground/10" };
+  return { icon: "text-muted-foreground", bg: "bg-muted" };
 }
 
 /** Border color CSS variable string for artifact file category accent. */
 const BORDER_COLOR_MAP: Record<string, string> = {
-  "text-accent-purple": "var(--color-accent-purple)",
-  "text-accent-rose": "var(--color-accent-rose)",
-  "text-accent-emerald": "var(--color-accent-emerald)",
-  "text-accent-amber": "var(--color-accent-amber)",
-  "text-user-accent": "var(--color-user-accent)",
-  "text-steel": "var(--color-muted-foreground)",
+  "text-primary": "var(--color-accent-purple)",
+  "text-destructive": "var(--color-accent-rose)",
+  "text-success": "var(--color-accent-emerald)",
+  "text-warning": "var(--color-accent-amber)",
+  "text-foreground": "var(--color-user-accent)",
+  "text-muted-foreground": "var(--color-muted-foreground)",
 };
 
 export function fileCategoryBorderColor(contentType: string, name?: string): string {

@@ -202,7 +202,7 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
       )}
 
       {!hideCard && loading && (
-        <div className="rounded-lg border border-hairline-soft bg-card p-3">
+        <div className="rounded-lg border border-border bg-card p-3">
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 shrink-0 rounded-lg skeleton-shimmer" />
             <div className="flex-1 space-y-1.5">
@@ -237,7 +237,7 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
           {!configured && (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-body-sm-bold text-ink-deep" htmlFor="discord-bot-token">
+                <label className="block text-body-sm-bold text-foreground" htmlFor="discord-bot-token">
                   {t("channels.discord.botTokenLabel")}
                 </label>
                 <Input
@@ -251,7 +251,7 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
                   placeholder={t("channels.discord.botTokenPlaceholder")}
                   autoFocus
                 />
-                <p className="text-caption text-steel">{t("channels.discord.botTokenHint")}</p>
+                <p className="text-caption text-muted-foreground">{t("channels.discord.botTokenHint")}</p>
               </div>
 
               <ProviderHelpAccordion
@@ -297,15 +297,15 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
               />
 
               {status.last_error && (
-                <div className="flex items-start gap-2 rounded-md border border-critical-strong bg-critical-strong/5 px-3 py-2 text-body-sm text-critical">
+                <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>{status.last_error}</span>
                 </div>
               )}
 
               {isEditingToken && (
-                <div className="rounded-md border border-hairline-soft bg-surface-soft p-3 space-y-2">
-                  <p className="text-body-sm-bold text-ink-deep">
+                <div className="rounded-md border border-border bg-muted p-3 space-y-2">
+                  <p className="text-body-sm-bold text-foreground">
                     {t("channels.discord.updateToken")}
                   </p>
                   <Input
@@ -377,7 +377,7 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
               </div>
 
               {!canGenerateLinkToken && (
-                <p className="flex items-start gap-1.5 text-caption text-accent-amber">
+                <p className="flex items-start gap-1.5 text-caption text-warning">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>{t("channels.discord.fixSetupHint")}</span>
                 </p>

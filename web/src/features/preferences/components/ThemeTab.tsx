@@ -22,45 +22,45 @@ const THEME_OPTIONS: readonly {
 ];
 
 const SWATCHES: readonly { readonly token: string; readonly label: string }[] = [
-  { token: "var(--color-canvas)", label: "canvas" },
-  { token: "var(--color-surface-soft)", label: "surface" },
-  { token: "var(--color-ink-deep)", label: "ink" },
-  { token: "var(--color-cobalt)", label: "cobalt" },
+  { token: "var(--color-background)", label: "background" },
+  { token: "var(--color-muted)", label: "muted" },
+  { token: "var(--color-foreground)", label: "foreground" },
+  { token: "var(--color-primary)", label: "primary" },
   { token: "var(--color-accent-emerald)", label: "accent" },
 ];
 
 function ThemePreview() {
   return (
-    <div className="overflow-hidden rounded-md border border-hairline-soft bg-canvas">
-      <div className="flex items-baseline gap-3 border-b border-hairline-soft/60 px-4 pb-3 pt-4">
+    <div className="overflow-hidden rounded-md border border-border bg-background">
+      <div className="flex items-baseline gap-3 border-b border-border/60 px-4 pb-3 pt-4">
         <span
-          className="text-[2.25rem] leading-none text-ink-deep"
+          className="text-[2.25rem] leading-none text-foreground"
           style={{ fontFamily: "var(--font-brand-family)" }}
           aria-hidden="true"
         >
           Aa
         </span>
-        <span className="label-mono text-stone">Synapse</span>
+        <span className="label-mono text-text-subtle">Synapse</span>
       </div>
       <div className="px-4 py-3">
-        <p className="text-body-sm text-ink-deep">
+        <p className="text-body-sm text-foreground">
           The quick brown fox jumps over the lazy dog.
         </p>
-        <p className="mt-1 text-caption text-steel">
+        <p className="mt-1 text-caption text-muted-foreground">
           Display + body type rendered in the active theme.
         </p>
       </div>
       <div
-        className="flex items-stretch gap-1 border-t border-hairline-soft/60 px-3 py-2.5"
+        className="flex items-stretch gap-1 border-t border-border/60 px-3 py-2.5"
         aria-hidden="true"
       >
         {SWATCHES.map(({ token, label }) => (
           <div key={label} className="flex flex-1 flex-col items-stretch gap-1">
             <div
-              className="h-6 rounded-sm ring-1 ring-inset ring-hairline-soft/60"
+              className="h-6 rounded-sm ring-1 ring-inset ring-border/60"
               style={{ background: token }}
             />
-            <span className="label-mono text-center text-stone">{label}</span>
+            <span className="label-mono text-center text-text-subtle">{label}</span>
           </div>
         ))}
       </div>
@@ -111,12 +111,12 @@ export function ThemeTab() {
       <div className="surface-panel mt-4 p-3">
         <ThemePreview />
         <div className="mt-3 flex items-center gap-1.5">
-          <SelectedIcon className="h-3.5 w-3.5 text-steel" />
-          <span className="text-sm font-medium text-ink-deep">
+          <SelectedIcon className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">
             {t(selectedOption.labelKey)}
           </span>
         </div>
-        <p className="mt-0.5 text-xs text-steel">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {t(selectedOption.descKey)}
         </p>
       </div>

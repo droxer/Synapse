@@ -48,16 +48,16 @@ describe("activity visual helpers", () => {
     expect(getToolCallTone(toolCallFixture())).toBe("running");
   });
 
-  it("maps tones to row utility classes (neutral cards + support surfaces)", () => {
-    expect(getToolCallVisualClasses("running").row).toContain("surface-panel");
-    expect(getToolCallVisualClasses("complete").row).toContain("surface-panel");
+  it("maps tones to row utility classes (flat neutral rows + error tint)", () => {
+    expect(getToolCallVisualClasses("running").row).toContain("bg-transparent");
+    expect(getToolCallVisualClasses("complete").row).toContain("bg-transparent");
     expect(getToolCallVisualClasses("error").row).toContain("critical-strong");
-    expect(getToolCallVisualClasses("running").rowHover).toContain("border-hairline");
+    expect(getToolCallVisualClasses("running").rowHover).toContain("bg-muted");
   });
 
-  it("keeps shared activity rows on the compact rounded-lg rhythm", () => {
-    expect(EVENT_ROW_BASE_CLASSES).toContain("surface-panel");
-    expect(EVENT_ROW_BASE_CLASSES).toContain("rounded-lg");
+  it("keeps shared activity rows on the compact rounded-md rhythm", () => {
+    expect(EVENT_ROW_BASE_CLASSES).toContain("rounded-md");
     expect(EVENT_ROW_BASE_CLASSES).not.toContain("rounded-xl");
+    expect(EVENT_ROW_BASE_CLASSES).not.toContain("surface-panel");
   });
 });

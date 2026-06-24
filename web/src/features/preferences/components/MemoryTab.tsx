@@ -40,8 +40,8 @@ function ScopeChip({ scope, label }: { readonly scope: "global" | "conversation"
       className={cn(
         "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-micro font-medium",
         scope === "global"
-          ? "border-cobalt/25 bg-cobalt/10 text-cobalt"
-          : "border-hairline-soft bg-surface-soft text-steel",
+          ? "border-primary/25 bg-primary/10 text-primary"
+          : "border-border bg-muted text-muted-foreground",
       )}
     >
       {label}
@@ -69,7 +69,7 @@ function DeleteMemoryButton({
           variant="ghost"
           size="icon"
           aria-label={`${t("explorer.delete")} ${entryKey}`}
-          className={cn(dim, "shrink-0 text-steel hover:bg-critical/10 hover:text-critical")}
+          className={cn(dim, "shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive")}
           disabled={disabled}
         >
           <Trash2 className="h-3 w-3" />
@@ -82,14 +82,14 @@ function DeleteMemoryButton({
             {t("preferences.memory.confirmDeleteDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="rounded-md border border-hairline-soft bg-surface-soft px-3 py-2">
-          <p className="font-mono text-caption text-ink-deep break-all">{entryKey}</p>
+        <div className="rounded-md border border-border bg-muted px-3 py-2">
+          <p className="font-mono text-caption text-foreground break-all">{entryKey}</p>
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>{t("explorer.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-critical text-white hover:bg-critical/90"
+            className="bg-destructive text-white hover:bg-destructive/90"
           >
             {t("explorer.delete")}
           </AlertDialogAction>
@@ -129,8 +129,8 @@ export function MemoryTab() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-hairline-soft">
-        <div className="hidden grid-cols-[180px_minmax(0,1fr)_100px_100px_40px] gap-3 bg-surface-soft px-4 py-3 label-mono text-steel md:grid">
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="hidden grid-cols-[180px_minmax(0,1fr)_100px_100px_40px] gap-3 bg-muted px-4 py-3 label-mono text-muted-foreground md:grid">
           <span>{t("preferences.memory.key")}</span>
           <span>{t("preferences.memory.value")}</span>
           <span>{t("preferences.memory.scope")}</span>
@@ -139,11 +139,11 @@ export function MemoryTab() {
         </div>
 
         {loading && items.length === 0 ? (
-          <div className="px-3 py-6 text-center text-sm text-steel">
+          <div className="px-3 py-6 text-center text-sm text-muted-foreground">
             <span className="inline-block h-4 w-24 skeleton-shimmer rounded" />
           </div>
         ) : items.length === 0 ? (
-          <div className="px-3 py-6 text-center text-sm text-steel">
+          <div className="px-3 py-6 text-center text-sm text-muted-foreground">
             {t("preferences.memory.noData")}
           </div>
         ) : (
@@ -165,14 +165,14 @@ export function MemoryTab() {
                   key={entry.id}
                   variants={listItem}
                   className={cn(
-                    "border-t border-hairline-soft/60 first:border-t-0 transition-colors duration-100 hover:bg-surface-soft",
+                    "border-t border-border/60 first:border-t-0 transition-colors duration-100 hover:bg-muted",
                     "px-4 py-3 text-sm",
                   )}
                 >
                   <div className="md:hidden">
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <span
-                        className="min-w-0 truncate font-mono text-caption font-medium text-ink-deep"
+                        className="min-w-0 truncate font-mono text-caption font-medium text-foreground"
                         title={entry.key}
                       >
                         {entry.key}
@@ -185,14 +185,14 @@ export function MemoryTab() {
                       />
                     </div>
                     <p
-                      className="mt-2 min-w-0 text-caption leading-relaxed text-steel"
+                      className="mt-2 min-w-0 text-caption leading-relaxed text-muted-foreground"
                       title={entry.value}
                     >
                       {truncateValue(entry.value)}
                     </p>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <ScopeChip scope={entry.scope} label={scopeLabel} />
-                      <span className="font-mono text-micro text-stone">
+                      <span className="font-mono text-micro text-text-subtle">
                         {t("preferences.memory.lastUpdated")}: {updatedLabel}
                       </span>
                     </div>
@@ -200,19 +200,19 @@ export function MemoryTab() {
 
                   <div className={cn("hidden", MEMORY_GRID)}>
                     <span
-                      className="min-w-0 truncate font-mono text-caption font-medium text-ink-deep"
+                      className="min-w-0 truncate font-mono text-caption font-medium text-foreground"
                       title={entry.key}
                     >
                       {entry.key}
                     </span>
                     <p
-                      className="min-w-0 truncate text-caption leading-relaxed text-steel"
+                      className="min-w-0 truncate text-caption leading-relaxed text-muted-foreground"
                       title={entry.value}
                     >
                       {truncateValue(entry.value)}
                     </p>
                     <ScopeChip scope={entry.scope} label={scopeLabel} />
-                    <span className="text-right text-caption text-steel">
+                    <span className="text-right text-caption text-muted-foreground">
                       {updatedLabel}
                     </span>
                     <DeleteMemoryButton
@@ -239,7 +239,7 @@ export function MemoryTab() {
             <ChevronLeft className="mr-1 h-3.5 w-3.5" />
             {t("preferences.memory.previous")}
           </Button>
-          <span className="text-caption text-steel">
+          <span className="text-caption text-muted-foreground">
             {t("preferences.memory.page", {
               current: page + 1,
               total: totalPages,

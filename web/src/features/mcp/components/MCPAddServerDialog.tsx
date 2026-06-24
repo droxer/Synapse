@@ -49,7 +49,7 @@ export function MCPAddServerDialog({
     <AddEntityDialog
       open={open}
       onOpenChange={onOpenChange}
-      icon={<Blocks className="h-4 w-4 text-steel" />}
+      icon={<Blocks className="h-4 w-4 text-muted-foreground" />}
       title={title}
     >
       <MCPServerForm

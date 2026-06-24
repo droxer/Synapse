@@ -24,7 +24,7 @@ export function ImageOutput({ output, conversationId, artifactIds, className }: 
   return (
     <div className={cn(OUTPUT_SURFACE_ROOT_CLASSES, className)}>
       <div className={OUTPUT_SURFACE_HEADER_CLASSES}>
-        <ImageIcon className="h-3 w-3 text-steel" />
+        <ImageIcon className="h-3 w-3 text-muted-foreground" />
         <span className={OUTPUT_SURFACE_LABEL_CLASSES}>{t("output.imageOutput")}</span>
       </div>
       <div className={OUTPUT_SURFACE_BODY_CLASSES}>
@@ -35,22 +35,22 @@ export function ImageOutput({ output, conversationId, artifactIds, className }: 
                 key={aid}
                 src={`/api/conversations/${conversationId}/artifacts/${aid}`}
                 alt={t("output.generatedImage")}
-                className="max-h-80 rounded-md bg-canvas object-contain"
+                className="max-h-80 rounded-md bg-background object-contain"
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                 }}
               />
             ))
           ) : looksLikeUri ? (
-            <img src={output} alt={t("output.agentOutput")} className="max-h-80 rounded-md bg-canvas object-contain" />
+            <img src={output} alt={t("output.agentOutput")} className="max-h-80 rounded-md bg-background object-contain" />
           ) : (
-            <p className="text-sm text-steel italic">
+            <p className="text-sm text-muted-foreground italic">
               {t("output.imageArtifactHint")}
             </p>
           )}
         </div>
         {!hasArtifacts && !looksLikeUri && (
-          <pre className="mt-2 whitespace-pre-wrap font-mono text-sm leading-relaxed text-steel">
+          <pre className="mt-2 whitespace-pre-wrap font-mono text-sm leading-relaxed text-muted-foreground">
             {output}
           </pre>
         )}

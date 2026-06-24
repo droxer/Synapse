@@ -77,10 +77,10 @@ export function PreferencesDialog({ open, onOpenChange }: PreferencesDialogProps
 
           <div className="flex h-[min(86vh,48rem)] min-h-[28rem] w-full min-w-0 flex-col md:flex-row">
             <nav
-              className="flex shrink-0 gap-1 overflow-x-auto border-b border-hairline-soft/60 bg-surface-soft p-2 md:w-56 md:flex-col md:gap-0.5 md:overflow-x-visible md:border-b-0 md:border-r md:p-3"
+              className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/60 bg-muted p-2 md:w-56 md:flex-col md:gap-0.5 md:overflow-x-visible md:border-b-0 md:border-r md:p-3"
               aria-label={t("preferences.title")}
             >
-              <p className="label-mono hidden px-3 pb-3 pt-3 text-stone md:block">
+              <p className="label-mono hidden px-3 pb-3 pt-3 text-text-subtle md:block">
                 {t("preferences.title")}
               </p>
               {MENU_ITEMS.map(({ id, labelKey, icon: Icon }) => {
@@ -93,22 +93,22 @@ export function PreferencesDialog({ open, onOpenChange }: PreferencesDialogProps
                     onClick={() => setActiveId(id)}
                     className={cn(
                       "group relative flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-body-sm transition-colors duration-150",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                       isActive
-                        ? "bg-canvas text-ink-deep md:font-medium"
-                        : "text-steel hover:bg-canvas/60 hover:text-ink-deep",
+                        ? "bg-background text-foreground md:font-medium"
+                        : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                     )}
                   >
                     {isActive ? (
                       <span
                         aria-hidden="true"
-                        className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-cobalt md:inset-y-1.5 md:left-0 md:right-auto md:h-auto md:w-0.5"
+                        className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary md:inset-y-1.5 md:left-0 md:right-auto md:h-auto md:w-0.5"
                       />
                     ) : null}
                     <Icon
                       className={cn(
                         "h-4 w-4 shrink-0 transition-colors duration-150",
-                        isActive ? "text-cobalt" : "text-stone group-hover:text-steel",
+                        isActive ? "text-primary" : "text-text-subtle group-hover:text-muted-foreground",
                       )}
                     />
                     <span className="whitespace-nowrap">{t(labelKey)}</span>

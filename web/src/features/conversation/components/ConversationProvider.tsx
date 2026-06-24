@@ -103,6 +103,66 @@ export function shouldRefetchHistoryForTerminalEvent(
   return getHistoryRefetchModeForTerminalEvent(event) !== "none";
 }
 
+export function getTerminalEventArtifactIds(
+  event: AgentEvent | undefined,
+): readonly string[] {
+  if (event?.type !== "turn_complete" && event?.type !== "task_complete") {
+    return [];
+  }
+  const ids = event.data.artifact_ids;
+  if (!Array.isArray(ids)) {
+    return [];
+  }
+  return [...new Set(ids.map(String).filter(Boolean))];
+}
+
+export function hasMissingTerminalArtifacts(
+  event: AgentEvent | undefined,
+  artifacts: readonly ArtifactInfo[],
+): boolean {
+  const expectedIds = getTerminalEventArtifactIds(event);
+  if (expectedIds.length === 0) {
+    return false;
+  }
+  const visibleIds = new Set(artifacts.map((artifact) => artifact.id));
+  return expectedIds.some((id) => !visibleIds.has(id));
+}
+
+export const TERMINAL_ARTIFACT_REFETCH_RETRY_BASE_MS = 750;
+export const TERMINAL_ARTIFACT_REFETCH_MAX_DELAY_MS = 6000;
+export const TERMINAL_ARTIFACT_REFETCH_MAX_ATTEMPTS = 5;
+
+export function getTerminalArtifactRetryKey(
+  event: AgentEvent | undefined,
+): string | null {
+  const expectedArtifactIds = getTerminalEventArtifactIds(event);
+  if (expectedArtifactIds.length === 0) {
+    return null;
+  }
+  return `${event?.type}:${event?.timestamp}:${event?.iteration ?? ""}:${expectedArtifactIds.join(",")}`;
+}
+
+export function claimTerminalArtifactRetryAttempt(
+  attemptsByKey: Map<string, number>,
+  key: string,
+  maxAttempts = TERMINAL_ARTIFACT_REFETCH_MAX_ATTEMPTS,
+): number | null {
+  const attempted = attemptsByKey.get(key) ?? 0;
+  if (attempted >= maxAttempts) {
+    return null;
+  }
+  const nextAttempt = attempted + 1;
+  attemptsByKey.set(key, nextAttempt);
+  return nextAttempt;
+}
+
+export function getTerminalArtifactRetryDelayMs(
+  attempt: number,
+): number {
+  const backoff = TERMINAL_ARTIFACT_REFETCH_RETRY_BASE_MS * (2 ** Math.max(0, attempt - 1));
+  return Math.min(backoff, TERMINAL_ARTIFACT_REFETCH_MAX_DELAY_MS);
+}
+
 export function ConversationProvider({ children }: ConversationProviderProps) {
   const conversationId = useAppStore((s) => s.conversationId);
   const isLive = useAppStore((s) => s.isLiveConversation);
@@ -155,10 +215,12 @@ export function ConversationProvider({ children }: ConversationProviderProps) {
 
   const artifacts = useSessionFilteredArtifacts(transcriptArtifacts);
   const lastTerminalEventKeyRef = useRef<string | null>(null);
+  const artifactRetryAttemptsByKeyRef = useRef<Map<string, number>>(new Map());
   const wasConnectedRef = useRef(false);
 
   useEffect(() => {
     lastTerminalEventKeyRef.current = null;
+    artifactRetryAttemptsByKeyRef.current.clear();
     wasConnectedRef.current = false;
   }, [conversationId]);
 
@@ -182,6 +244,35 @@ export function ConversationProvider({ children }: ConversationProviderProps) {
     }
     void refetchTranscriptHistory();
   }, [effectiveEvents, isLive, refetchAllHistory, refetchTranscriptHistory]);
+
+  useEffect(() => {
+    if (!isLive) {
+      return;
+    }
+    const lastEvent = effectiveEvents[effectiveEvents.length - 1];
+    const retryKey = getTerminalArtifactRetryKey(lastEvent);
+    if (retryKey === null) {
+      return;
+    }
+    if (!hasMissingTerminalArtifacts(lastEvent, artifacts)) {
+      artifactRetryAttemptsByKeyRef.current.delete(retryKey);
+      return;
+    }
+
+    const attempt = claimTerminalArtifactRetryAttempt(
+      artifactRetryAttemptsByKeyRef.current,
+      retryKey,
+    );
+    if (attempt === null) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void refetchTranscriptHistory();
+    }, getTerminalArtifactRetryDelayMs(attempt));
+
+    return () => window.clearTimeout(timer);
+  }, [artifacts, effectiveEvents, isLive, refetchTranscriptHistory]);
 
   useEffect(() => {
     if (isConnected) {

@@ -61,7 +61,7 @@ export function MCPServerCard({
               variant="ghost"
               size="icon-xs"
               aria-label={t("mcp.editServer", { name: server.name })}
-              className="shrink-0 text-steel hover:bg-surface-soft hover:text-ink-deep"
+              className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => onEdit(server)}
             >
               <Pencil className="h-3 w-3" />
@@ -77,7 +77,7 @@ export function MCPServerCard({
           variant="ghost"
           size="icon-xs"
           aria-label={`${t("mcp.remove")} ${server.name}`}
-          className="shrink-0 text-steel hover:bg-critical/10 hover:text-critical"
+          className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={() => onDelete(server.name)}
         >
           <Trash2 className="h-3 w-3" />
@@ -103,7 +103,7 @@ export function MCPServerCard({
       <span
         className={cn(
           "h-1.5 w-1.5 rounded-full transition-colors duration-150",
-          isDisabled ? "bg-border-strong" : "bg-accent-emerald",
+          isDisabled ? "bg-border-strong" : "bg-success",
         )}
       />
       {isDisabled ? t("mcp.disabled") : t("mcp.enabled")}
@@ -114,7 +114,7 @@ export function MCPServerCard({
     <ToolingCard
       icon={
         <Blocks
-          className={cn("h-4 w-4", isDisabled ? "text-stone" : "text-steel")}
+          className={cn("h-4 w-4", isDisabled ? "text-text-subtle" : "text-muted-foreground")}
         />
       }
       badge={badge}
@@ -124,7 +124,7 @@ export function MCPServerCard({
         <div
           className={cn(
             "flex items-center gap-3 text-xs",
-            isDisabled ? "text-stone" : "text-steel",
+            isDisabled ? "text-text-subtle" : "text-muted-foreground",
           )}
         >
           <span className="flex items-center gap-1">
@@ -140,7 +140,7 @@ export function MCPServerCard({
                 isDisabled
                   ? "bg-border-strong"
                   : server.status === "connected"
-                    ? "bg-accent-emerald"
+                    ? "bg-success"
                     : "bg-border-strong",
               )}
             />
@@ -151,7 +151,7 @@ export function MCPServerCard({
         </div>
       }
       footerLeft={
-        <span className="truncate font-mono text-micro text-stone">
+        <span className="truncate font-mono text-micro text-text-subtle">
           {server.url || " "}
         </span>
       }

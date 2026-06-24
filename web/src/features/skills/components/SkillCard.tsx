@@ -56,7 +56,7 @@ export function SkillCard({ skill, onDelete, onToggle }: SkillCardProps) {
       variant="ghost"
       size="icon-xs"
       aria-label={`${t("skills.uninstall")} ${displayName}`}
-      className="shrink-0 text-steel transition-[background-color,color] hover:bg-critical/10 hover:text-critical"
+      className="shrink-0 text-muted-foreground transition-[background-color,color] hover:bg-destructive/10 hover:text-destructive"
       onClick={(e) => {
         e.preventDefault();
         onDelete?.(skill.name);
@@ -86,7 +86,7 @@ export function SkillCard({ skill, onDelete, onToggle }: SkillCardProps) {
       <span
         className={cn(
           "h-1.5 w-1.5 rounded-full transition-colors duration-150",
-          isDisabled ? "bg-border-strong" : "bg-accent-emerald",
+          isDisabled ? "bg-border-strong" : "bg-success",
         )}
       />
       {isDisabled ? t("skills.disabled") : t("skills.enabled")}
@@ -98,7 +98,7 @@ export function SkillCard({ skill, onDelete, onToggle }: SkillCardProps) {
       icon={
         <Lightbulb
           aria-hidden="true"
-          className={cn("h-4 w-4", isDisabled ? "text-stone" : "text-steel")}
+          className={cn("h-4 w-4", isDisabled ? "text-text-subtle" : "text-muted-foreground")}
         />
       }
       badge={badge}
@@ -109,7 +109,7 @@ export function SkillCard({ skill, onDelete, onToggle }: SkillCardProps) {
           <p
             className={cn(
               "line-clamp-2 text-xs leading-relaxed",
-              isDisabled ? "text-stone" : "text-steel",
+              isDisabled ? "text-text-subtle" : "text-muted-foreground",
             )}
           >
             {skill.description}
@@ -117,7 +117,7 @@ export function SkillCard({ skill, onDelete, onToggle }: SkillCardProps) {
         ) : null
       }
       footerLeft={
-        <span className="label-mono truncate text-stone">
+        <span className="label-mono truncate text-text-subtle">
           {t(SOURCE_FOOTER_KEY[skill.source_type] ?? "skills.sectionInstalled")}
         </span>
       }

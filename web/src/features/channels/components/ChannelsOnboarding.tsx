@@ -20,7 +20,7 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
   ] as const;
 
   return (
-    <div className="flex h-full items-center justify-center bg-canvas px-8 welcome-radial-bg">
+    <div className="flex h-full items-center justify-center bg-background px-8 welcome-radial-bg">
       <motion.div
         variants={channelsFadeIn}
         initial="hidden"
@@ -29,18 +29,18 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
       >
         <div className="relative flex h-28 w-28 items-center justify-center">
           {/* Broadcast pulse — symbolizes outgoing signal */}
-          <span className="absolute inset-0 rounded-full border border-focus/30 animate-ping [animation-duration:2.6s]" />
-          <span className="absolute inset-[14%] rounded-full border border-focus/20 animate-ping [animation-duration:2.6s] [animation-delay:0.7s]" />
-          <span className="absolute inset-0 rounded-full border border-hairline-soft" />
-          <span className="absolute inset-[18%] rounded-full border border-hairline" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-xl border border-hairline-soft bg-surface-soft shadow-sm">
+          <span className="absolute inset-0 rounded-full border border-ring/30 animate-ping [animation-duration:2.6s]" />
+          <span className="absolute inset-[14%] rounded-full border border-ring/20 animate-ping [animation-duration:2.6s] [animation-delay:0.7s]" />
+          <span className="absolute inset-0 rounded-full border border-border" />
+          <span className="absolute inset-[18%] rounded-full border border-border-strong" />
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-xl border border-border bg-muted shadow-sm">
             <ChannelProviderIcon provider="telegram" size="lg" />
           </div>
         </div>
 
         <div className="flex w-full flex-col items-center space-y-1.5">
-          <h2 className="w-full text-subtitle-lg text-ink-deep">{t("channels.onboarding.title")}</h2>
-          <p className="w-full text-body-sm text-steel max-w-[18rem]">
+          <h2 className="w-full text-subtitle-lg text-foreground">{t("channels.onboarding.title")}</h2>
+          <p className="w-full text-body-sm text-muted-foreground max-w-[18rem]">
             {t("channels.onboarding.description")}
           </p>
         </div>
@@ -54,8 +54,8 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
                   <div
                     className={
                       isActive
-                        ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-focus bg-focus text-caption-bold text-on-cobalt"
-                        : "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-soft text-caption-bold text-stone/70 ring-1 ring-hairline-soft"
+                        ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ring bg-ring text-caption-bold text-primary-foreground"
+                        : "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-caption-bold text-text-subtle/70 ring-1 ring-border"
                     }
                   >
                     {idx + 1}
@@ -63,7 +63,7 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
                   {idx < steps.length - 1 && (
                     <div
                       className={`mt-1 w-px flex-1 min-h-[20px] ${
-                        isActive ? "bg-focus/30" : "bg-hairline-soft/60"
+                        isActive ? "bg-ring/30" : "bg-border/60"
                       }`}
                     />
                   )}
@@ -71,14 +71,14 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
                 <div className="pb-4 min-w-0">
                   <p
                     className={`text-body-sm-bold leading-tight ${
-                      isActive ? "text-ink-deep" : "text-stone/80"
+                      isActive ? "text-foreground" : "text-text-subtle/80"
                     }`}
                   >
                     {step.label}
                   </p>
                   <p
                     className={`text-caption mt-0.5 ${
-                      isActive ? "text-steel" : "text-stone/60"
+                      isActive ? "text-muted-foreground" : "text-text-subtle/60"
                     }`}
                   >
                     {step.sub}

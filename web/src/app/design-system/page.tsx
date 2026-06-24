@@ -1,16 +1,19 @@
 import { notFound } from "next/navigation";
-import { Truck, RotateCcw, ShieldCheck, CreditCard } from "lucide-react";
+// TODO Task 10: restore lucide icons when FeatureRowSection is rebuilt
+// import { Truck, RotateCcw, ShieldCheck, CreditCard } from "lucide-react";
 
+import { LogoComparison } from "@/shared/components/LogoComparison";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { ColorSwatch } from "@/shared/components/marketing/color-swatch";
-import { FeatureIconRow } from "@/shared/components/marketing/feature-icon-row";
-import { FooterRegion } from "@/shared/components/marketing/footer-region";
-import { HeroBand } from "@/shared/components/marketing/hero-band";
-import { PromoBanner } from "@/shared/components/marketing/promo-banner";
+// TODO Task 10: restore marketing component imports when gallery is rebuilt
+// import { ColorSwatch } from "@/shared/components/marketing/color-swatch";
+// import { FeatureIconRow } from "@/shared/components/marketing/feature-icon-row";
+// import { FooterRegion } from "@/shared/components/marketing/footer-region";
+// import { HeroBand } from "@/shared/components/marketing/hero-band";
+// import { PromoBanner } from "@/shared/components/marketing/promo-banner";
 
 /**
  * Live gallery for the Meta-aligned design system documented in /DESIGN.md.
@@ -22,13 +25,16 @@ export default function DesignSystemPage() {
   }
 
   return (
-    <main id="main" className="min-h-screen bg-canvas text-ink-deep">
+    <main id="main" className="min-h-screen bg-background text-foreground">
+      {/* TODO Task 10: restore PromoBanner when gallery is rebuilt
       <PromoBanner action={<a href="#">Learn more</a>}>
         Get 25% off the #1 selling AI agent — limited time only.
       </PromoBanner>
+      */}
 
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[80px] px-8 py-[64px] md:px-12">
         <Header />
+        <LogoSection />
         <ColorSection />
         <TypographySection />
         <RadiusSection />
@@ -40,10 +46,12 @@ export default function DesignSystemPage() {
         <TabsSection />
         <SidebarNavSection />
         <DarkThemeSection />
-        <HeroBandSection />
-        <FeatureRowSection />
+        {/* TODO Task 10: restore HeroBandSection and FeatureRowSection when gallery is rebuilt */}
+        {/* <HeroBandSection /> */}
+        {/* <FeatureRowSection /> */}
       </div>
 
+      {/* TODO Task 10: restore FooterRegion when gallery is rebuilt
       <FooterRegion
         columns={[
           {
@@ -81,18 +89,27 @@ export default function DesignSystemPage() {
         ]}
         legal={<>&copy; Synapse 2026 · All rights reserved</>}
       />
+      */}
     </main>
+  );
+}
+
+function LogoSection() {
+  return (
+    <Section title="Product logo" eyebrow="Brand">
+      <LogoComparison />
+    </Section>
   );
 }
 
 function Header() {
   return (
     <header className="flex flex-col gap-4">
-      <span className="text-body-sm-bold uppercase tracking-[0.1em] text-steel">
+      <span className="text-body-sm-bold uppercase tracking-[0.1em] text-muted-foreground">
         DESIGN.md gallery
       </span>
       <h1 className="text-display-lg">A system, on canvas.</h1>
-      <p className="text-subtitle-md max-w-[640px] text-charcoal">
+      <p className="text-subtitle-md max-w-[640px] text-muted-foreground">
         Tokens, primitives, and signature components rebuilt to mirror the Meta-inspired
         DESIGN.md — cobalt for action, black pills for marketing, 32px photographic cards,
         and a 4px spacing rhythm.
@@ -114,7 +131,7 @@ function Section({
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         {eyebrow ? (
-          <span className="text-body-sm-bold uppercase tracking-[0.1em] text-steel">
+          <span className="text-body-sm-bold uppercase tracking-[0.1em] text-muted-foreground">
             {eyebrow}
           </span>
         ) : null}
@@ -152,11 +169,11 @@ function ColorSection() {
     <Section eyebrow="01 · Tokens" title="Colors">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {COLOR_TOKENS.map((s) => (
-          <div key={s.name} className="overflow-hidden rounded-xl border border-hairline-soft">
+          <div key={s.name} className="overflow-hidden rounded-xl border border-border">
             <div className="h-20" style={{ background: `var(${s.var})` }} />
-            <div className="bg-canvas px-3 py-2">
-              <div className="text-body-sm-bold text-ink-deep">{s.name}</div>
-              <div className="text-caption-bold text-steel">
+            <div className="bg-background px-3 py-2">
+              <div className="text-body-sm-bold text-foreground">{s.name}</div>
+              <div className="text-caption-bold text-muted-foreground">
                 {s.var}
               </div>
             </div>
@@ -187,9 +204,9 @@ function TypographySection() {
         {TYPE_ROLES.map((r) => (
           <div
             key={r.label}
-            className="flex flex-col gap-1 border-b border-hairline-soft pb-4"
+            className="flex flex-col gap-1 border-b border-border pb-4"
           >
-            <span className="text-caption-bold text-steel">
+            <span className="text-caption-bold text-muted-foreground">
               {r.label}
             </span>
             <span className={r.className}>Made for prescriptions. Built for comfort.</span>
@@ -219,10 +236,10 @@ function RadiusSection() {
         {RADII.map((r) => (
           <div key={r.name} className="flex flex-col items-center gap-2">
             <div
-              className="size-16 bg-cobalt"
+              className="size-16 bg-primary"
               style={{ borderRadius: `var(${r.varName})` }}
             />
-            <span className="text-caption-bold text-steel">
+            <span className="text-caption-bold text-muted-foreground">
               {r.name}
             </span>
           </div>
@@ -237,7 +254,7 @@ function ButtonSection() {
     <Section eyebrow="04 · Primitives" title="Buttons">
       <div className="flex flex-wrap items-center gap-3">
         <Button>Send</Button>
-        <Button variant="marketing">Shop now</Button>
+        <Button variant="default">Shop now</Button>
         <Button variant="secondary">Learn more</Button>
         <Button variant="ghost">Cancel</Button>
         <Button variant="destructive">Delete</Button>
@@ -251,13 +268,13 @@ function ButtonSection() {
         <Button size="xs">Continue · xs</Button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <Button variant="pill-tab" size="tab">
+        <Button variant="ghost" size="tab">
           Glasses
         </Button>
-        <Button variant="pill-tab-active" size="tab">
+        <Button variant="secondary" size="tab">
           Agents
         </Button>
-        <Button variant="pill-tab" size="tab">
+        <Button variant="ghost" size="tab">
           Channels
         </Button>
       </div>
@@ -270,11 +287,11 @@ function BadgeSection() {
     <Section eyebrow="05 · Primitives" title="Badges">
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant="success">In stock</Badge>
-        <Badge variant="promo-yellow">Limited time</Badge>
-        <Badge variant="attention">Almost gone</Badge>
-        <Badge variant="critical">Out of stock</Badge>
+        <Badge variant="accent">Limited time</Badge>
+        <Badge variant="warning">Almost gone</Badge>
+        <Badge variant="danger">Out of stock</Badge>
         <Badge variant="outline">New</Badge>
-        <Badge variant="secondary">Beta</Badge>
+        <Badge variant="neutral">Beta</Badge>
       </div>
     </Section>
   );
@@ -284,33 +301,35 @@ function CardSection() {
   return (
     <Section eyebrow="06 · Primitives" title="Cards">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card variant="product-feature">
-          <h3 className="text-heading-sm">Product feature</h3>
-          <p className="text-body-md text-charcoal">
-            32px radius, 32px padding, hairline-soft border. The default photographic surface chrome.
+        <Card variant="default">
+          <h3 className="text-heading-sm">Default</h3>
+          <p className="text-body-md text-muted-foreground">
+            Primary card surface — borderless, separated from the page by tonal fill.
           </p>
           <div>
             <Button>Configure</Button>
           </div>
         </Card>
-        <Card variant="promo-strip">
-          <h3 className="text-heading-md text-canvas">Look forward.</h3>
-          <p className="text-subtitle-md max-w-[440px] opacity-90">
-            Dark promo strip — ink-deep on canvas, 64px pad, 32px radius. Used sparingly between marketing zones.
+        <Card variant="interactive">
+          <h3 className="text-heading-sm">Interactive</h3>
+          <p className="text-body-md text-muted-foreground">
+            Borderless card that lifts with a subtle shadow on hover.
           </p>
           <div>
-            <Button variant="marketing">Pre-order</Button>
+            <Button variant="default">Pre-order</Button>
           </div>
         </Card>
-        <Card variant="checkout-summary">
-          <h3 className="text-subtitle-lg">Checkout summary</h3>
-          <p className="text-body-sm text-steel">16px radius, level-2 shadow.</p>
+        <Card variant="outlined">
+          <h3 className="text-subtitle-lg">Outlined</h3>
+          <p className="text-body-sm text-muted-foreground">
+            Bordered card for same-tone surfaces, e.g. inside a dialog.
+          </p>
           <Button>Add to cart</Button>
         </Card>
-        <Card variant="warranty">
-          <h3 className="text-subtitle-lg">1y Warranty</h3>
-          <p className="text-body-sm text-charcoal">
-            Surface-soft tile, 24px radius. Reserved for warranty + finance offers.
+        <Card variant="sunken">
+          <h3 className="text-subtitle-lg">Sunken</h3>
+          <p className="text-body-sm text-muted-foreground">
+            Recessed card with muted background for secondary content blocks.
           </p>
         </Card>
       </div>
@@ -329,9 +348,10 @@ function InputSection() {
         <label className="flex flex-col gap-2">
           <span className="text-body-sm-bold">Error state</span>
           <Input aria-invalid placeholder="Please enter a valid email" />
-          <span className="text-body-sm text-critical-strong">That email looks off.</span>
+          <span className="text-body-sm text-destructive">That email looks off.</span>
         </label>
       </div>
+      {/* TODO Task 10: restore ColorSwatch usages when gallery is rebuilt
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-body-sm-bold">Swatches</span>
         <ColorSwatch color="var(--color-ink-deep)" label="Ink" />
@@ -339,6 +359,7 @@ function InputSection() {
         <ColorSwatch color="var(--color-attention)" label="Attention" />
         <ColorSwatch color="var(--color-oculus-purple)" label="Oculus" />
       </div>
+      */}
     </Section>
   );
 }
@@ -346,11 +367,11 @@ function InputSection() {
 function FocusSection() {
   return (
     <Section eyebrow="08 · Primitives" title="Focus contract">
-      <p className="text-body-sm text-steel max-w-[640px]">
+      <p className="text-body-sm text-muted-foreground max-w-[640px]">
         Default interactive focus: 2px ring on fb-blue with 2px canvas offset. Text inputs swap to a 2px solid fb-blue border.
       </p>
       <div className="flex flex-wrap items-center gap-4">
-        <Button className="focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas">
+        <Button className="focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
           Tab to focus
         </Button>
         <Input className="max-w-xs" placeholder="Focus me" aria-label="Focus demo input" />
@@ -363,7 +384,7 @@ function SidebarNavSection() {
   const items = ["New chat", "Library", "Channels", "Skills"];
   return (
     <Section eyebrow="09 · Shell" title="Sidebar pill nav">
-      <p className="text-body-sm text-steel max-w-[640px]">
+      <p className="text-body-sm text-muted-foreground max-w-[640px]">
         Dense sidebar rows use the same pill geometry as buttons — rounded-full with sidebar-active/hover tokens.
       </p>
       <nav className="flex w-full max-w-xs flex-col gap-1 rounded-xxl bg-sidebar-bg p-2">
@@ -373,8 +394,8 @@ function SidebarNavSection() {
             type="button"
             className={
               index === 0
-                ? "flex w-full items-center gap-2.5 rounded-full bg-sidebar-active px-3 py-2 text-body-sm-bold text-ink-deep outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-                : "flex w-full items-center gap-2.5 rounded-full px-3 py-2 text-body-sm-bold text-sidebar-foreground-muted outline-none hover:bg-sidebar-hover hover:text-ink-deep focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                ? "flex w-full items-center gap-2.5 rounded-full bg-sidebar-active px-3 py-2 text-body-sm-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                : "flex w-full items-center gap-2.5 rounded-full px-3 py-2 text-body-sm-bold text-sidebar-foreground-muted outline-none hover:bg-sidebar-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             }
           >
             {item}
@@ -388,22 +409,22 @@ function SidebarNavSection() {
 function DarkThemeSection() {
   return (
     <Section eyebrow="10 · Themes" title="Dark mode spot-check">
-      <p className="text-body-sm text-steel max-w-[640px]">
+      <p className="text-body-sm text-muted-foreground max-w-[640px]">
         Dark tokens are synthesised (not in DESIGN.md). Validate cobalt and critical contrast before shipping new dark surfaces.
       </p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-xxxl border border-hairline-soft bg-canvas p-6">
-          <span className="text-body-sm-bold text-ink-deep">Light canvas</span>
+        <div className="rounded-xxxl border border-border bg-background p-6">
+          <span className="text-body-sm-bold text-foreground">Light canvas</span>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button size="sm">Cobalt action</Button>
-            <Badge variant="critical">Error</Badge>
+            <Badge variant="danger">Error</Badge>
           </div>
         </div>
-        <div className="dark rounded-xxxl border border-hairline-soft bg-canvas p-6">
-          <span className="text-body-sm-bold text-ink-deep">Dark canvas (.dark)</span>
+        <div className="dark rounded-xxxl border border-border bg-background p-6">
+          <span className="text-body-sm-bold text-foreground">Dark canvas (.dark)</span>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button size="sm">Cobalt action</Button>
-            <Badge variant="critical">Error</Badge>
+            <Badge variant="danger">Error</Badge>
           </div>
         </div>
       </div>
@@ -413,9 +434,9 @@ function DarkThemeSection() {
 
 function TabsSection() {
   return (
-    <Section eyebrow="11 · Primitives" title="Pill tabs">
+    <Section eyebrow="11 · Primitives" title="Segmented tabs">
       <Tabs defaultValue="agents">
-        <TabsList variant="pill">
+        <TabsList variant="default">
           <TabsTrigger value="agents">Agents</TabsTrigger>
           <TabsTrigger value="channels">Channels</TabsTrigger>
           <TabsTrigger value="library">Library</TabsTrigger>
@@ -426,51 +447,52 @@ function TabsSection() {
   );
 }
 
-function HeroBandSection() {
-  return (
-    <Section eyebrow="12 · Signature" title="Hero band">
-      <HeroBand
-        eyebrow="New · 2026"
-        title="Made for prescriptions. Built for comfort."
-        subtitle="Confident hardware merchandising voice, applied to a workspace product. Dual-CTA pair below."
-        actions={
-          <>
-            <Button variant="marketing">Shop now</Button>
-            <Button variant="secondary">Learn more</Button>
-          </>
-        }
-      />
-    </Section>
-  );
-}
+// TODO Task 10: restore HeroBandSection and FeatureRowSection when gallery is rebuilt
+// function HeroBandSection() {
+//   return (
+//     <Section eyebrow="12 · Signature" title="Hero band">
+//       <HeroBand
+//         eyebrow="New · 2026"
+//         title="Made for prescriptions. Built for comfort."
+//         subtitle="Confident hardware merchandising voice, applied to a workspace product. Dual-CTA pair below."
+//         actions={
+//           <>
+//             <Button variant="default">Shop now</Button>
+//             <Button variant="secondary">Learn more</Button>
+//           </>
+//         }
+//       />
+//     </Section>
+//   );
+// }
 
-function FeatureRowSection() {
-  return (
-    <Section eyebrow="13 · Signature" title="Feature row">
-      <FeatureIconRow
-        items={[
-          {
-            icon: <Truck />,
-            title: "Free 2-day delivery",
-            description: "On orders over $35 — almost everywhere.",
-          },
-          {
-            icon: <RotateCcw />,
-            title: "Free 30-day returns",
-            description: "If it isn't right, send it back free.",
-          },
-          {
-            icon: <ShieldCheck />,
-            title: "Worry-free warranty",
-            description: "One year of coverage from us.",
-          },
-          {
-            icon: <CreditCard />,
-            title: "Buy now, pay later",
-            description: "Split eligible orders into 4 payments.",
-          },
-        ]}
-      />
-    </Section>
-  );
-}
+// function FeatureRowSection() {
+//   return (
+//     <Section eyebrow="13 · Signature" title="Feature row">
+//       <FeatureIconRow
+//         items={[
+//           {
+//             icon: <Truck />,
+//             title: "Free 2-day delivery",
+//             description: "On orders over $35 — almost everywhere.",
+//           },
+//           {
+//             icon: <RotateCcw />,
+//             title: "Free 30-day returns",
+//             description: "If it isn't right, send it back free.",
+//           },
+//           {
+//             icon: <ShieldCheck />,
+//             title: "Worry-free warranty",
+//             description: "One year of coverage from us.",
+//           },
+//           {
+//             icon: <CreditCard />,
+//             title: "Buy now, pay later",
+//             description: "Split eligible orders into 4 payments.",
+//           },
+//         ]}
+//       />
+//     </Section>
+//   );
+// }

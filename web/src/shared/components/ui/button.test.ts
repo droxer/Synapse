@@ -1,54 +1,34 @@
 import { describe, expect, it } from "@jest/globals";
-
 import { buttonVariants } from "./button";
 
-/**
- * DESIGN.md button system contract:
- * - `default` is the commerce primary (cobalt fill, white text).
- * - `marketing` is the marketing primary (black pill, white text).
- * - `secondary` is the outlined ghost with a 2px ink-deep border. `outline` is removed.
- * - `ghost` is a soft 1px hairline-soft tertiary affordance.
- * - Every variant is pill-shaped (`rounded-full`).
- */
 describe("buttonVariants", () => {
-  it("default variant uses the cobalt commerce primary", () => {
-    const classes = buttonVariants({ variant: "default" });
-    expect(classes).toContain("bg-cobalt");
-    expect(classes).toContain("text-on-cobalt");
-    expect(classes).toContain("hover:bg-cobalt-deep");
+  it("default uses the teal primary fill", () => {
+    const c = buttonVariants({ variant: "default" });
+    expect(c).toContain("bg-primary");
+    expect(c).toContain("text-primary-foreground");
   });
-
-  it("marketing variant uses the black ink-button primary", () => {
-    const classes = buttonVariants({ variant: "marketing" });
-    expect(classes).toContain("bg-ink-button");
-    expect(classes).toContain("text-on-ink-button");
+  it("secondary is a subtle surface with a border", () => {
+    const c = buttonVariants({ variant: "secondary" });
+    expect(c).toContain("border");
+    expect(c).toContain("bg-secondary");
   });
-
-  it("secondary renders a 2px ink-deep outlined pill", () => {
-    const classes = buttonVariants({ variant: "secondary" });
-    expect(classes).toContain("border-2");
-    expect(classes).toContain("border-ink-deep");
-    expect(classes).toContain("text-ink-deep");
+  it("ghost is transparent with muted hover", () => {
+    const c = buttonVariants({ variant: "ghost" });
+    expect(c).toContain("bg-transparent");
+    expect(c).toContain("hover:bg-muted");
   });
-
-  it("ghost uses a 1px hairline-soft outline", () => {
-    const classes = buttonVariants({ variant: "ghost" });
-    expect(classes).toContain("border-hairline-soft");
-    expect(classes).not.toContain("border-2");
+  it("destructive uses the danger token", () => {
+    expect(buttonVariants({ variant: "destructive" })).toContain("bg-destructive");
   });
-
-  it("link buttons use cobalt text and no solid fill", () => {
-    const classes = buttonVariants({ variant: "link" });
-    expect(classes).toContain("text-cobalt");
-    expect(classes).not.toMatch(/\bbg-cobalt\b/);
+  it("link uses primary text and no solid fill", () => {
+    const c = buttonVariants({ variant: "link" });
+    expect(c).toContain("text-primary");
+    expect(c).not.toMatch(/\bbg-primary\b/);
   });
-
-  it("every interactive variant is pill-shaped (rounded-full)", () => {
-    for (const variant of [
-      "default", "marketing", "secondary", "ghost", "destructive",
-      "pill-tab", "pill-tab-active",
-    ] as const) {
-      expect(buttonVariants({ variant })).toContain("rounded-full");
+  it("text buttons are rounded-md, never pill", () => {
+    for (const variant of ["default","secondary","ghost","destructive"] as const) {
+      expect(buttonVariants({ variant })).toContain("rounded-md");
+      expect(buttonVariants({ variant })).not.toContain("rounded-full");
     }
   });
 });

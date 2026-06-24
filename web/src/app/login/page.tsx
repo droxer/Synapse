@@ -125,7 +125,7 @@ function LoginForm() {
   };
 
   return (
-    <main id="main" className="grid h-dvh overflow-y-auto bg-canvas px-4 py-8">
+    <main id="main" className="grid h-dvh overflow-y-auto bg-background px-4 py-8">
       <div className="m-auto w-full max-w-[28rem]">
         <div className="surface-overlay overflow-hidden">
           <div className="px-8 py-6 sm:px-9">
@@ -133,7 +133,7 @@ function LoginForm() {
               <Logo size={56} tone="auto" className="rounded-lg" />
               <div>
                 <p className="brand-wordmark">{`Synapse`}</p>
-                <p className="mt-1 text-caption text-steel">
+                <p className="mt-1 text-caption text-muted-foreground">
                   Workspace sign-in
                 </p>
               </div>
@@ -143,11 +143,11 @@ function LoginForm() {
             <div className="flex flex-col gap-6">
 
               <div className="flex w-full flex-col items-center space-y-2 text-center">
-                <p className="label-mono text-stone">Account Access</p>
-                <h1 className="w-full text-heading-sm text-ink-deep">
+                <p className="label-mono text-text-subtle">Account Access</p>
+                <h1 className="w-full text-heading-sm text-foreground">
                   Welcome to Synapse
                 </h1>
-                <p className="w-full text-body-sm text-steel">
+                <p className="w-full text-body-sm text-muted-foreground">
                   Sign in to continue
                 </p>
               </div>
@@ -155,7 +155,7 @@ function LoginForm() {
             {error && (
               <div
                 role="alert"
-                className="flex w-full items-start gap-2 rounded-lg border border-critical-strong bg-critical/10 px-4 py-3 text-body-sm text-critical"
+                className="flex w-full items-start gap-2 rounded-lg border border-destructive bg-destructive/10 px-4 py-3 text-body-sm text-destructive"
               >
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
@@ -175,11 +175,11 @@ function LoginForm() {
                     disabled={isLoading}
                     variant="secondary"
                     size="lg"
-                    className="w-full justify-center gap-3 border-hairline bg-canvas hover:border-charcoal hover:bg-surface-soft"
+                    className="w-full justify-center gap-3 border-border-strong bg-background hover:border-border-strong hover:bg-muted"
                   >
                   {isLoading ? (
                     <span role="status">
-                      <div className="h-5 w-5 rounded-full skeleton-shimmer bg-stone/30" />
+                      <div className="h-5 w-5 rounded-full skeleton-shimmer bg-text-subtle/30" />
                       <span className="sr-only">Signing in...</span>
                     </span>
                   ) : (
@@ -214,12 +214,12 @@ function LoginForm() {
 
             {/* Desktop: waiting for browser auth */}
               {waitingForBrowser && (
-                <div className="flex w-full flex-col items-center gap-3 rounded-lg bg-surface-soft/50 px-4 py-4 text-center">
+                <div className="flex w-full flex-col items-center gap-3 rounded-lg bg-muted/50 px-4 py-4 text-center">
                   <span role="status">
-                    <div className="h-5 w-5 rounded-full skeleton-shimmer bg-surface-soft" />
+                    <div className="h-5 w-5 rounded-full skeleton-shimmer bg-muted" />
                     <span className="sr-only">Waiting for browser authentication...</span>
                   </span>
-                  <p className="w-full text-body-sm text-steel">
+                  <p className="w-full text-body-sm text-muted-foreground">
                     Complete sign-in in your browser, then return here.
                   </p>
                   <Button
@@ -233,7 +233,7 @@ function LoginForm() {
                     }}
                     variant="ghost"
                     size="sm"
-                    className="text-caption-bold text-stone hover:text-ink-deep"
+                    className="text-caption-bold text-text-subtle hover:text-foreground"
                   >
                     Cancel
                   </Button>
@@ -251,8 +251,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-canvas" role="status">
-          <div className="h-8 w-full max-w-[28rem] rounded-full skeleton-shimmer bg-surface-soft" />
+        <div className="flex min-h-screen items-center justify-center bg-background" role="status">
+          <div className="h-8 w-full max-w-[28rem] rounded-full skeleton-shimmer bg-muted" />
           <span className="sr-only">Loading...</span>
         </div>
       }

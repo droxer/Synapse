@@ -21,7 +21,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import {
   EVENT_LEFT_RAIL_CLASSES,
-  EVENT_META_BADGE_CLASSES,
   SKILL_TOOL_NAMES,
   getToolCallTone,
   getToolCallVisualClasses,
@@ -75,8 +74,8 @@ function SpawnAgentDisplay({ tc }: { readonly tc: ToolCallInfo }) {
   return (
     <div className={cn("mb-2 py-1.5", EVENT_LEFT_RAIL_CLASSES)}>
       <div className="flex items-center gap-2">
-        <GitFork className="h-3.5 w-3.5 shrink-0 text-steel" />
-        <span className="text-sm font-medium text-ink-deep">{normalizeAgentName(agentName)}</span>
+        <GitFork className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">{normalizeAgentName(agentName)}</span>
         {role && (
           <span className="status-pill status-neutral">
             {role}
@@ -84,7 +83,7 @@ function SpawnAgentDisplay({ tc }: { readonly tc: ToolCallInfo }) {
         )}
       </div>
       {taskDesc && (
-        <p className="mt-1 text-sm leading-relaxed text-steel">
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
           {taskDesc.length > 200 ? taskDesc.slice(0, 197) + "..." : taskDesc}
         </p>
       )}
@@ -100,8 +99,8 @@ function WaitForAgentsDisplay({ tc, t, agentNameMap }: { readonly tc: ToolCallIn
   return (
     <div className={cn("mb-2 py-1.5", EVENT_LEFT_RAIL_CLASSES)}>
       <div className="flex items-center gap-2">
-        <Clock className="h-3.5 w-3.5 shrink-0 text-steel" />
-        <span className="text-sm font-medium text-ink-deep">
+        <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">
           {waitingAll
             ? t("computer.waitingAllAgents")
             : t("computer.waitingAgents", { count: agentIds.length })}
@@ -132,15 +131,15 @@ function AgentSendDisplay({ tc, t, agentNameMap }: { readonly tc: ToolCallInfo; 
   return (
     <div className={cn("mb-2 py-1.5", EVENT_LEFT_RAIL_CLASSES)}>
       <div className="flex items-center gap-2">
-        <MessageSquare className="h-3.5 w-3.5 shrink-0 text-steel" />
-        <span className="text-sm font-medium text-ink-deep">
+        <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">
           {isBroadcast
             ? t("computer.broadcastMessage")
             : t("computer.sendToAgent", { id: agentNameMap.get(targetId) || targetId.slice(0, 8) })}
         </span>
       </div>
       {message && (
-        <p className="mt-1 text-sm leading-relaxed text-steel">
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
           {message.length > 200 ? message.slice(0, 197) + "..." : message}
         </p>
       )}
@@ -159,7 +158,7 @@ function ThinkingPreview({ text }: { readonly text: string }) {
 
   return (
     <div className={cn("mb-2 py-0.5", EVENT_LEFT_RAIL_CLASSES)}>
-      <span id={contentId} className="text-sm italic leading-relaxed text-steel">
+      <span id={contentId} className="text-sm italic leading-relaxed text-muted-foreground">
         {shown}
         {isLong && !expanded && "..."}
       </span>
@@ -169,7 +168,7 @@ function ThinkingPreview({ text }: { readonly text: string }) {
           onClick={() => setExpanded((e) => !e)}
           aria-controls={contentId}
           aria-expanded={expanded}
-          className="ml-1 rounded text-sm text-steel hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          className="ml-1 rounded text-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {expanded ? t("computer.thinkingCollapse") : t("computer.thinkingReadMore")}
         </button>
@@ -227,11 +226,6 @@ function ActivityTimelineToolCallRow({
         </span>
         <div className="flex shrink-0 items-center gap-1.5 self-start">
           <RunningBadge toolCall={toolCall} t={t} />
-          {toolCall.success === true && (
-            <span className={cn(EVENT_META_BADGE_CLASSES, visual.doneBadge)}>
-              {t("computer.statusDone")}
-            </span>
-          )}
         </div>
       </div>
 
@@ -297,7 +291,7 @@ function getRunningToolStatusText(toolCall: ToolCallInfo, t: TFn): string {
 function RunningBadge({ toolCall, t }: { readonly toolCall: ToolCallInfo; readonly t: TFn }) {
   if (toolCall.success !== undefined) return null;
   return (
-    <span className="status-pill status-info">
+    <span className="text-micro font-medium text-ring">
       {t("computer.running")}
     </span>
   );
@@ -346,20 +340,20 @@ function StatusIcon({ tc }: { readonly tc: ToolCallInfo }) {
   if (tc.success !== undefined) {
     return tc.success === false
       ? (
-        <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS, "bg-surface-soft")} aria-label={t("a11y.toolFailed")} role="img">
-          <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-critical")} strokeWidth={2.25} />
+        <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS)} aria-label={t("a11y.toolFailed")} role="img">
+          <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-destructive")} strokeWidth={2.25} />
           <CircleX
-            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-canvas text-critical"
+            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-destructive"
             strokeWidth={2.5}
             aria-hidden
           />
         </span>
       )
       : (
-        <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS, "bg-surface-soft")} aria-label={t("a11y.toolSuccess")} role="img">
-          <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-ink-deep")} strokeWidth={2.25} />
+        <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS)} aria-label={t("a11y.toolSuccess")} role="img">
+          <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-foreground")} strokeWidth={2.25} />
           <Check
-            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-canvas text-accent-emerald"
+            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-success"
             strokeWidth={3}
             aria-hidden
           />
@@ -367,9 +361,9 @@ function StatusIcon({ tc }: { readonly tc: ToolCallInfo }) {
       );
   }
   return (
-    <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS, "bg-surface-soft")} aria-label={t("a11y.toolRunning")} role="img">
-      <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-focus")} strokeWidth={2.25} />
-      <span className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-focus" />
+    <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS)} aria-label={t("a11y.toolRunning")} role="img">
+      <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-ring")} strokeWidth={2.25} />
+      <span className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-ring" />
     </span>
   );
 }
@@ -402,12 +396,12 @@ export function SandboxPreviewPanel({ previewSession }: { readonly previewSessio
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-canvas">
-      <div className="flex shrink-0 items-center gap-2 border-b border-hairline-soft/60 px-3 py-2">
+    <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <PanelTop className="h-4 w-4 shrink-0 text-steel" aria-hidden />
-            <span className="truncate text-sm font-medium text-ink-deep">
+            <PanelTop className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="truncate text-sm font-medium text-foreground">
               {t("preview.title")}
             </span>
             {hostLabel && (
@@ -417,7 +411,7 @@ export function SandboxPreviewPanel({ previewSession }: { readonly previewSessio
             )}
           </div>
           {previewSession.directory && (
-            <p className="mt-0.5 truncate font-mono text-micro text-steel">
+            <p className="mt-0.5 truncate font-mono text-micro text-muted-foreground">
               {previewSession.directory}
             </p>
           )}
@@ -429,7 +423,7 @@ export function SandboxPreviewPanel({ previewSession }: { readonly previewSessio
           aria-label={t("preview.reload")}
           onClick={handleReload}
           disabled={!url}
-          className="shrink-0 text-steel hover:bg-surface-soft hover:text-ink-deep"
+          className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -440,19 +434,19 @@ export function SandboxPreviewPanel({ previewSession }: { readonly previewSessio
           aria-label={t("preview.open")}
           onClick={handleOpen}
           disabled={!url}
-          className="shrink-0 text-steel hover:bg-surface-soft hover:text-ink-deep"
+          className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <ExternalLink className="h-4 w-4" />
         </Button>
       </div>
 
       {url ? (
-        <div className="min-h-0 flex-1 bg-surface-soft p-2">
+        <div className="min-h-0 flex-1 bg-muted p-2">
           <iframe
             key={frameKey}
             src={url}
             title={t("preview.frameTitle")}
-            className="h-full min-h-[18rem] w-full rounded-md border border-hairline-soft bg-canvas"
+            className="h-full min-h-[18rem] w-full rounded-md border border-border bg-background"
             referrerPolicy="no-referrer"
             sandbox="allow-downloads allow-forms allow-modals allow-popups allow-scripts"
           />
@@ -681,12 +675,12 @@ export function AgentComputerPanel({
   );
 
   return (
-    <div lang="en" className="flex h-full flex-col bg-canvas">
+    <div lang="en" className="flex h-full flex-col bg-background">
       {/* ── Header ── */}
-      <div className="shrink-0 bg-canvas">
+      <div className="shrink-0 bg-background">
         {/* Title bar */}
         <div className="flex items-center gap-2 px-3 py-2">
-          <span className="label-mono flex-1 truncate text-steel">
+          <span className="label-mono flex-1 truncate text-muted-foreground">
             {t("computer.title")}
           </span>
           {/* Inline running status — animated entrance/exit */}
@@ -700,7 +694,7 @@ export function AgentComputerPanel({
                 className="flex min-w-0 items-center gap-1.5 truncate"
               >
                 <PulsingDot size="sm" />
-                <span className="truncate text-micro text-steel">
+                <span className="truncate text-micro text-muted-foreground">
                   {getRunningToolStatusText(latestToolCall, t)}
                 </span>
               </motion.span>
@@ -713,7 +707,7 @@ export function AgentComputerPanel({
               size="icon-xs"
               aria-label={t("computer.closePanel")}
               onClick={onClose}
-              className="shrink-0 text-steel hover:bg-surface-soft hover:text-ink-deep"
+              className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -723,7 +717,7 @@ export function AgentComputerPanel({
         {/* Tab bar — underline-style, flush with border */}
         <div
           ref={tabListRef}
-          className="relative flex gap-0.5 px-3"
+          className="relative flex gap-1 border-b border-border/60 px-3"
           role="tablist"
           aria-label={t("computer.tabsLabel")}
           onKeyDown={handleTabKeyDown}
@@ -737,16 +731,16 @@ export function AgentComputerPanel({
             tabIndex={activeTab === "activity" ? 0 : -1}
             onClick={() => setActiveTab("activity")}
             className={cn(
-              "relative flex items-center gap-1.5 px-2.5 pb-2 pt-1 label-mono transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
+              "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               activeTab === "activity"
-                ? "text-ink-deep"
-                : "text-steel hover:text-ink-deep",
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Activity className="h-4 w-4" aria-hidden="true" />
             {t("computer.activity")}
-            {activeTab === "activity" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-focus" />}
+            {activeTab === "activity" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ring" />}
           </button>
           {previewSession?.active && (
             <button
@@ -758,16 +752,16 @@ export function AgentComputerPanel({
               tabIndex={activeTab === "preview" ? 0 : -1}
               onClick={() => setActiveTab("preview")}
               className={cn(
-                "relative flex items-center gap-1.5 px-2.5 pb-2 pt-1 label-mono transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
+                "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 activeTab === "preview"
-                  ? "text-ink-deep"
-                  : "text-steel hover:text-ink-deep",
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               <PanelTop className="h-4 w-4" aria-hidden="true" />
               {t("preview.tab")}
-              {activeTab === "preview" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-focus" />}
+              {activeTab === "preview" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ring" />}
             </button>
           )}
           {hasArtifacts && (
@@ -780,24 +774,24 @@ export function AgentComputerPanel({
               tabIndex={activeTab === "files" ? 0 : -1}
               onClick={() => setActiveTab("files")}
               className={cn(
-                "relative flex items-center gap-1.5 px-2.5 pb-2 pt-1 label-mono transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
+                "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 activeTab === "files"
-                  ? "text-ink-deep"
-                  : "text-steel hover:text-ink-deep",
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               <FolderOpen className="h-4 w-4" aria-hidden="true" />
               {t("computer.artifacts")}
               <span
                 className={cn(
-                  "ml-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-md px-1.5 text-micro font-semibold tabular-nums transition-colors chip-muted",
-                  activeTab === "files" && "border border-hairline-soft",
+                  "ml-0.5 text-micro font-semibold tabular-nums transition-colors",
+                  activeTab === "files" ? "text-foreground" : "text-text-subtle",
                 )}
               >
                 {visibleArtifacts.length}
               </span>
-              {activeTab === "files" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-focus" />}
+              {activeTab === "files" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ring" />}
             </button>
           )}
         </div>
@@ -819,7 +813,7 @@ export function AgentComputerPanel({
 
       {/* ── Activity content area — terminal-style logs ── */}
       {activeTab === "activity" && (
-        <div id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" className="flex min-h-0 flex-1 flex-col bg-canvas">
+        <div id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" className="flex min-h-0 flex-1 flex-col bg-background">
           <div role="status" aria-live="polite" className="sr-only">
             {isRunning && latestToolCall
               ? getRunningToolStatusText(latestToolCall, t)
@@ -831,7 +825,7 @@ export function AgentComputerPanel({
           </div>
           <div
             ref={contentRef}
-            className="flex-1 overflow-y-auto bg-canvas px-4 py-3 sm:px-5"
+            className="flex-1 overflow-y-auto bg-background px-4 py-3 sm:px-5"
           >
             {/* Empty state */}
             {timelineItems.length === 0 && (
@@ -874,15 +868,15 @@ export function AgentComputerPanel({
                       <div
                         key={tc.id}
                         className={cn(
-                          scopedWrap && "border-l-2 border-hairline-soft pl-3",
-                          isFirstAgentTool && agentHighlighted && "rounded-lg bg-surface-soft",
+                          scopedWrap && "border-l border-border/70 pl-3",
+                          isFirstAgentTool && agentHighlighted && "rounded-lg bg-muted",
                         )}
                         data-step-id={`tool-${tc.id}`}
                         data-agent-tool-owner={agentId || undefined}
                         data-agent-tool-anchor={isFirstAgentTool ? "true" : undefined}
                       >
                         {agentLabel && (
-                          <div className="mb-1 flex items-center gap-1.5 text-micro text-steel">
+                          <div className="mb-1 flex items-center gap-1.5 text-micro text-muted-foreground">
                             <GitFork className="h-3 w-3 shrink-0" aria-hidden />
                             <span className="truncate">{agentLabel}</span>
                           </div>
@@ -896,15 +890,15 @@ export function AgentComputerPanel({
                     <div
                       key={tc.id}
                       className={cn(
-                        scopedWrap && "border-l-2 border-hairline-soft pl-3",
-                        isFirstAgentTool && agentHighlighted && "rounded-lg bg-surface-soft",
+                        scopedWrap && "border-l border-border/70 pl-3",
+                        isFirstAgentTool && agentHighlighted && "rounded-lg bg-muted",
                       )}
                       data-step-id={`tool-${tc.id}`}
                       data-agent-tool-owner={agentId || undefined}
                       data-agent-tool-anchor={isFirstAgentTool ? "true" : undefined}
                     >
                       {agentLabel && (
-                        <div className="mb-1 flex items-center gap-1.5 text-micro text-steel">
+                        <div className="mb-1 flex items-center gap-1.5 text-micro text-muted-foreground">
                           <GitFork className="h-3 w-3 shrink-0" aria-hidden />
                           <span className="truncate">{agentLabel}</span>
                         </div>
@@ -923,23 +917,23 @@ export function AgentComputerPanel({
           </div>
 
           {/* ── Consolidated status bar ── */}
-          <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 bg-canvas px-3 py-2.5">
+          <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 border-t border-border/60 bg-background px-3 py-2">
             <Progress
               value={progressValue}
-              className="h-2 min-w-[6rem] flex-1 rounded-full bg-surface-soft"
+              className="h-1.5 min-w-[6rem] flex-1 rounded-full bg-muted"
               indicatorClassName={getTaskStateProgressIndicatorClass(taskState)}
             />
 
             <div
               className={cn(
-                "status-pill shrink-0 px-2 py-1",
+                "inline-flex shrink-0 items-center gap-1.5 text-micro font-medium",
                 isRunning
-                  ? "status-info"
+                  ? "text-ring"
                   : taskState === "complete"
-                    ? "status-primary"
+                    ? "text-foreground"
                     : taskState === "error"
-                      ? "status-error"
-                      : "status-neutral",
+                      ? "text-destructive"
+                      : "text-muted-foreground",
               )}
             >
               {isRunning ? (
@@ -947,7 +941,7 @@ export function AgentComputerPanel({
               ) : taskState === "complete" ? (
                 <CircleCheck className="h-3 w-3" />
               ) : taskState === "error" ? (
-                <CircleX className="h-3 w-3 text-critical" />
+                <CircleX className="h-3 w-3 text-destructive" />
               ) : null}
               <span className="label-mono">
                 {taskState === "complete"
@@ -962,12 +956,12 @@ export function AgentComputerPanel({
 
             <span
               className={cn(
-                "status-pill tabular-nums",
+                "shrink-0 font-mono text-micro tabular-nums",
                 taskState === "error"
-                  ? "status-error"
+                  ? "text-destructive"
                   : isRunning
-                    ? "status-info"
-                    : "status-neutral",
+                    ? "text-ring"
+                    : "text-text-subtle",
               )}
             >
               {completedCount}/{visibleToolCalls.length}

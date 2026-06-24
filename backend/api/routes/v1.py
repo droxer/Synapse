@@ -852,7 +852,15 @@ async def _artifact_ids_for_run(state: AppState, record: AgentRunRecord) -> list
     if isinstance(result_artifacts, list):
         return [value for value in result_artifacts if isinstance(value, str)]
     async with state.db_session_factory() as session:
-        events = await state.db_repo.get_events(session, record.conversation_id)
+        get_events_for_run = getattr(state.db_repo, "get_events_for_run", None)
+        if callable(get_events_for_run):
+            events = await get_events_for_run(
+                session,
+                record.conversation_id,
+                str(record.id),
+            )
+        else:
+            events = await state.db_repo.get_events(session, record.conversation_id)
     return _artifact_ids_from_events(events, run_id=str(record.id))
 
 
@@ -878,7 +886,15 @@ async def _public_event_generator(
     run_id = str(run.id)
     conversation_id = str(run.conversation_id)
     async with state.db_session_factory() as session:
-        historical = await state.db_repo.get_events(session, run.conversation_id)
+        get_events_for_run = getattr(state.db_repo, "get_events_for_run", None)
+        if callable(get_events_for_run):
+            historical = await get_events_for_run(
+                session,
+                run.conversation_id,
+                run_id,
+            )
+        else:
+            historical = await state.db_repo.get_events(session, run.conversation_id)
     historical_for_run = _events_for_run(historical, run_id=run_id)
     yielded_event_ids: set[int] = set()
     for event in historical_for_run:
@@ -913,10 +929,18 @@ async def _public_event_generator(
         latest = await _latest_run_record(state, run.id)
         if latest is not None and latest.status in _TERMINAL_STATUSES:
             async with state.db_session_factory() as session:
-                fresh_events = await state.db_repo.get_events(
-                    session,
-                    run.conversation_id,
-                )
+                get_events_for_run = getattr(state.db_repo, "get_events_for_run", None)
+                if callable(get_events_for_run):
+                    fresh_events = await get_events_for_run(
+                        session,
+                        run.conversation_id,
+                        run_id,
+                    )
+                else:
+                    fresh_events = await state.db_repo.get_events(
+                        session,
+                        run.conversation_id,
+                    )
             for event in _events_for_run(fresh_events, run_id=run_id):
                 if event.id in yielded_event_ids:
                     continue

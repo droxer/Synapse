@@ -6,9 +6,9 @@ import { Package, Globe, FolderGit2 } from "lucide-react";
  * (same shell as tool “done” / counts in the agent panel).
  */
 export const SOURCE_STYLE = {
-  bundled: { icon: Package, className: "text-accent-emerald" },
-  user: { icon: Globe, className: "text-focus" },
-  project: { icon: FolderGit2, className: "text-accent-amber" },
+  bundled: { icon: Package, className: "text-success" },
+  user: { icon: Globe, className: "text-ring" },
+  project: { icon: FolderGit2, className: "text-warning" },
 } as const;
 
 export const SOURCE_LABEL_KEY: Record<string, string> = {

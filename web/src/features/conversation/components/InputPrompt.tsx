@@ -90,23 +90,23 @@ export function InputPrompt({
       >
         <div className="border-l-2 border-l-border-active px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="mb-2.5 flex items-center gap-2.5">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-soft text-steel">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
               <CircleHelp className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <h3
                 id="input-prompt-title"
-                className="truncate text-sm font-semibold leading-5 text-ink-deep"
+                className="truncate text-sm font-semibold leading-5 text-foreground"
               >
                 {title ?? t("inputPrompt.title")}
               </h3>
-              <p className="text-xs leading-4 text-steel">
+              <p className="text-xs leading-4 text-muted-foreground">
                 {t("inputPrompt.subtitle")}
               </p>
             </div>
           </div>
 
-          <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-ink-deep">
+          <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {question}
           </p>
 
@@ -121,11 +121,11 @@ export function InputPrompt({
                   onClick={() => onSubmit(option.value ?? option.label)}
                 >
                   <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-sm font-medium leading-5 text-ink-deep">
+                    <span className="text-sm font-medium leading-5 text-foreground">
                       {option.label}
                     </span>
                     {option.description && (
-                      <span className="text-xs leading-4 text-steel">
+                      <span className="text-xs leading-4 text-muted-foreground">
                         {option.description}
                       </span>
                     )}

@@ -49,6 +49,7 @@ class FileAttachment:
     content_type: str
     data: bytes
     size: int
+    local_path: str | None = None
 
 
 def serialize_attachment_metadata(

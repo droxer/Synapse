@@ -47,6 +47,25 @@ _RETRYABLE_EXCEPTIONS = (OperationalError, InterfaceError, TimeoutError, OSError
 # Per-conversation background persistence queue bounds retained event payloads.
 _PERSISTENCE_QUEUE_MAXSIZE = 1000
 _PERSISTENCE_WORKER_IDLE_TIMEOUT_SECONDS = 30.0
+_NON_DROPPABLE_PERSISTENCE_EVENTS = {
+    EventType.ASK_USER,
+    EventType.USER_RESPONSE,
+    EventType.LLM_RESPONSE,
+    EventType.MESSAGE_USER,
+    EventType.TURN_START,
+    EventType.TURN_COMPLETE,
+    EventType.TURN_CANCELLED,
+    EventType.TASK_COMPLETE,
+    EventType.TASK_ERROR,
+    EventType.TOOL_CALL,
+    EventType.TOOL_RESULT,
+    EventType.AGENT_SPAWN,
+    EventType.AGENT_COMPLETE,
+    EventType.AGENT_HANDOFF,
+    EventType.PLAN_CREATED,
+    EventType.CONTEXT_COMPACTED,
+    EventType.ARTIFACT_CREATED,
+}
 
 
 def _normalize_artifact_payload(
@@ -471,6 +490,52 @@ def create_db_subscriber(
                 name=f"db-subscriber-{str(conversation_id)[:8]}",
             )
 
+    def _drop_one_queued_event() -> bool:
+        queued: list[AgentEvent] = []
+        dropped = False
+        for _ in range(persistence_queue.qsize()):
+            try:
+                queued_event = persistence_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+            if (
+                not dropped
+                and queued_event.type not in _NON_DROPPABLE_PERSISTENCE_EVENTS
+            ):
+                dropped = True
+                persistence_queue.task_done()
+                if pending_writes is not None:
+                    pending_writes._decrement()  # noqa: SLF001
+                continue
+            queued.append(queued_event)
+
+        for queued_event in queued:
+            try:
+                persistence_queue.put_nowait(queued_event)
+            except asyncio.QueueFull:
+                break
+        return dropped
+
+    def _enqueue_snapshot(snapshot: AgentEvent) -> bool:
+        try:
+            persistence_queue.put_nowait(snapshot)
+            return True
+        except asyncio.QueueFull:
+            if snapshot.type in _NON_DROPPABLE_PERSISTENCE_EVENTS:
+                if _drop_one_queued_event():
+                    try:
+                        persistence_queue.put_nowait(snapshot)
+                        return True
+                    except asyncio.QueueFull:
+                        pass
+            logger.warning(
+                "db_subscriber_queue_full_dropped conversation_id={} event_type={} maxsize={}",
+                conversation_id,
+                snapshot.type.value,
+                _PERSISTENCE_QUEUE_MAXSIZE,
+            )
+            return False
+
     async def _subscriber(event: AgentEvent) -> None:
         if event.type in _SKIP_EVENTS:
             return
@@ -482,19 +547,14 @@ def create_db_subscriber(
         pending_writes._increment()  # noqa: SLF001
         try:
             _ensure_worker()
-            if persistence_queue.full():
-                logger.warning(
-                    "db_subscriber_queue_full conversation_id={} maxsize={}",
-                    conversation_id,
-                    _PERSISTENCE_QUEUE_MAXSIZE,
-                )
             snapshot = AgentEvent(
                 type=event.type,
                 data=_clean_data(event.data),
                 timestamp=event.timestamp,
                 iteration=event.iteration,
             )
-            await persistence_queue.put(snapshot)
+            if not _enqueue_snapshot(snapshot):
+                pending_writes._decrement()  # noqa: SLF001
         except BaseException:
             pending_writes._decrement()  # noqa: SLF001
             raise

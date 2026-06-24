@@ -72,9 +72,9 @@ export function MCPPage() {
     : servers;
 
   return (
-    <div className="flex h-full flex-col bg-canvas">
+    <div className="flex h-full flex-col bg-background">
       <ProductPageHeader
-        icon={<Blocks className="h-5 w-5 text-steel" />}
+        icon={<Blocks className="h-5 w-5 text-muted-foreground" />}
         eyebrow={t("mcp.mcpServers")}
         title={t("mcp.title")}
         description={t("mcp.subtitle")}
@@ -85,14 +85,14 @@ export function MCPPage() {
               <span
                 className={cn(
                   "block h-2 w-2 rounded-full",
-                  connectedCount > 0 ? "bg-accent-emerald" : "bg-border-strong",
+                  connectedCount > 0 ? "bg-success" : "bg-border-strong",
                 )}
               />
             }
             value={
               <>
                 {connectedCount}
-                <span className="ml-1 text-sm text-steel">/ {servers.length}</span>
+                <span className="ml-1 text-sm text-muted-foreground">/ {servers.length}</span>
               </>
             }
             description={`HTTP ${httpCount} · SSE ${sseCount}`}
@@ -202,7 +202,7 @@ export function MCPPage() {
             <AlertDialogCancel>{t("mcp.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-critical text-white hover:bg-critical/90"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               {t("mcp.remove")}
             </AlertDialogAction>

@@ -64,13 +64,13 @@ export function MCPServerForm({
       )}
 
       <div className="space-y-1.5">
-        <Label htmlFor={`${idPrefix}-schema`} className="label-mono text-stone">
+        <Label htmlFor={`${idPrefix}-schema`} className="label-mono text-text-subtle">
           {t("mcp.schema")}
         </Label>
-        <p className="text-xs text-steel">{schemaHelper}</p>
+        <p className="text-xs text-muted-foreground">{schemaHelper}</p>
       </div>
 
-      <div className="surface-panel overflow-hidden bg-canvas transition-shadow duration-150 focus-within:ring-2 focus-within:ring-focus/40">
+      <div className="surface-panel overflow-hidden bg-background transition-shadow duration-150 focus-within:ring-2 focus-within:ring-ring/40">
         <Textarea
           id={`${idPrefix}-schema`}
           placeholder={t("mcp.schemaPlaceholder")}
@@ -81,7 +81,7 @@ export function MCPServerForm({
           autoFocus
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline-soft/60 bg-surface-soft/40 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 bg-muted/40 px-3 py-2">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
             <span
               className={cn(
@@ -93,7 +93,7 @@ export function MCPServerForm({
               {hasParsedConfig ? parsedName : t("mcp.waitingForConfig")}
             </span>
             {hasParsedConfig && (
-              <span className="font-mono text-micro text-stone">
+              <span className="font-mono text-micro text-text-subtle">
                 {formTransport}
               </span>
             )}

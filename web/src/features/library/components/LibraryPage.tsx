@@ -113,10 +113,10 @@ export function LibraryPage() {
   }, [stats, t]);
 
   return (
-    <div className="flex h-full flex-col bg-canvas">
+    <div className="flex h-full flex-col bg-background">
       {/* Header */}
       <ProductPageHeader
-        icon={<Library aria-hidden="true" className="h-5 w-5 text-steel" />}
+        icon={<Library aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
         eyebrow={t("library.eyebrow")}
         title={t("library.title")}
         description={

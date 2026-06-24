@@ -208,6 +208,13 @@ class BoxliteSession:
                 f"{cleanup.stderr or cleanup.stdout}"
             )
 
+        initialize = await self.exec(f": > {shlex.quote(encoded_path)}")
+        if not initialize.success:
+            raise OSError(
+                f"Failed to initialize Boxlite fallback upload path: "
+                f"{initialize.stderr or initialize.stdout}"
+            )
+
         chunk_size = 65536
         for idx in range(0, len(encoded), chunk_size):
             chunk = encoded[idx : idx + chunk_size]

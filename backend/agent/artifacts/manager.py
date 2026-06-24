@@ -245,10 +245,14 @@ class ArtifactManager:
             return None
 
         try:
-            with open(temp_path, "rb") as f:
-                data = f.read()
-
-            await self._backend.save(safe_name, data, content_type)
+            size = os.path.getsize(temp_path)
+            save_file = getattr(self._backend, "save_file", None)
+            if callable(save_file):
+                await save_file(safe_name, temp_path, content_type)
+            else:
+                with open(temp_path, "rb") as f:
+                    data = f.read()
+                await self._backend.save(safe_name, data, content_type)
         finally:
             # Clean up temp file (may already be the final file for local backend)
             if os.path.isfile(temp_path) and not isinstance(
@@ -256,7 +260,6 @@ class ArtifactManager:
             ):
                 os.remove(temp_path)
 
-        size = len(data)
         artifact = Artifact(
             id=artifact_id,
             path=safe_name,

@@ -44,7 +44,7 @@ import { MCPAddServerDialog } from "./MCPAddServerDialog";
 /* ── shimmer skeleton ── */
 function ServerSkeleton() {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-hairline-soft px-4 py-3">
+    <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
       <div className="h-2 w-2 shrink-0 rounded-full skeleton-shimmer" />
       <div className="flex-1 space-y-2">
         <div className="h-3.5 w-24 rounded skeleton-shimmer" />
@@ -109,7 +109,7 @@ export function MCPDialog({
           <div className="space-y-4 pt-2">
             {/* Section header */}
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-steel">
+              <h3 className="text-sm font-medium text-muted-foreground">
                 {t("mcp.mcpServers")}
               </h3>
               <Button
@@ -130,15 +130,15 @@ export function MCPDialog({
                   <ServerSkeleton />
                 </>
               ) : servers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2.5 rounded-lg border border-dashed border-hairline-soft py-14">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-soft">
-                    <Unplug className="h-5 w-5 text-stone" />
+                <div className="flex flex-col items-center justify-center gap-2.5 rounded-lg border border-dashed border-border py-14">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
+                    <Unplug className="h-5 w-5 text-text-subtle" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium text-ink-deep">
+                    <p className="text-sm font-medium text-foreground">
                       {t("mcp.noServers")}
                     </p>
-                    <p className="mt-0.5 text-xs text-steel">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {t("mcp.noServersHint")}
                     </p>
                   </div>
@@ -154,8 +154,8 @@ export function MCPDialog({
                     className={cn(
                       "group flex items-center gap-3 rounded-lg border px-4 py-3 transition-[border-color,background-color] duration-200 ease-out",
                       server.enabled === false
-                        ? "border-hairline-soft hover:border-hairline-soft"
-                        : "border-hairline-soft hover:border-hairline hover:bg-surface-soft",
+                        ? "border-border hover:border-border"
+                        : "border-border hover:border-border-strong hover:bg-muted",
                     )}
                   >
                     {/* Status dot */}
@@ -179,12 +179,12 @@ export function MCPDialog({
                       <div className="flex items-center gap-2">
                         <span className={cn(
                           "truncate text-sm font-medium transition-colors duration-200",
-                          server.enabled === false ? "text-steel" : "text-ink-deep",
+                          server.enabled === false ? "text-muted-foreground" : "text-foreground",
                         )}>
                           {server.name}
                         </span>
                         <Badge
-                          variant="secondary"
+                          variant="outline"
                           className={cn(
                             "gap-1 font-mono text-xs transition-opacity duration-200",
                             server.enabled === false && "opacity-60",
@@ -200,7 +200,7 @@ export function MCPDialog({
                       </div>
                       <div className={cn(
                         "mt-0.5 flex items-center gap-1.5 text-xs transition-colors duration-200",
-                        server.enabled === false ? "text-stone" : "text-steel",
+                        server.enabled === false ? "text-text-subtle" : "text-muted-foreground",
                       )}>
                         <Wrench className="h-3 w-3" />
                         <span>
@@ -227,10 +227,10 @@ export function MCPDialog({
                       aria-label={server.enabled !== false ? t("mcp.disable") : t("mcp.enable")}
                       className={cn(
                         "touch-target flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-micro font-medium transition-colors duration-150",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         server.enabled === false
-                          ? "bg-surface-soft text-stone hover:bg-surface-soft hover:text-steel"
-                          : "border border-hairline-soft bg-surface-soft text-steel hover:bg-surface-soft hover:text-ink-deep",
+                          ? "bg-muted text-text-subtle hover:bg-muted hover:text-muted-foreground"
+                          : "border border-border bg-muted text-muted-foreground hover:bg-muted hover:text-foreground",
                       )}
                       onClick={() => handleToggle(server.name, server.enabled === false)}
                     >
@@ -248,7 +248,7 @@ export function MCPDialog({
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            className="fine-hover-action shrink-0 text-steel transition-[background-color,color,opacity] hover:text-ink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                            className="fine-hover-action shrink-0 text-muted-foreground transition-[background-color,color,opacity] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             onClick={() => startEdit(server)}
                             aria-label={t("mcp.editServer", { name: server.name })}
                           >
@@ -263,7 +263,7 @@ export function MCPDialog({
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      className="fine-hover-action shrink-0 text-steel transition-[background-color,color,opacity] hover:text-critical focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                      className="fine-hover-action shrink-0 text-muted-foreground transition-[background-color,color,opacity] hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       onClick={() => setServerToDelete(server.name)}
                       aria-label={t("mcp.removeServer", { name: server.name })}
                     >
@@ -318,7 +318,7 @@ export function MCPDialog({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-critical-strong text-on-cobalt hover:bg-critical"
+              className="bg-destructive text-primary-foreground hover:bg-destructive/90"
             >
               {t("mcp.remove")}
             </AlertDialogAction>

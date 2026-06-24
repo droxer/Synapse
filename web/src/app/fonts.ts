@@ -1,12 +1,10 @@
 import localFont from "next/font/local";
-import { Montserrat } from "next/font/google";
+import { Inter } from "next/font/google";
 
-/* DESIGN.md system font: Optimistic VF (proprietary, not licensable).
-   Montserrat is the first declared fallback and the closest humanist-geometric match. */
-export const montserrat = Montserrat({
+export const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  variable: "--font-montserrat",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
   display: "swap",
 });
 

@@ -24,7 +24,7 @@ export function IconButton({
   onClick,
   disabled,
   type = "button",
-  className = "text-steel",
+  className = "text-muted-foreground",
   variant = "ghost",
 }: IconButtonProps) {
   return (

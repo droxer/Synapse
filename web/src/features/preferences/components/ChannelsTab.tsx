@@ -29,18 +29,18 @@ function ChannelIntegrationRow({
       : t("channels.integrations.notConfigured");
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-hairline-soft bg-card p-3">
+    <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
       <ChannelProviderIcon provider={provider} size="lg" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-body-sm-bold text-ink-deep">
+          <p className="truncate text-body-sm-bold text-foreground">
             {t(`channels.${provider}.title`)}
           </p>
-          <span className="shrink-0 rounded-sm border border-hairline-soft bg-surface-soft px-1.5 py-0.5 text-micro font-medium uppercase text-steel">
+          <span className="shrink-0 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-micro font-medium uppercase text-muted-foreground">
             {statusLabel}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-caption text-steel">
+        <p className="mt-0.5 truncate text-caption text-muted-foreground">
           {status?.bot_username ?? t(`channels.${provider}.description`)}
         </p>
       </div>
@@ -90,7 +90,7 @@ export function ChannelsTab({ onOpenTelegram, onOpenDiscord }: ChannelsTabProps)
       />
 
       {error && (
-        <div className="mb-4 rounded-md border border-critical-strong bg-critical-strong/5 px-3 py-2 text-body-sm text-critical">
+        <div className="mb-4 rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive">
           {error}
         </div>
       )}
@@ -115,7 +115,7 @@ export function ChannelsTab({ onOpenTelegram, onOpenDiscord }: ChannelsTabProps)
         </div>
       )}
 
-      <div className="mt-5 flex items-start gap-2 rounded-lg border border-hairline-soft bg-surface-soft p-3 text-caption text-steel">
+      <div className="mt-5 flex items-start gap-2 rounded-lg border border-border bg-muted p-3 text-caption text-muted-foreground">
         <MessageCircle className="mt-0.5 h-4 w-4 shrink-0" />
         <p>{t("preferences.channels.help")}</p>
       </div>

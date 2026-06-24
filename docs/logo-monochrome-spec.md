@@ -42,9 +42,20 @@ Optional support lockup:
 - Minimum target contrast ratio: **4.5:1**.
 - For favicon/app icon sizes under 24px, use pure black (`#000000`) when needed for optical clarity.
 
+## Mark Geometry
+
+The icon is a **diagonal synapse**:
+
+- Two **neural terminals** (circles) sit on a 45° axis — presynaptic and postsynaptic.
+- **Bridge pads** span toward the center along the axis.
+- A **synaptic cleft** (punched gap) sits between the terminals on the diagonal.
+- A **signal pulse** (center dot) marks transmission across the cleft.
+
+The diagonal axis adds energy and directionality; the cleft-and-pulse motif keeps the biology literal.
+
 ## Clear Space and Minimum Size
 
-- Define `x` as the thickness of one logo rail.
+- Define `x` as the diameter of one neural terminal.
 - Minimum clear space around all sides: `1x`.
 - Do not place text, icons, or container borders inside clear space.
 - Minimum digital size:
