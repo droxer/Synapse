@@ -202,6 +202,21 @@ class ConversationResponse(BaseModel):
     conversation_id: str
 
 
+class ConversationSuggestion(BaseModel):
+    """A suggested next prompt for the landing screen."""
+
+    label: str = Field(max_length=80)
+    prompt: str = Field(max_length=500)
+
+
+class ConversationSuggestionsResponse(BaseModel):
+    """Response body for generated conversation suggestions."""
+
+    suggestions: list[ConversationSuggestion] = Field(
+        default_factory=list, max_length=3
+    )
+
+
 class UserInputRequest(BaseModel):
     """Request body for POST /conversations/{id}/respond."""
 

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { HomeScreen } from "./HomeScreen";
 import { ConversationWorkspace } from "./ConversationWorkspace";
 import { useConversationContext } from "../hooks/use-conversation-context";
+import { useLandingSuggestions } from "../hooks/use-landing-suggestions";
 import { ErrorBoundary } from "@/shared/components";
 import { useAppStore } from "@/shared/stores";
 import {
@@ -50,6 +51,7 @@ export function ConversationView() {
 
   const isActuallyActive = shouldShowConversationWorkspace(conversationId, isWaitingForAgent);
   const isActive = isActuallyActive || isOptimisticallyStarting;
+  const landingSuggestions = useLandingSuggestions(!isActive);
 
   useEffect(() => {
     if (isActuallyActive) {
@@ -113,6 +115,7 @@ export function ConversationView() {
             onSubmitTask={handleSubmitFromHome}
             error={createError}
             isLoading={isWaitingForAgent}
+            suggestions={landingSuggestions}
           />
         </motion.div>
       ) : (

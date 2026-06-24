@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import tempfile
@@ -20,11 +21,13 @@ from agent.llm.client import AnthropicClient
 from agent.logging import conversation_log_context
 from agent.memory.store import PersistentMemoryStore
 from api.dependencies import AppState, get_app_state, get_db_session
-from agent.state.schemas import EventRecord
+from agent.state.schemas import EventRecord, MessageRecord
 from api.models import (
     ConversationEntry,
     ConversationMetricsResponse,
     ConversationResponse,
+    ConversationSuggestion,
+    ConversationSuggestionsResponse,
     FileAttachment,
     MAX_FILE_SIZE_MB,
     MAX_FILES_PER_MESSAGE,
@@ -72,6 +75,9 @@ _UPLOAD_READ_CHUNK_SIZE = 1024 * 1024
 _MCP_RESTORE_MAX_CONCURRENT = 3
 _MCP_RESTORE_SEMAPHORE = asyncio.Semaphore(_MCP_RESTORE_MAX_CONCURRENT)
 _MCP_RESTORE_FAST_PATH_TIMEOUT_SECONDS = 0.75
+_SUGGESTION_TRANSCRIPT_MESSAGE_LIMIT = 12
+_SUGGESTION_TRANSCRIPT_CHAR_LIMIT = 6000
+_SUGGESTION_MAX_TOKENS = 300
 
 router = APIRouter(dependencies=common_dependencies)
 
@@ -1338,6 +1344,114 @@ async def _classify_execution_shape(
         return EXECUTION_SHAPE_SINGLE_AGENT, "router error: defaulted to single agent"
 
 
+_SUGGESTION_SYSTEM_PROMPT = (
+    "Generate exactly three helpful follow-up questions for a user returning to an "
+    "AI coding conversation. Base them only on the transcript. Each suggestion must "
+    "be concrete, short, and useful as the next message to the agent. Reply with "
+    "strict JSON only, with this shape: "
+    '{"suggestions":[{"label":"short label","prompt":"full question"},'
+    '{"label":"short label","prompt":"full question"},'
+    '{"label":"short label","prompt":"full question"}]}. '
+    "Labels must be 2-6 words. Prompts must be question-style messages."
+)
+
+
+def _message_record_text(message: MessageRecord) -> str:
+    content = message.content
+    if isinstance(content, str):
+        return content.strip()
+    text = content.get("text") if isinstance(content, dict) else None
+    if isinstance(text, str):
+        return text.strip()
+    return ""
+
+
+def _format_suggestion_transcript(
+    messages: list[MessageRecord],
+    *,
+    max_chars: int = _SUGGESTION_TRANSCRIPT_CHAR_LIMIT,
+) -> str:
+    lines: list[str] = []
+    for message in messages:
+        if message.role not in {"user", "assistant"}:
+            continue
+        text = _message_record_text(message)
+        if not text:
+            continue
+        role = "User" if message.role == "user" else "Assistant"
+        lines.append(f"{role}: {text}")
+
+    transcript = "\n".join(lines).strip()
+    if len(transcript) <= max_chars:
+        return transcript
+    return transcript[-max_chars:].lstrip()
+
+
+def _parse_generated_suggestions(text: str) -> list[ConversationSuggestion]:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(payload, dict):
+        return []
+    raw_suggestions = payload.get("suggestions")
+    if not isinstance(raw_suggestions, list) or len(raw_suggestions) != 3:
+        return []
+
+    suggestions: list[ConversationSuggestion] = []
+    seen_prompts: set[str] = set()
+    for raw in raw_suggestions:
+        if not isinstance(raw, dict):
+            return []
+        label = raw.get("label")
+        prompt = raw.get("prompt")
+        if not isinstance(label, str) or not isinstance(prompt, str):
+            return []
+        clean_label = label.strip()[:80]
+        clean_prompt = prompt.strip()[:500]
+        if not clean_label or not clean_prompt:
+            return []
+        prompt_key = clean_prompt.casefold()
+        if prompt_key in seen_prompts:
+            return []
+        seen_prompts.add(prompt_key)
+        suggestions.append(
+            ConversationSuggestion(label=clean_label, prompt=clean_prompt)
+        )
+
+    return suggestions if len(suggestions) == 3 else []
+
+
+async def _generate_conversation_suggestions(
+    claude_client: AnthropicClient,
+    transcript: str,
+    *,
+    locale: str | None,
+) -> list[ConversationSuggestion]:
+    if not transcript.strip():
+        return []
+
+    locale_instruction = (
+        f"Use this UI locale for all labels and prompts: {locale}."
+        if locale
+        else "Use the same language as the recent user messages."
+    )
+    user_message = f"{locale_instruction}\n\nRecent transcript:\n{transcript}"
+    try:
+        settings = get_settings()
+        response = await claude_client.create_message(
+            system=_SUGGESTION_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_message}],
+            max_tokens=_SUGGESTION_MAX_TOKENS,
+            model=settings.LITE_MODEL,
+        )
+    except Exception as exc:
+        logger.warning("conversation_suggestions_generation_failed error={}", exc)
+        return []
+
+    return _parse_generated_suggestions(response.text.strip())
+
+
 # ---------------------------------------------------------------------------
 # Metrics aggregation
 # ---------------------------------------------------------------------------
@@ -1881,6 +1995,40 @@ async def get_conversation_messages(
                 for m in messages
             ],
         }
+
+
+@router.get(
+    "/conversations/{conversation_id}/suggestions",
+    response_model=ConversationSuggestionsResponse,
+)
+async def get_conversation_suggestions(
+    request: Request,
+    conversation_id: str = Path(..., pattern=_UUID_PATTERN),
+    session: Any = Depends(get_db_session),
+    state: AppState = Depends(get_app_state),
+    auth_user: AuthUser | None = Depends(get_current_user),
+) -> ConversationSuggestionsResponse:
+    """Generate landing-page suggestions from recent conversation messages."""
+    with conversation_log_context(conversation_id):
+        await _verify_conversation_ownership(state, conversation_id, auth_user)
+        conv_uuid = uuid.UUID(conversation_id)
+        convo = await state.db_repo.get_conversation(session, conv_uuid)
+        if convo is None:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        messages = await state.db_repo.get_recent_messages(
+            session,
+            conv_uuid,
+            _SUGGESTION_TRANSCRIPT_MESSAGE_LIMIT,
+        )
+        transcript = _format_suggestion_transcript(messages)
+        locale = await _resolve_turn_locale(request, state, auth_user=auth_user)
+        suggestions = await _generate_conversation_suggestions(
+            state.claude_client,
+            transcript,
+            locale=locale,
+        )
+        return ConversationSuggestionsResponse(suggestions=suggestions)
 
 
 @router.get("/conversations/{conversation_id}/events")

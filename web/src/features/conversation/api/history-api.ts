@@ -39,6 +39,15 @@ export interface ConversationArtifactsResponse {
   readonly artifacts: readonly HistoryArtifact[];
 }
 
+export interface ConversationSuggestion {
+  readonly label: string;
+  readonly prompt: string;
+}
+
+export interface ConversationSuggestionsResponse {
+  readonly suggestions: readonly ConversationSuggestion[];
+}
+
 export async function fetchEvents(
   conversationId: string,
 ): Promise<ConversationEventsResponse> {
@@ -76,6 +85,22 @@ export async function fetchArtifacts(
 
   if (!res.ok) {
     throw new Error(`Failed to fetch artifacts: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function fetchConversationSuggestions(
+  conversationId: string,
+  signal?: AbortSignal,
+): Promise<ConversationSuggestionsResponse> {
+  const res = await fetch(
+    `${API_BASE}/conversations/${conversationId}/suggestions`,
+    { signal },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch conversation suggestions: ${res.status}`);
   }
 
   return res.json();

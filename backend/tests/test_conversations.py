@@ -38,11 +38,15 @@ from api.routes.conversations import (  # noqa: E402
     ORCHESTRATOR_PLANNER,
     _build_conversation_metrics_response,
     _classify_execution_shape,
+    _SUGGESTION_MAX_TOKENS,
+    _SUGGESTION_TRANSCRIPT_CHAR_LIMIT,
+    _SUGGESTION_TRANSCRIPT_MESSAGE_LIMIT,
     _planner_flag_to_mode,
     _resolve_execution_route,
     create_conversation,
     get_conversation_events,
     get_conversation_messages,
+    get_conversation_suggestions,
     list_conversations,
     respond_to_prompt,
     send_message,
@@ -595,6 +599,203 @@ class TestClassifyExecutionShape:
         assert "prompt_chain" in _EXECUTION_ROUTER_SYSTEM_PROMPT
         assert "parallel" in _EXECUTION_ROUTER_SYSTEM_PROMPT
         assert "orchestrator_workers" in _EXECUTION_ROUTER_SYSTEM_PROMPT
+
+
+class _SuggestionRepo:
+    def __init__(self, messages: list[MessageRecord]) -> None:
+        self.messages = messages
+        self.recent_limit: int | None = None
+
+    async def get_conversation(
+        self,
+        session: object,
+        conversation_id: uuid.UUID,
+    ) -> SimpleNamespace:
+        del session
+        return SimpleNamespace(id=conversation_id, title="Chat")
+
+    async def get_recent_messages(
+        self,
+        session: object,
+        conversation_id: uuid.UUID,
+        limit: int,
+    ) -> list[MessageRecord]:
+        del session
+        self.recent_limit = limit
+        return [
+            message
+            for message in self.messages[-limit:]
+            if message.conversation_id == conversation_id
+        ]
+
+
+def _suggestion_message(
+    conversation_id: uuid.UUID,
+    role: str,
+    text: str,
+    *,
+    index: int = 0,
+) -> MessageRecord:
+    return MessageRecord(
+        id=uuid.uuid4(),
+        conversation_id=conversation_id,
+        role=role,
+        content={"text": text},
+        iteration=index,
+        created_at=datetime.now(timezone.utc),
+    )
+
+
+def _suggestion_request(locale: str = "en") -> SimpleNamespace:
+    return SimpleNamespace(cookies={"synapse-locale": locale})
+
+
+class TestConversationSuggestions:
+    @pytest.mark.asyncio
+    async def test_returns_three_generated_suggestions(self) -> None:
+        conversation_id = uuid.uuid4()
+        repo = _SuggestionRepo(
+            [
+                _suggestion_message(
+                    conversation_id, "user", "Make the dashboard faster."
+                ),
+                _suggestion_message(
+                    conversation_id, "assistant", "I changed the query."
+                ),
+            ]
+        )
+        client = _mock_client(
+            '{"suggestions":['
+            '{"label":"Verify speed","prompt":"Can you verify the dashboard speed improvement?"},'
+            '{"label":"Add tests","prompt":"Can you add regression tests for the dashboard query?"},'
+            '{"label":"Review risks","prompt":"What risks remain after the dashboard query change?"}'
+            "]}"
+        )
+        state = SimpleNamespace(db_repo=repo, claude_client=client)
+
+        response = await get_conversation_suggestions(
+            request=_suggestion_request(),
+            conversation_id=str(conversation_id),
+            session=object(),
+            state=state,
+            auth_user=None,
+        )
+
+        assert [item.label for item in response.suggestions] == [
+            "Verify speed",
+            "Add tests",
+            "Review risks",
+        ]
+        assert repo.recent_limit == _SUGGESTION_TRANSCRIPT_MESSAGE_LIMIT
+        call_kwargs = client.create_message.call_args.kwargs
+        assert call_kwargs["max_tokens"] == _SUGGESTION_MAX_TOKENS
+        assert call_kwargs["model"] is not None
+
+    @pytest.mark.asyncio
+    async def test_empty_transcript_returns_no_suggestions_without_llm_call(
+        self,
+    ) -> None:
+        conversation_id = uuid.uuid4()
+        repo = _SuggestionRepo([])
+        client = _mock_client('{"suggestions":[]}')
+        state = SimpleNamespace(db_repo=repo, claude_client=client)
+
+        response = await get_conversation_suggestions(
+            request=_suggestion_request(),
+            conversation_id=str(conversation_id),
+            session=object(),
+            state=state,
+            auth_user=None,
+        )
+
+        assert response.suggestions == []
+        client.create_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_invalid_llm_output_returns_no_suggestions(self) -> None:
+        conversation_id = uuid.uuid4()
+        repo = _SuggestionRepo(
+            [
+                _suggestion_message(conversation_id, "user", "Continue this feature."),
+            ]
+        )
+        client = _mock_client("not json")
+        state = SimpleNamespace(db_repo=repo, claude_client=client)
+
+        response = await get_conversation_suggestions(
+            request=_suggestion_request(),
+            conversation_id=str(conversation_id),
+            session=object(),
+            state=state,
+            auth_user=None,
+        )
+
+        assert response.suggestions == []
+
+    @pytest.mark.asyncio
+    async def test_transcript_passed_to_model_is_bounded(self) -> None:
+        conversation_id = uuid.uuid4()
+        repo = _SuggestionRepo(
+            [
+                _suggestion_message(conversation_id, "user", "x" * 8000),
+            ]
+        )
+        client = _mock_client(
+            '{"suggestions":['
+            '{"label":"One","prompt":"Question one?"},'
+            '{"label":"Two","prompt":"Question two?"},'
+            '{"label":"Three","prompt":"Question three?"}'
+            "]}"
+        )
+        state = SimpleNamespace(db_repo=repo, claude_client=client)
+
+        await get_conversation_suggestions(
+            request=_suggestion_request(),
+            conversation_id=str(conversation_id),
+            session=object(),
+            state=state,
+            auth_user=None,
+        )
+
+        content = client.create_message.call_args.kwargs["messages"][0]["content"]
+        transcript = content.split("Recent transcript:\n", 1)[1]
+        assert len(transcript) <= _SUGGESTION_TRANSCRIPT_CHAR_LIMIT
+
+    @pytest.mark.asyncio
+    async def test_ownership_is_checked_before_generation(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        conversation_id = uuid.uuid4()
+        repo = _SuggestionRepo(
+            [
+                _suggestion_message(conversation_id, "user", "Continue this feature."),
+            ]
+        )
+        client = _mock_client('{"suggestions":[]}')
+        state = SimpleNamespace(db_repo=repo, claude_client=client)
+        ownership_check = AsyncMock(
+            side_effect=HTTPException(status_code=404, detail="Conversation not found")
+        )
+        monkeypatch.setattr(
+            conversation_routes,
+            "_verify_conversation_ownership",
+            ownership_check,
+        )
+
+        with pytest.raises(HTTPException):
+            await get_conversation_suggestions(
+                request=_suggestion_request(),
+                conversation_id=str(conversation_id),
+                session=object(),
+                state=state,
+                auth_user=SimpleNamespace(
+                    google_id="g", email="e", name="n", picture=None
+                ),
+            )
+
+        ownership_check.assert_awaited_once()
+        client.create_message.assert_not_called()
 
 
 class _DummyRequest:

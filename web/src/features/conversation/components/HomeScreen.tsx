@@ -7,11 +7,13 @@ import { ChatInput } from "./ChatInput";
 import { SuggestionPill } from "./SuggestionPill";
 import { ErrorBanner } from "@/shared/components/ErrorBanner";
 import { useTranslation } from "@/i18n";
+import type { LandingSuggestion } from "../hooks/use-landing-suggestions";
 
 interface HomeScreenProps {
   onSubmitTask: (task: string, files?: File[], skills?: string[], usePlanner?: boolean) => void;
   error?: string | null;
   isLoading?: boolean;
+  suggestions?: readonly LandingSuggestion[] | null;
 }
 
 const SUGGESTION_ICONS = [
@@ -20,7 +22,12 @@ const SUGGESTION_ICONS = [
   <CircleDot key="circle" className="h-4 w-4" aria-hidden="true" />,
 ];
 
-export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScreenProps) {
+export function HomeScreen({
+  onSubmitTask,
+  error,
+  isLoading = false,
+  suggestions: generatedSuggestions = null,
+}: HomeScreenProps) {
   const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
   const [dismissed, setDismissed] = useState(false);
@@ -28,7 +35,7 @@ export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScree
   const [composerHasContent, setComposerHasContent] = useState(false);
   const [suggestionStatus, setSuggestionStatus] = useState("");
 
-  const suggestions = [
+  const defaultSuggestions = [
     {
       label: t("welcome.suggestion.prototype"),
       prompt: t("welcome.suggestion.prototypePrompt"),
@@ -42,6 +49,9 @@ export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScree
       prompt: t("welcome.suggestion.planBuildPrompt"),
     },
   ];
+  const suggestions = generatedSuggestions?.length === 3
+    ? generatedSuggestions
+    : defaultSuggestions;
 
   useEffect(() => {
     if (error) setDismissed(false);

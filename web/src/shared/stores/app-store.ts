@@ -37,6 +37,7 @@ interface AppState {
   // Conversation
   readonly conversationId: string | null;
   readonly isLiveConversation: boolean;
+  readonly lastOpenedConversationId: string | null;
   readonly pendingNewTask: PendingNewTask | null;
   readonly pendingConversationRouteId: string | null;
   readonly conversationHistory: readonly ConversationHistoryItem[];
@@ -91,6 +92,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       conversationId: null,
       isLiveConversation: false,
+      lastOpenedConversationId: null,
       pendingNewTask: null,
       pendingConversationRouteId: null,
       conversationHistory: [],
@@ -121,6 +123,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           conversationId,
           isLiveConversation: true,
+          lastOpenedConversationId: conversationId,
           conversationHistory: [
             {
               id: conversationId,
@@ -151,9 +154,17 @@ export const useAppStore = create<AppState>()(
         })),
 
       switchConversation: (conversationId) =>
-        set({ conversationId, isLiveConversation: false }),
+        set({
+          conversationId,
+          isLiveConversation: false,
+          lastOpenedConversationId: conversationId,
+        }),
 
-      resumeConversation: () => set({ isLiveConversation: true }),
+      resumeConversation: () =>
+        set((state) => ({
+          isLiveConversation: true,
+          lastOpenedConversationId: state.conversationId ?? state.lastOpenedConversationId,
+        })),
 
       resetConversation: () => set({ conversationId: null, isLiveConversation: false }),
 
@@ -247,6 +258,9 @@ export const useAppStore = create<AppState>()(
           if (activeId === conversationId) {
             get().resetConversation();
           }
+          if (get().lastOpenedConversationId === conversationId) {
+            set({ lastOpenedConversationId: null });
+          }
         } catch (err) {
           console.error("Failed to delete conversation:", err);
           if (wasInSidebar) {
@@ -261,6 +275,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         conversationId: state.conversationId,
         isLiveConversation: state.isLiveConversation,
+        lastOpenedConversationId: state.lastOpenedConversationId,
         sidebarCollapsed: state.sidebarCollapsed,
         sidebarWidth: state.sidebarWidth,
       }),

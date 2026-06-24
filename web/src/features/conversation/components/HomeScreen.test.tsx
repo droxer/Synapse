@@ -141,6 +141,24 @@ describe("HomeScreen", () => {
     expect(html).toContain("Plan the build");
   });
 
+  it("renders generated suggestions when provided", () => {
+    const html = renderToStaticMarkup(
+      <HomeScreen
+        onSubmitTask={jest.fn()}
+        suggestions={[
+          { label: "Verify speed", prompt: "Can you verify speed?" },
+          { label: "Add tests", prompt: "Can you add tests?" },
+          { label: "Review risks", prompt: "What risks remain?" },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("Verify speed");
+    expect(html).toContain("Add tests");
+    expect(html).toContain("Review risks");
+    expect(html).not.toContain("Prototype a feature");
+  });
+
   it("keeps text left-aligned inside the centered content block", () => {
     const html = renderToStaticMarkup(<HomeScreen onSubmitTask={jest.fn()} />);
 
