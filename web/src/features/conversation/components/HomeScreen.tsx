@@ -67,7 +67,7 @@ export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScree
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col justify-center overflow-hidden px-6 sm:px-8">
+    <div className="relative flex h-full w-full flex-col justify-center overflow-hidden px-4 sm:px-6">
       {/* Decorative background layer */}
       <div
         className="pointer-events-none absolute inset-0 opacity-50"
@@ -78,11 +78,11 @@ export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScree
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -right-10 top-20 h-64 w-64 rotate-12 rounded-[40px] border border-primary/10 bg-primary/[0.04]"
+        className="pointer-events-none absolute -right-10 top-20 h-64 w-64 rotate-12 rounded-[40px] border border-cobalt/10 bg-cobalt/[0.04]"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute right-16 bottom-24 h-36 w-36 -rotate-6 rounded-3xl border border-primary/[0.08] bg-primary/[0.04]"
+        className="pointer-events-none absolute right-16 bottom-24 h-36 w-36 -rotate-6 rounded-3xl border border-cobalt/[0.08] bg-cobalt/[0.04]"
         aria-hidden="true"
       />
 
@@ -94,21 +94,21 @@ export function HomeScreen({ onSubmitTask, error, isLoading = false }: HomeScree
       >
         <motion.p
           variants={itemVariants}
-          className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+          className="text-xs font-semibold uppercase tracking-[0.08em] text-steel"
         >
           {t("sidebar.brand")}
         </motion.p>
 
         <motion.h1
           variants={itemVariants}
-          className="mt-4 text-left text-[42px] font-medium leading-[1.12] tracking-[-0.02em] text-foreground"
+          className="mt-4 text-left text-[32px] font-medium leading-[1.12] tracking-[-0.02em] text-ink-deep sm:text-[36px] lg:text-[42px]"
         >
           {t("welcome.heading")}
         </motion.h1>
 
         <motion.p
           variants={itemVariants}
-          className="mt-4 max-w-[440px] text-left text-body-md text-muted-foreground"
+          className="mt-4 max-w-[440px] text-left text-body-md text-steel"
         >
           {t("welcome.subtitle")}
         </motion.p>

@@ -257,6 +257,19 @@
     50% { transform: translateY(-4px); }
   }
 
+  @keyframes logo-pulse-ring {
+    0%, 100% { opacity: 0.1; transform: scale(0.9); }
+    50% { opacity: 0.32; transform: scale(1.12); }
+  }
+
+  @keyframes logo-pulse-dot {
+    0%, 100% { opacity: 0.72; transform: scale(0.94); }
+    50% { opacity: 1; transform: scale(1.06); }
+  }
+
+  --animate-logo-pulse-ring: logo-pulse-ring 1.8s ease-in-out infinite;
+  --animate-logo-pulse-dot: logo-pulse-dot 1.8s ease-in-out infinite;
+
 }
 
 /* ─── Light mode (default) ───
@@ -1106,6 +1119,7 @@ pre, code {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xxl);
   background-color: var(--color-card);
+  box-shadow: var(--shadow-sm);
   transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
 }
 
