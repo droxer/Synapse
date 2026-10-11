@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
+import { Badge } from "@/shared/components/ui/badge";
 
 interface SkillSectionProps {
   readonly icon: LucideIcon;
@@ -25,13 +26,13 @@ export function SkillSection({
     <section className={cn("space-y-3", className)}>
       <div>
         <div className="flex items-center gap-2">
-          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <span className="status-pill status-neutral tabular-nums">
+          <Icon aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" />
+          <h3 className="text-body-sm-bold text-foreground">{title}</h3>
+          <Badge variant="neutral" className="tabular-nums">
             {count}
-          </span>
+          </Badge>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <p className="mt-1 text-caption text-muted-foreground">{description}</p>
       </div>
       {children}
     </section>

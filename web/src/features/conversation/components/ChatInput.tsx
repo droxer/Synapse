@@ -234,8 +234,10 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
             rows={isWelcome ? 3 : 1}
             autoFocus={autoFocus}
             aria-label={t("chat.inputLabel")}
+            name="message"
+            autoComplete="off"
             className={cn(
-              "w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm leading-relaxed text-ink-deep placeholder:text-steel outline-none",
+              "w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-body-sm text-ink-deep placeholder:text-steel outline-none",
               disabled && "opacity-50 cursor-not-allowed",
             )}
           />
@@ -251,9 +253,9 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                 aria-label={t("chat.attachFile")}
                 title={t("chat.attachFile")}
                 onClick={() => fileInputRef.current?.click()}
-                className="h-7 gap-1.5 rounded-lg px-2 text-xs font-medium text-steel transition-colors duration-150 hover:bg-surface-soft hover:text-ink-deep"
+                className="h-7 w-7 px-0 text-steel hover:bg-surface-soft hover:text-ink-deep"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
 
               <SkillSelector
@@ -271,14 +273,14 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                   size="sm"
                   aria-label={t("chat.planner")}
                   className={cn(
-                    "h-7 gap-1.5 rounded-lg border px-2 text-xs font-medium transition-colors duration-150 data-[state=on]:border-charcoal data-[state=on]:bg-cobalt data-[state=on]:text-on-cobalt",
+                    "h-7 gap-1.5 px-2.5 text-caption-bold transition-colors duration-150 data-[state=on]:bg-cobalt data-[state=on]:text-on-cobalt",
                     usePlanner
                       ? "hover:bg-cobalt-deep hover:text-on-cobalt"
-                      : "border-transparent text-steel hover:bg-surface-soft hover:text-ink-deep",
+                      : "text-steel hover:bg-surface-soft hover:text-ink-deep",
                   )}
                   title={usePlanner ? t("chat.plannerActive") : t("chat.plannerHint")}
                 >
-                  <GitFork className="h-3.5 w-3.5" />
+                  <GitFork className="h-3.5 w-3.5" aria-hidden="true" />
                   <span className="hidden sm:inline">{t("chat.planLabel")}</span>
                 </Toggle>
               )}
@@ -297,41 +299,42 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                   >
                   <Button
                     type="button"
-                    size="icon"
-                    variant="secondary"
+                    size="icon-sm"
+                    variant="ghost"
                     onClick={onCancel}
                     aria-label={t("chat.cancelExecution")}
                     title={t("chat.cancelExecution")}
-                    className="group h-8 w-8 text-steel hover:bg-critical/10 hover:text-critical active:bg-critical-strong/15"
+                    className="group text-steel hover:bg-critical/10 hover:text-critical active:bg-critical-strong/15"
                   >
                     <Square
                       className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110"
                       fill="currentColor"
                       strokeWidth={0}
+                      aria-hidden="true"
                     />
                   </Button>
                 </motion.div>
               ) : (
                 <motion.div
                   key="send"
-                  initial={{ opacity: shouldReduceMotion ? (hasContent ? 1 : 0.4) : 0 }}
-                  animate={{ opacity: hasContent ? 1 : 0.4 }}
-                  exit={{ opacity: shouldReduceMotion ? (hasContent ? 1 : 0.4) : 0 }}
+                  initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: shouldReduceMotion ? 1 : 0 }}
                   transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
                 >
                   <Button
                     type="submit"
-                    size="icon"
+                    size="icon-sm"
                     disabled={disabled || !hasContent}
                     aria-label={hasContent ? t("chat.sendMessage") : t("chat.typeToSend")}
                     title={hasContent ? t("chat.sendMessage") : t("chat.typeToSend")}
                     className={cn(
-                      "h-8 w-8 rounded-lg transition-colors duration-200",
+                      "transition-colors duration-200",
                       hasContent && "bg-cobalt text-on-cobalt hover:bg-cobalt-deep",
                       !hasContent && "bg-transparent text-steel",
                     )}
                   >
-                    <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+                    <ArrowUp className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
                   </Button>
                 </motion.div>
               )}

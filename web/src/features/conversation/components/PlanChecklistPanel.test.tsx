@@ -76,7 +76,7 @@ describe("PlanChecklistPanel", () => {
     expect(html).toContain("Replan step");
     expect(html).toContain("opacity-70");
     expect(html).toContain("text-warning");
-    expect(html).toContain("status-warn");
+    expect(html).toContain('data-variant="warning"');
   });
 
   it("localizes fallback planner step labels when i18n keys are present", () => {

@@ -51,7 +51,7 @@ export function TerminalWindow({ title, children, className, copyText }: Termina
     <div className={cn(OUTPUT_SURFACE_ROOT_CLASSES, className)}>
       {/* Title bar */}
       <div className={cn(OUTPUT_SURFACE_HEADER_CLASSES, "justify-between")}>
-        <span className={cn(OUTPUT_SURFACE_LABEL_CLASSES, "font-mono text-[var(--color-terminal-dim)]")}>
+        <span className={cn(OUTPUT_SURFACE_LABEL_CLASSES, "font-mono text-terminal-dim")}>
           {title}
         </span>
         <button
@@ -59,7 +59,7 @@ export function TerminalWindow({ title, children, className, copyText }: Termina
           onClick={handleCopy}
           aria-label={copied ? t("output.copied") : t("output.terminalCopy")}
           className={cn(
-            "flex items-center gap-1 rounded-md px-1.5 py-0.5 text-micro text-[var(--color-terminal-dim)] transition-colors hover:bg-background hover:text-[var(--color-terminal-text)]",
+            "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-micro text-terminal-dim transition-colors hover:bg-background hover:text-terminal-text",
             OUTPUT_SURFACE_FOCUS_CLASSES,
           )}
         >
@@ -69,6 +69,9 @@ export function TerminalWindow({ title, children, className, copyText }: Termina
             <Copy className="h-3 w-3" />
           )}
         </button>
+        <span className="sr-only" aria-live="polite">
+          {copied ? t("output.copied") : ""}
+        </span>
       </div>
 
       {/* Terminal body */}
@@ -77,7 +80,7 @@ export function TerminalWindow({ title, children, className, copyText }: Termina
           ref={bodyRef}
           className={cn(
             OUTPUT_SURFACE_INNER_CLASSES,
-            "overflow-hidden border-terminal-border bg-[var(--color-terminal-bg)] px-3 py-2.5 font-mono text-sm leading-relaxed",
+            "overflow-hidden bg-terminal-bg px-3 py-2.5 font-mono text-sm leading-relaxed",
           )}
         >
           {children}

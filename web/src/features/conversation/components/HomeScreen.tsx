@@ -78,21 +78,13 @@ export function HomeScreen({
 
   return (
     <div className="relative flex h-full w-full flex-col justify-center overflow-hidden px-4 sm:px-6">
-      {/* Decorative background layer */}
+      {/* Decorative background layer — soft tonal shapes, no lines */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-50"
-        style={{
-          backgroundImage: "radial-gradient(circle, var(--color-hairline) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-        }}
+        className="pointer-events-none absolute -right-10 top-20 h-64 w-64 rotate-12 rounded-feature bg-surface-soft"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -right-10 top-20 h-64 w-64 rotate-12 rounded-[40px] border border-cobalt/10 bg-cobalt/[0.04]"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute right-16 bottom-24 h-36 w-36 -rotate-6 rounded-3xl border border-cobalt/[0.08] bg-cobalt/[0.04]"
+        className="pointer-events-none absolute right-16 bottom-24 h-36 w-36 -rotate-6 rounded-xxl bg-surface-soft"
         aria-hidden="true"
       />
 
@@ -104,14 +96,14 @@ export function HomeScreen({
       >
         <motion.p
           variants={itemVariants}
-          className="text-xs font-semibold uppercase tracking-[0.08em] text-steel"
+          className="text-caption-bold uppercase tracking-[0.08em] text-steel"
         >
           {t("sidebar.brand")}
         </motion.p>
 
         <motion.h1
           variants={itemVariants}
-          className="mt-4 text-left text-[32px] font-medium leading-[1.12] tracking-[-0.02em] text-ink-deep sm:text-[36px] lg:text-[42px]"
+          className="mt-4 text-balance text-left text-heading-sm text-ink-deep sm:text-heading-lg lg:text-display-lg"
         >
           {t("welcome.heading")}
         </motion.h1>

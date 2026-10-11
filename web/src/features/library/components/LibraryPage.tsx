@@ -17,12 +17,19 @@ import type { ViewMode } from "../types";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+const BYTE_UNITS = ["byte", "kilobyte", "megabyte", "gigabyte"] as const;
+
+function formatBytes(bytes: number, locale: string): string {
+  const i = bytes <= 0
+    ? 0
+    : Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), BYTE_UNITS.length - 1);
   const value = bytes / Math.pow(1024, i);
-  return `${i === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[i]}`;
+  return new Intl.NumberFormat(locale, {
+    style: "unit",
+    unit: BYTE_UNITS[i],
+    unitDisplay: "short",
+    maximumFractionDigits: i === 0 ? 0 : 1,
+  }).format(value);
 }
 
 function readStoredViewMode(): ViewMode {
@@ -41,7 +48,7 @@ function readStoredViewMode(): ViewMode {
 
 function GroupSkeleton() {
   return (
-    <div className="mb-8">
+    <div className="mb-8" aria-hidden="true">
       <div className="flex items-center gap-3 pb-3 mb-4">
         <div className="h-4 w-48 skeleton-shimmer rounded" />
         <div className="flex-1" />
@@ -62,7 +69,7 @@ function GroupSkeleton() {
 // ---------------------------------------------------------------------------
 
 export function LibraryPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { groups, isLoading, error, filter, setFilter, loadMore, hasMore, removeArtifactsById } =
     useLibrary();
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
@@ -109,8 +116,8 @@ export function LibraryPage() {
         : "library.statsConversations",
       { count: stats.totalConversations },
     );
-    return `${filesLabel} · ${formatBytes(stats.totalSize)} · ${convsLabel}`;
-  }, [stats, t]);
+    return `${filesLabel} · ${formatBytes(stats.totalSize, locale)} · ${convsLabel}`;
+  }, [stats, t, locale]);
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -121,9 +128,11 @@ export function LibraryPage() {
         title={t("library.title")}
         description={
           isLoading && !statsLine ? (
-            <div className="h-3 w-40 skeleton-shimmer rounded" />
+            <div aria-hidden="true" className="h-3 w-40 skeleton-shimmer rounded" />
+          ) : statsLine ? (
+            <span className="tabular-nums">{statsLine}</span>
           ) : (
-            statsLine ?? t("library.subtitle")
+            t("library.subtitle")
           )
         }
         actions={
@@ -154,7 +163,7 @@ export function LibraryPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 overflow-hidden">
           {/* Error */}
           {error && dismissedAt === null && (
-            <ErrorBanner message={error} onDismiss={() => {
+            <ErrorBanner message={error} dismissLabel={t("mcp.dismissError")} onDismiss={() => {
               lastDismissedErrorRef.current = error;
               setDismissedAt(Date.now());
             }} />
@@ -175,7 +184,8 @@ export function LibraryPage() {
 
           {/* Loading state */}
           {isLoading && groups.length === 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-6" role="status" aria-busy="true">
+              <span className="sr-only">{t("login.loading")}</span>
               <GroupSkeleton />
               <GroupSkeleton />
               <GroupSkeleton />

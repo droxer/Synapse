@@ -39,7 +39,8 @@ describe("ToolOutputRenderer typography", () => {
 
     expect(html).toContain("text-sm leading-relaxed text-muted-foreground");
     expect(html).toContain("mt-1 text-sm text-muted-foreground");
-    expect(html).toContain("border-destructive bg-card");
+    expect(html).toContain("bg-destructive/5");
+    expect(html).not.toContain("border-destructive");
   });
 
   it("constrains tall output bodies inside a scrollable region", () => {

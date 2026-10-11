@@ -8,6 +8,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { CodeOutput } from "@/shared/components/ui/code-output";
 import { MarkdownRenderer } from "@/shared/components/MarkdownRenderer";
 import { useTranslation } from "@/i18n";
+import { cn } from "@/shared/lib/utils";
 import {
   fileExtension,
   fileIcon,
@@ -131,25 +132,28 @@ async function convertXlsxToHtml(url: string): Promise<string> {
 /*  Shared styles injected into office preview iframes                */
 /* ------------------------------------------------------------------ */
 
+/* srcDoc iframes cannot read the parent's CSS variables, so these literals mirror the
+   DESIGN.md tokens in globals.css (canvas / ink-deep / surface-soft / hairline-soft).
+   Keep them in sync when those tokens change. */
 const OFFICE_IFRAME_STYLES = `
 <style>
   :root {
     color-scheme: light dark;
     --preview-font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
-    --preview-background: #FFFFFF;
-    --preview-foreground: #000000;
-    --preview-secondary: #EEF4FF;
-    --preview-muted: #F4F7FB;
-    --preview-border: #E4E6EB;
-    --preview-hover: #F7FAFF;
+    --preview-background: #ffffff; /* canvas */
+    --preview-foreground: #0a1317; /* ink-deep */
+    --preview-secondary: #f1f4f7;  /* surface-soft */
+    --preview-muted: #f7f9fb;      /* surface-soft at 50% on canvas */
+    --preview-border: #dee3e9;     /* hairline-soft */
+    --preview-hover: #eaf1fb;      /* cobalt 6% on canvas */
   }
   .dark {
-    --preview-background: #101114;
-    --preview-foreground: #FFFFFF;
-    --preview-secondary: #172033;
-    --preview-muted: #1A1F2B;
-    --preview-border: #2A2D33;
-    --preview-hover: #1D2432;
+    --preview-background: #0a1317; /* canvas (dark) */
+    --preview-foreground: #f5f7fa; /* ink-deep (dark) */
+    --preview-secondary: #131c22;  /* surface-soft (dark) */
+    --preview-muted: #0f181d;      /* surface-soft at 50% (dark) */
+    --preview-border: #1e252c;     /* hairline-soft (dark) */
+    --preview-hover: #13202c;      /* cobalt 6% (dark) */
   }
   html:lang(zh-CN) {
     --preview-font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -183,7 +187,7 @@ const OFFICE_IFRAME_STYLES = `
     font-variant-numeric: tabular-nums;
   }
   th, td {
-    border: 1px solid var(--preview-border);
+    border-bottom: 1px solid var(--preview-border);
     padding: 0.375rem 0.625rem;
     text-align: left;
     white-space: nowrap;
@@ -348,8 +352,11 @@ export function FilePreview({
   if (content.status === "error") {
     return (
       <div className={className}>
-        <div className="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground">
-          <p className="text-sm">{t("artifacts.previewError")}</p>
+        <div
+          role="alert"
+          className="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground"
+        >
+          <p className="text-sm text-pretty text-center">{t("artifacts.previewError")}</p>
           {downloadButton}
         </div>
       </div>
@@ -360,20 +367,26 @@ export function FilePreview({
   if (ct.startsWith("image/")) {
     return (
       <div className={className}>
-        <div className="flex justify-center overflow-auto">
-          <img
-            src={inlineUrl}
-            alt={fileName}
-            width={800}
-            height={600}
-            loading="lazy"
-            className={
-              imageZoomed
-                ? "max-w-none cursor-zoom-out"
-                : "max-h-[70vh] cursor-zoom-in object-contain"
-            }
+        <div className="flex justify-center overflow-auto overscroll-contain">
+          <button
+            type="button"
+            aria-pressed={imageZoomed}
+            aria-label={imageZoomed ? t("shared.filePreview.zoomOut") : t("shared.filePreview.zoomIn")}
             onClick={() => setImageZoomed((z) => !z)}
-          />
+            className={cn(
+              "rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              imageZoomed ? "cursor-zoom-out" : "cursor-zoom-in",
+            )}
+          >
+            <img
+              src={inlineUrl}
+              alt={fileName}
+              width={800}
+              height={600}
+              loading="lazy"
+              className={imageZoomed ? "h-auto max-w-none" : "h-auto max-h-[70vh] w-auto object-contain"}
+            />
+          </button>
         </div>
       </div>
     );
@@ -384,7 +397,7 @@ export function FilePreview({
     if (isMarkdownType(ct, fileName)) {
       return (
         <div className={className}>
-          <div className="rounded-md border border-border bg-background px-4 py-3">
+          <div className="rounded-lg bg-muted px-4 py-3">
             <MarkdownRenderer content={content.text} isStreaming={false} />
           </div>
         </div>
@@ -412,7 +425,7 @@ export function FilePreview({
           src={inlineUrl}
           title={fileName}
           sandbox="allow-scripts allow-same-origin"
-          className="h-[70vh] w-full rounded-md border border-border"
+          className="h-[70vh] w-full rounded-lg bg-muted"
         />
       </div>
     );
@@ -426,7 +439,7 @@ export function FilePreview({
           src={inlineUrl}
           title={fileName}
           sandbox="allow-same-origin"
-          className="h-[70vh] w-full rounded-md border border-border"
+          className="h-[70vh] w-full rounded-lg bg-muted"
         />
       </div>
     );
@@ -441,7 +454,7 @@ export function FilePreview({
           srcDoc={srcDoc}
           title={fileName}
           sandbox="allow-same-origin"
-          className="h-[70vh] w-full rounded-md border border-border"
+          className="h-[70vh] w-full rounded-lg bg-muted"
         />
       </div>
     );
@@ -455,16 +468,16 @@ export function FilePreview({
           {content.manifest.slides.map((slide) => (
             <figure
               key={slide.index}
-              className="overflow-hidden rounded-lg border border-border bg-card"
+              className="overflow-hidden rounded-xl bg-muted"
             >
-              <div className="border-b border-border/60 px-3 py-2 label-mono text-muted-foreground">
-                {`Slide ${slide.index}`}
-              </div>
+              <figcaption className="px-3 pt-2 pb-1.5 label-mono text-muted-foreground tabular-nums">
+                {t("shared.filePreview.slide", { index: slide.index })}
+              </figcaption>
               <img
                 src={slide.image_url}
-                alt={`${fileName} slide ${slide.index}`}
+                alt={t("shared.filePreview.slideAlt", { name: fileName, index: slide.index })}
                 loading="lazy"
-                className="w-full bg-muted object-contain"
+                className="w-full bg-background object-contain"
               />
             </figure>
           ))}

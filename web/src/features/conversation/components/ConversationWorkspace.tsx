@@ -63,10 +63,8 @@ export function getConversationWorkspaceLayoutClasses(
         ? "grid grid-rows-[minmax(0,1fr)_minmax(18rem,40%)] md:grid-cols-[minmax(0,1fr)_minmax(20rem,36%)] md:grid-rows-1"
         : "grid grid-rows-[minmax(0,1fr)_minmax(20rem,42%)] lg:grid-cols-[minmax(0,1fr)_minmax(22rem,var(--agent-panel-width))] lg:grid-rows-1"
       : "flex flex-col",
-    panelBorderClass:
-      layoutVariant === "embedded"
-        ? "border-t md:border-l md:border-t-0"
-        : "border-t lg:border-l lg:border-t-0",
+    // Tonal separation instead of a hairline divider between panes.
+    panelBorderClass: "bg-surface-soft",
   } as const;
 }
 
@@ -77,7 +75,7 @@ export function getAgentComputerPanelClassName(
   return cn(
     isMobile
       ? "fixed inset-0 z-50 flex min-h-0 min-w-0 flex-col overflow-hidden bg-background"
-      : "relative z-10 flex min-h-0 min-w-0 flex-col overflow-hidden border-border bg-background",
+      : "relative z-10 flex min-h-0 min-w-0 flex-col overflow-hidden",
     !isMobile && panelBorderClass,
   );
 }
@@ -241,7 +239,7 @@ export const MessageRow = memo(function MessageRow({
         >
           <div className={cn("max-w-[94%] min-w-[120px]", messageWidthClass)}>
             <div className="surface-message-user px-4 py-3">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              <p className="whitespace-pre-wrap break-words text-body-sm text-foreground">
                 {msg.content}
               </p>
               {msg.attachments && msg.attachments.length > 0 && (
@@ -249,10 +247,11 @@ export const MessageRow = memo(function MessageRow({
                   {msg.attachments.map((att, attachmentIndex) => (
                     <span
                       key={`${att.name}:${att.size}:${att.type}:${attachmentIndex}`}
-                      className="inline-flex items-center gap-1 rounded-md bg-background/50 px-2 py-0.5 text-micro font-mono text-muted-foreground"
+                      className="inline-flex max-w-full items-center gap-1 rounded-full bg-background/50 px-2 py-0.5 text-micro font-mono text-muted-foreground"
+                      title={att.name}
                     >
-                      <Paperclip className="h-3 w-3" />
-                      {att.name}
+                      <Paperclip className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="min-w-0 truncate">{att.name}</span>
                     </span>
                   ))}
                 </div>
@@ -297,7 +296,7 @@ export const MessageRow = memo(function MessageRow({
               </div>
             ) : null}
             {/* Message body */}
-            <div className="conversation-response-body text-sm leading-relaxed text-foreground">
+            <div className="conversation-response-body break-words text-body-sm text-foreground">
               {hasPlanHere && (
                 <div className={showMarkdown || imageUrls.length > 0 ? "mb-3" : undefined}>
                   <PlanChecklistPanel planSteps={embeddedPlanSteps} />
@@ -338,11 +337,12 @@ export const MessageRow = memo(function MessageRow({
                       variant="ghost"
                       size="icon-xs"
                       onClick={() => handleCopy(copyAssistantText.trim() || msg.content)}
-                      className="rounded-lg text-text-subtle hover:text-foreground hover:bg-muted/80"
+                      aria-label={copied ? t("conversation.copied") : t("conversation.copy")}
+                      className="text-text-subtle hover:text-foreground hover:bg-muted/80"
                     >
                       {copied
-                        ? <Check className="h-3.5 w-3.5 text-success" />
-                        : <Copy className="h-3.5 w-3.5" />}
+                        ? <Check className="h-3.5 w-3.5 text-success-text" aria-hidden="true" />
+                        : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" sideOffset={4}>
@@ -358,9 +358,10 @@ export const MessageRow = memo(function MessageRow({
                         variant="ghost"
                         size="icon-xs"
                         onClick={onRetry}
-                        className="rounded-lg text-text-subtle hover:text-foreground hover:bg-muted/80"
+                        aria-label={t("conversation.retry")}
+                        className="text-text-subtle hover:text-foreground hover:bg-muted/80"
                       >
-                        <RotateCcw className="h-3.5 w-3.5" />
+                        <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
@@ -549,7 +550,7 @@ export function ConversationWorkspace({
       <div
         className="flex h-full flex-col overflow-hidden"
         role="region"
-        aria-label="Conversation"
+        aria-label={t("conversation.regionLabel")}
         aria-busy={effectiveTaskState === "executing" || effectiveTaskState === "planning"}
       >
         {!hideTopBar && (
@@ -653,7 +654,7 @@ export function ConversationWorkspace({
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.12 }}
                         >
-                          <div className="mt-3" role="status" aria-live="polite" aria-atomic="true">
+                          <div className="mt-3">
                             <AssistantLoadingSkeleton phase={effectivePhase} />
                           </div>
                         </motion.div>

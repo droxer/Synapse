@@ -53,16 +53,16 @@ export function ProductPageHeader({
       <div className={cn("mx-auto max-w-6xl space-y-4", innerClassName)}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="chip-muted flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
               {icon}
             </div>
             <div className="min-w-0">
               <p className="label-mono text-text-subtle">{eyebrow}</p>
-              <h1 className="mt-2 text-heading-sm text-foreground">
+              <h1 className="mt-2 text-heading-sm text-balance text-foreground">
                 {title}
               </h1>
               {description ? (
-                <div className="mt-1 max-w-2xl text-body-sm text-muted-foreground">
+                <div className="mt-1 max-w-2xl text-body-sm text-pretty text-muted-foreground">
                   {description}
                 </div>
               ) : null}
@@ -109,7 +109,7 @@ export function ProductSectionHeader({
   return (
     <section
       className={cn(
-        "card-product-feature flex flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center lg:justify-between",
+        "surface-panel flex flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center lg:justify-between",
         className,
       )}
     >
@@ -118,7 +118,7 @@ export function ProductSectionHeader({
           <p className="label-mono text-text-subtle">{eyebrow}</p>
         ) : null}
         {title ? (
-          <h2 className="text-body-sm-bold text-foreground">{title}</h2>
+          <h2 className="text-body-sm-bold text-balance text-foreground">{title}</h2>
         ) : null}
         {description ? (
           <div className={cn("text-body-sm text-muted-foreground", eyebrow || title ? "mt-1" : undefined)}>
@@ -143,12 +143,12 @@ export function ProductStatCard({
   className,
 }: ProductStatCardProps) {
   return (
-    <div className={cn("card-icon-feature px-4 py-3", className)}>
+    <div className={cn("surface-panel px-4 py-3", className)}>
       <div className="flex items-center gap-2">
         {icon ? <span className="shrink-0 text-muted-foreground">{icon}</span> : null}
         <span className="label-mono text-text-subtle">{label}</span>
       </div>
-      <div className="mt-2 text-heading-sm text-foreground">
+      <div className="mt-2 text-heading-sm text-foreground tabular-nums">
         {value}
       </div>
       {description ? (

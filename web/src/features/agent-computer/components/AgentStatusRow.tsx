@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, CircleCheck, GitFork, CircleX, ChevronRight, ArrowRightLeft, AlertTriangle, Minus } from "lucide-react";
+import { CircleCheck, GitFork, CircleX, ChevronRight, ArrowRightLeft, AlertTriangle, Minus } from "lucide-react";
 import { MarkdownRenderer } from "@/shared/components/MarkdownRenderer";
 import { PulsingDot } from "@/shared/components/PulsingDot";
 import { cn } from "@/shared/lib/utils";
 import { TOOLING_ACTIVITY_ROW_CLASSES } from "@/shared/lib/tooling-ui-styles";
-import { normalizeToolName, normalizeAgentName } from "../lib/tool-constants";
+import { normalizeToolNameI18n, normalizeAgentName } from "../lib/tool-constants";
 import { ToolOutputRenderer } from "./ToolOutputRenderer";
 import { ToolArgsDisplay } from "./ToolArgsDisplay";
 import { SkillActivityEntry } from "./SkillActivityEntry";
+import { RunningBadge, ToolStatusGlyph, type ToolStatusTone } from "./ToolStatusGlyph";
 import { useTranslation } from "@/i18n";
 import {
   EVENT_LEFT_RAIL_CLASSES,
   EVENT_META_BADGE_CLASSES,
-  OUTPUT_CARD_INNER_CLASSES,
   PROSE_CLASSES,
   EVENT_ROW_BASE_CLASSES,
   SKILL_TOOL_NAMES,
@@ -30,40 +30,45 @@ function ToolStatusIcon({ tc, label }: { readonly tc: ToolCallInfo; readonly lab
   const isSkill = SKILL_TOOL_NAMES.has(tc.name);
   const skillId = isSkill ? String(tc.input.name ?? "").trim() : "";
   const ToolGlyph = skillId ? getSkillIcon(skillId) : getToolIcon(tc.name);
-  if (tc.success !== undefined) {
-    return tc.success === false
-      ? (
-        <span className="relative mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted" role="img" aria-label={label}>
-          <ToolGlyph className="h-3.5 w-3.5 text-destructive" strokeWidth={2.25} />
-          <CircleX
-            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-destructive"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-        </span>
-      )
-      : (
-        <span className="relative mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted" role="img" aria-label={label}>
-          <ToolGlyph className="h-3.5 w-3.5 text-foreground" strokeWidth={2.25} />
-          <Check
-            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-success"
-            strokeWidth={3}
-            aria-hidden
-          />
-        </span>
-      );
-  }
-  return (
-    <span className="relative mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted" role="img" aria-label={label}>
-      <ToolGlyph className="h-3.5 w-3.5 text-ring" strokeWidth={2.25} />
-      <span className="absolute inset-0 rounded-md bg-ring/20 animate-pulsing-dot-fade" />
-    </span>
-  );
+  const tone: ToolStatusTone = tc.success === undefined ? "running" : tc.success ? "complete" : "error";
+  return <ToolStatusGlyph glyph={ToolGlyph} tone={tone} label={label} />;
 }
+
+function AgentStatusIcon({ status, label }: { readonly status: AgentStatus["status"]; readonly label: string }) {
+  if (status === "running") {
+    return (
+      <span role="img" aria-label={label} className="flex shrink-0 items-center">
+        <PulsingDot size="sm" />
+      </span>
+    );
+  }
+  const Icon = status === "complete"
+    ? CircleCheck
+    : status === "skipped"
+      ? Minus
+      : status === "replan_required"
+        ? AlertTriangle
+        : CircleX;
+  const color = status === "complete"
+    ? "text-success-text"
+    : status === "skipped"
+      ? "text-muted-foreground"
+      : status === "replan_required"
+        ? "text-warning-text"
+        : "text-destructive";
+  return <Icon role="img" aria-label={label} className={cn("h-4 w-4 shrink-0", color)} />;
+}
+
+const AGENT_STATUS_LABEL_KEY: Record<string, string> = {
+  complete: "a11y.agentStatusComplete",
+  error: "a11y.agentStatusError",
+  skipped: "a11y.agentStatusSkipped",
+  replan_required: "a11y.agentStatusReplan",
+  running: "a11y.agentStatusRunning",
+};
 
 interface AgentStatusRowProps {
   readonly agent: AgentStatus;
-  readonly variant?: "light" | "dark";
   readonly toolCalls?: ToolCallInfo[];
   readonly conversationId?: string | null;
   readonly agentNameMap?: ReadonlyMap<string, string>;
@@ -71,7 +76,6 @@ interface AgentStatusRowProps {
 
 export function AgentStatusRow({
   agent,
-  variant: _variant = "light",
   toolCalls,
   conversationId,
   agentNameMap,
@@ -104,25 +108,18 @@ export function AgentStatusRow({
   const rowClassName = cn(
     EVENT_ROW_BASE_CLASSES,
     "flex w-full items-center gap-2 text-left text-sm transition-colors",
-    hasTools && "cursor-pointer transition-colors duration-150 hover:border-border-strong hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    hasTools && "cursor-pointer duration-150 hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   );
 
   const rowContent = (
     <>
-        {agent.status === "complete" ? (
-          <CircleCheck className="h-4 w-4 shrink-0 text-success" />
-        ) : agent.status === "skipped" ? (
-          <Minus className="h-4 w-4 shrink-0 text-muted-foreground" />
-        ) : agent.status === "replan_required" ? (
-          <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
-        ) : agent.status === "error" ? (
-          <CircleX className="h-4 w-4 shrink-0 text-destructive" />
-        ) : (
-          <PulsingDot size="sm" />
-        )}
-        <GitFork className="h-4 w-4 shrink-0 text-text-subtle" />
+        <AgentStatusIcon
+          status={agent.status}
+          label={t(AGENT_STATUS_LABEL_KEY[agent.status] ?? "a11y.agentStatusRunning")}
+        />
+        <GitFork className="h-4 w-4 shrink-0 text-text-subtle" aria-hidden="true" />
         <div className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-foreground">
+          <span className="block truncate text-sm font-medium text-foreground" title={agent.agentId}>
             {agent.description.includes(" → ") ? (
               <>
                 {agentLabel}
@@ -132,9 +129,6 @@ export function AgentStatusRow({
             ) : (
               agentLabel
             )}
-          </span>
-          <span className="mt-0.5 block font-mono text-micro text-text-subtle">
-            {agent.agentId.slice(0, 8)}
           </span>
         </div>
         {hasTools && (
@@ -148,7 +142,7 @@ export function AgentStatusRow({
             transition={{ duration: 0.15, ease: "easeOut" }}
             className="flex items-center"
           >
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </motion.span>
         )}
     </>
@@ -182,7 +176,7 @@ export function AgentStatusRow({
 
       {hasSummary && (
         <div className={cn("ml-1.5 mt-1.5", EVENT_LEFT_RAIL_CLASSES)}>
-          <div className={cn(OUTPUT_CARD_INNER_CLASSES, "grid gap-2 sm:grid-cols-[5rem_1fr]")}>
+          <div className="grid gap-2 rounded-lg bg-muted px-2.5 py-2 sm:grid-cols-[5rem_1fr]">
             <span className="text-micro font-medium text-text-subtle">
               {t("computer.agentSummary")}
             </span>
@@ -199,11 +193,10 @@ export function AgentStatusRow({
       <AnimatePresence initial={false}>
         {expanded && hasTools && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ opacity: 0, y: -2 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -2 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="overflow-hidden"
           >
             <div className={cn("ml-1.5 mt-1.5 space-y-2", EVENT_LEFT_RAIL_CLASSES)}>
               {toolCalls.map((tc) => {
@@ -233,12 +226,10 @@ export function AgentStatusRow({
                           tc.success === false ? "text-destructive" : "text-foreground",
                         )}
                       >
-                        {normalizeToolName(tc.name)}
+                        {normalizeToolNameI18n(tc.name, t)}
                       </span>
                       {tc.success === undefined && (
-                        <span className="status-pill status-info shrink-0">
-                          {t("computer.running")}
-                        </span>
+                        <RunningBadge>{t("computer.running")}</RunningBadge>
                       )}
                     </div>
                     {Object.keys(tc.input).length > 0 && (

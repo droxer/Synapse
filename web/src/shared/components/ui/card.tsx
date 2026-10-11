@@ -14,12 +14,12 @@ import { cn } from "@/shared/lib/utils"
 type CardVariant = "default" | "sunken" | "interactive" | "outlined" | "panel"
 
 const cardVariantClass: Record<CardVariant, string> = {
-  default: "flex flex-col gap-6 py-6 rounded-lg bg-card text-card-foreground",
-  sunken: "flex flex-col gap-6 py-6 rounded-lg bg-muted text-card-foreground",
+  default: "flex flex-col gap-6 py-6 rounded-xl bg-card text-card-foreground",
+  sunken: "flex flex-col gap-6 py-6 rounded-xl bg-muted text-card-foreground",
   interactive:
-    "flex flex-col gap-6 py-6 rounded-lg bg-card text-card-foreground hover:shadow-sm",
+    "flex flex-col gap-6 py-6 rounded-xl bg-card text-card-foreground transition-shadow hover:shadow-elevated",
   outlined:
-    "flex flex-col gap-6 py-6 rounded-lg border border-border bg-card text-card-foreground",
+    "flex flex-col gap-6 py-6 rounded-xl border border-border bg-card text-card-foreground",
   panel: "flex flex-col gap-6 py-6 rounded-lg bg-card text-card-foreground",
 }
 
@@ -59,7 +59,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("text-title text-foreground", className)}
+      className={cn("text-subtitle-lg text-foreground", className)}
       {...props}
     />
   )
@@ -69,7 +69,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-body text-text-muted", className)}
+      className={cn("text-body-sm text-muted-foreground", className)}
       {...props}
     />
   )

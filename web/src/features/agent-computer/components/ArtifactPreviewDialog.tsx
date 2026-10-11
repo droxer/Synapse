@@ -66,17 +66,18 @@ export function ArtifactPreviewDialog({
         <DialogHeader>
           <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <span
-              className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded ${colors.bg}`}
+              className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${colors.bg}`}
             >
               <BrandFileTypeIcon
                 name={artifact.name}
                 contentType={artifact.contentType}
                 className={`h-3.5 w-3.5 ${colors.icon}`}
+                aria-hidden="true"
               />
             </span>
-            <span className="min-w-0 flex-1 truncate">{artifact.name}</span>
+            <span className="min-w-0 flex-1 truncate" title={artifact.name}>{artifact.name}</span>
             {ext && (
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-micro uppercase text-muted-foreground">
+              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 font-mono text-micro uppercase text-muted-foreground">
                 {ext}
               </span>
             )}
@@ -91,7 +92,7 @@ export function ArtifactPreviewDialog({
           )}
         </DialogHeader>
 
-        <div className="max-h-[75vh] overflow-auto">
+        <div className="max-h-[75vh] overflow-auto overscroll-contain">
           {artifactUrl && (
             <FilePreview
               url={artifactUrl}
@@ -102,20 +103,19 @@ export function ArtifactPreviewDialog({
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           {onRequestDelete && (
             <Button
-              variant="secondary"
+              variant="destructive"
               size="sm"
-              className="text-destructive hover:bg-muted hover:text-destructive"
               onClick={onRequestDelete}
             >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               {t("explorer.delete")}
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={handleDownload}>
-            <Download className="mr-1.5 h-3.5 w-3.5" />
+            <Download className="h-3.5 w-3.5" aria-hidden="true" />
             {t("artifacts.downloadFile")}
           </Button>
         </DialogFooter>

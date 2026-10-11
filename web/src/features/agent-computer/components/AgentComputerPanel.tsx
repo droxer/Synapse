@@ -6,7 +6,6 @@ import {
   Monitor,
   CircleCheck,
   CircleX,
-  Check,
   X,
   FolderOpen,
   GitFork,
@@ -17,6 +16,7 @@ import {
   ExternalLink,
   PanelTop,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import {
@@ -36,6 +36,7 @@ import { normalizeSkillName } from "@/features/skills/lib/normalize-skill-name";
 import { ToolOutputRenderer } from "./ToolOutputRenderer";
 import { SkillActivityEntry } from "./SkillActivityEntry";
 import { AgentStatusRow } from "./AgentStatusRow";
+import { RunningBadge, ToolStatusGlyph, type ToolStatusTone } from "./ToolStatusGlyph";
 import { ArtifactFilesPanel } from "./ArtifactFilesPanel";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { cn } from "@/shared/lib/utils";
@@ -62,8 +63,6 @@ function getToolVerb(name: string, t: TFn): string {
 
 const COMPUTER_USE_TOOLS = new Set(["computer_action", "computer_screenshot"]);
 const AGENT_META_TOOLS = new Set(["agent_spawn", "agent_wait", "agent_send"]);
-const TOOL_ICON_FRAME_CLASS = "flex h-5 w-5 shrink-0 items-center justify-center rounded-md";
-const TOOL_ICON_GLYPH_CLASS = "h-3.5 w-3.5";
 
 /** Polished display for agent_spawn tool calls. */
 function SpawnAgentDisplay({ tc }: { readonly tc: ToolCallInfo }) {
@@ -84,7 +83,7 @@ function SpawnAgentDisplay({ tc }: { readonly tc: ToolCallInfo }) {
       </div>
       {taskDesc && (
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          {taskDesc.length > 200 ? taskDesc.slice(0, 197) + "..." : taskDesc}
+          {taskDesc.length > 200 ? taskDesc.slice(0, 197) + "…" : taskDesc}
         </p>
       )}
     </div>
@@ -140,7 +139,7 @@ function AgentSendDisplay({ tc, t, agentNameMap }: { readonly tc: ToolCallInfo; 
       </div>
       {message && (
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          {message.length > 200 ? message.slice(0, 197) + "..." : message}
+          {message.length > 200 ? message.slice(0, 197) + "…" : message}
         </p>
       )}
     </div>
@@ -160,7 +159,7 @@ function ThinkingPreview({ text }: { readonly text: string }) {
     <div className={cn("mb-2 py-0.5", EVENT_LEFT_RAIL_CLASSES)}>
       <span id={contentId} className="text-sm italic leading-relaxed text-muted-foreground">
         {shown}
-        {isLong && !expanded && "..."}
+        {isLong && !expanded && "…"}
       </span>
       {isLong && (
         <button
@@ -201,18 +200,13 @@ function ActivityTimelineToolCallRow({
     <motion.div
       data-step-id={`tool-${toolCall.id}`}
       initial={{ opacity: 0, y: 4 }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        backgroundColor: activeHighlight === `tool-${toolCall.id}`
-          ? "var(--color-secondary)"
-          : "rgba(0, 0, 0, 0)",
-      }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.12, ease: "easeOut" }}
       className={cn(
         TOOLING_ACTIVITY_ROW_CLASSES,
         visual.row,
         visual.rowHover,
+        activeHighlight === `tool-${toolCall.id}` && "bg-muted",
       )}
     >
       {toolCall.thinkingText && (
@@ -224,9 +218,11 @@ function ActivityTimelineToolCallRow({
         <span className={cn("min-w-0 flex-1 leading-6", visual.text)}>
           {statusText}
         </span>
-        <div className="flex shrink-0 items-center gap-1.5 self-start">
-          <RunningBadge toolCall={toolCall} t={t} />
-        </div>
+        {toolCall.success === undefined && (
+          <div className="flex shrink-0 items-center gap-1.5 self-start">
+            <RunningBadge>{t("computer.running")}</RunningBadge>
+          </div>
+        )}
       </div>
 
       {AGENT_META_TOOLS.has(toolCall.name) && (
@@ -288,15 +284,6 @@ function getRunningToolStatusText(toolCall: ToolCallInfo, t: TFn): string {
   return t("computer.usingTool", { verb: getToolVerb(toolCall.name, t) });
 }
 
-function RunningBadge({ toolCall, t }: { readonly toolCall: ToolCallInfo; readonly t: TFn }) {
-  if (toolCall.success !== undefined) return null;
-  return (
-    <span className="text-micro font-medium text-ring">
-      {t("computer.running")}
-    </span>
-  );
-}
-
 function getComputerUseStatusText(tc: ToolCallInfo, t: TFn): string {
   const action = tc.computerUseMetadata?.action ?? (tc.input.action as string | undefined);
   if (tc.name === "computer_screenshot" || !action) {
@@ -315,7 +302,7 @@ function getBrowserStatusText(tc: ToolCallInfo, t: TFn): string {
   }
   const task = tc.input.task as string | undefined;
   if (task) {
-    const truncated = task.length > 60 ? task.slice(0, 57) + "..." : task;
+    const truncated = task.length > 60 ? task.slice(0, 57) + "…" : task;
     return t("computer.browsingTask", { task: truncated });
   }
   return t("computer.usingTool", { verb: getToolVerb("browser_use", t) });
@@ -337,38 +324,73 @@ function StatusIcon({ tc }: { readonly tc: ToolCallInfo }) {
   const { t } = useTranslation();
   const skillId = SKILL_TOOL_NAMES.has(tc.name) ? String(tc.input.name ?? "").trim() : "";
   const ToolGlyph = skillId ? getSkillIcon(skillId) : getToolIcon(tc.name);
-  if (tc.success !== undefined) {
-    return tc.success === false
-      ? (
-        <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS)} aria-label={t("a11y.toolFailed")} role="img">
-          <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-destructive")} strokeWidth={2.25} />
-          <CircleX
-            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-destructive"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-        </span>
-      )
-      : (
-        <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS)} aria-label={t("a11y.toolSuccess")} role="img">
-          <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-foreground")} strokeWidth={2.25} />
-          <Check
-            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-success"
-            strokeWidth={3}
-            aria-hidden
-          />
-        </span>
-      );
-  }
-  return (
-    <span className={cn("relative mt-0.5", TOOL_ICON_FRAME_CLASS)} aria-label={t("a11y.toolRunning")} role="img">
-      <ToolGlyph className={cn(TOOL_ICON_GLYPH_CLASS, "text-ring")} strokeWidth={2.25} />
-      <span className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-ring" />
-    </span>
-  );
+  const tone: ToolStatusTone = tc.success === undefined ? "running" : tc.success ? "complete" : "error";
+  const label = tone === "error"
+    ? t("a11y.toolFailed")
+    : tone === "complete"
+      ? t("a11y.toolSuccess")
+      : t("a11y.toolRunning");
+  return <ToolStatusGlyph glyph={ToolGlyph} tone={tone} label={label} />;
 }
 
 type PanelTab = "activity" | "files" | "preview";
+
+const TAB_NAV_KEYS = new Set(["ArrowLeft", "ArrowRight", "Home", "End"]);
+
+const PANEL_TAB_META: Record<PanelTab, { readonly icon: LucideIcon; readonly labelKey: string }> = {
+  activity: { icon: Activity, labelKey: "computer.activity" },
+  preview: { icon: PanelTop, labelKey: "preview.tab" },
+  files: { icon: FolderOpen, labelKey: "computer.artifacts" },
+};
+
+const PANEL_TAB_CLASSES = cn(
+  "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+);
+
+function PanelTabButton({
+  tab,
+  isActive,
+  count,
+  onSelect,
+}: {
+  readonly tab: PanelTab;
+  readonly isActive: boolean;
+  readonly count?: number;
+  readonly onSelect: (tab: PanelTab) => void;
+}) {
+  const { t } = useTranslation();
+  const { icon: Icon, labelKey } = PANEL_TAB_META[tab];
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={isActive}
+      aria-controls={`panel-${tab}`}
+      id={`tab-${tab}`}
+      tabIndex={isActive ? 0 : -1}
+      onClick={() => onSelect(tab)}
+      className={cn(
+        PANEL_TAB_CLASSES,
+        isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+      {t(labelKey)}
+      {count !== undefined && (
+        <span
+          className={cn(
+            "ml-0.5 text-micro font-semibold tabular-nums transition-colors",
+            isActive ? "text-foreground" : "text-text-subtle",
+          )}
+        >
+          {count}
+        </span>
+      )}
+      {isActive && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-ring" />}
+    </button>
+  );
+}
 
 export function SandboxPreviewPanel({ previewSession }: { readonly previewSession: PreviewSession | null }) {
   const { t } = useTranslation();
@@ -397,7 +419,7 @@ export function SandboxPreviewPanel({ previewSession }: { readonly previewSessio
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2">
+      <div className="flex shrink-0 items-center gap-2 px-3 py-2">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <PanelTop className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
@@ -446,7 +468,7 @@ export function SandboxPreviewPanel({ previewSession }: { readonly previewSessio
             key={frameKey}
             src={url}
             title={t("preview.frameTitle")}
-            className="h-full min-h-[18rem] w-full rounded-md border border-border bg-background"
+            className="h-full min-h-[18rem] w-full rounded-md bg-background"
             referrerPolicy="no-referrer"
             sandbox="allow-downloads allow-forms allow-modals allow-popups allow-scripts"
           />
@@ -563,7 +585,9 @@ export function AgentComputerPanel({
         }
       }
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const prefersReducedMotion = typeof window !== "undefined"
+          && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        el.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "center" });
       }
     });
 
@@ -574,14 +598,19 @@ export function AgentComputerPanel({
 
   const handleTabKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (!TAB_NAV_KEYS.has(e.key)) return;
       e.preventDefault();
 
       const currentIndex = panelTabs.indexOf(activeTab);
+      const lastIndex = panelTabs.length - 1;
       const nextIndex =
-        e.key === "ArrowRight"
-          ? (currentIndex + 1) % panelTabs.length
-          : (currentIndex - 1 + panelTabs.length) % panelTabs.length;
+        e.key === "Home"
+          ? 0
+          : e.key === "End"
+            ? lastIndex
+            : e.key === "ArrowRight"
+              ? (currentIndex + 1) % panelTabs.length
+              : (currentIndex - 1 + panelTabs.length) % panelTabs.length;
 
       const nextTab = panelTabs[nextIndex] ?? "activity";
       setActiveTab(nextTab);
@@ -675,7 +704,7 @@ export function AgentComputerPanel({
   );
 
   return (
-    <div lang="en" className="flex h-full flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       {/* ── Header ── */}
       <div className="shrink-0 bg-background">
         {/* Title bar */}
@@ -714,92 +743,29 @@ export function AgentComputerPanel({
           )}
         </div>
 
-        {/* Tab bar — underline-style, flush with border */}
+        {/* Tab bar — underline indicator only, no baseline rule */}
         <div
           ref={tabListRef}
-          className="relative flex gap-1 border-b border-border/60 px-3"
+          className="relative flex gap-1 px-3"
           role="tablist"
           aria-label={t("computer.tabsLabel")}
           onKeyDown={handleTabKeyDown}
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "activity"}
-            aria-controls="panel-activity"
-            id="tab-activity"
-            tabIndex={activeTab === "activity" ? 0 : -1}
-            onClick={() => setActiveTab("activity")}
-            className={cn(
-              "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              activeTab === "activity"
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Activity className="h-4 w-4" aria-hidden="true" />
-            {t("computer.activity")}
-            {activeTab === "activity" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ring" />}
-          </button>
-          {previewSession?.active && (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "preview"}
-              aria-controls="panel-preview"
-              id="tab-preview"
-              tabIndex={activeTab === "preview" ? 0 : -1}
-              onClick={() => setActiveTab("preview")}
-              className={cn(
-                "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                activeTab === "preview"
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <PanelTop className="h-4 w-4" aria-hidden="true" />
-              {t("preview.tab")}
-              {activeTab === "preview" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ring" />}
-            </button>
-          )}
-          {hasArtifacts && (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "files"}
-              aria-controls="panel-files"
-              id="tab-files"
-              tabIndex={activeTab === "files" ? 0 : -1}
-              onClick={() => setActiveTab("files")}
-              className={cn(
-                "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                activeTab === "files"
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <FolderOpen className="h-4 w-4" aria-hidden="true" />
-              {t("computer.artifacts")}
-              <span
-                className={cn(
-                  "ml-0.5 text-micro font-semibold tabular-nums transition-colors",
-                  activeTab === "files" ? "text-foreground" : "text-text-subtle",
-                )}
-              >
-                {visibleArtifacts.length}
-              </span>
-              {activeTab === "files" && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ring" />}
-            </button>
-          )}
+          {panelTabs.map((tab) => (
+            <PanelTabButton
+              key={tab}
+              tab={tab}
+              isActive={activeTab === tab}
+              count={tab === "files" ? visibleArtifacts.length : undefined}
+              onSelect={setActiveTab}
+            />
+          ))}
         </div>
       </div>
 
       {/* ── Files tab ── */}
       {activeTab === "files" && hasArtifacts && (
-        <div id="panel-files" role="tabpanel" aria-labelledby="tab-files" className="flex-1 overflow-y-auto">
+        <div id="panel-files" role="tabpanel" aria-labelledby="tab-files" className="min-h-0 flex-1">
           <ArtifactFilesPanel artifacts={visibleArtifacts} conversationId={conversationId} />
         </div>
       )}
@@ -825,7 +791,7 @@ export function AgentComputerPanel({
           </div>
           <div
             ref={contentRef}
-            className="flex-1 overflow-y-auto bg-background px-4 py-3 sm:px-5"
+            className="flex-1 overflow-y-auto overscroll-contain bg-background px-4 py-3 sm:px-5"
           >
             {/* Empty state */}
             {timelineItems.length === 0 && (
@@ -846,7 +812,6 @@ export function AgentComputerPanel({
                   >
                     <AgentStatusRow
                       agent={item.agent}
-                      variant="light"
                       conversationId={conversationId}
                       agentNameMap={agentNameMap}
                     />
@@ -868,7 +833,7 @@ export function AgentComputerPanel({
                       <div
                         key={tc.id}
                         className={cn(
-                          scopedWrap && "border-l border-border/70 pl-3",
+                          scopedWrap && "pl-3",
                           isFirstAgentTool && agentHighlighted && "rounded-lg bg-muted",
                         )}
                         data-step-id={`tool-${tc.id}`}
@@ -890,7 +855,7 @@ export function AgentComputerPanel({
                     <div
                       key={tc.id}
                       className={cn(
-                        scopedWrap && "border-l border-border/70 pl-3",
+                        scopedWrap && "pl-3",
                         isFirstAgentTool && agentHighlighted && "rounded-lg bg-muted",
                       )}
                       data-step-id={`tool-${tc.id}`}
@@ -917,9 +882,10 @@ export function AgentComputerPanel({
           </div>
 
           {/* ── Consolidated status bar ── */}
-          <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 border-t border-border/60 bg-background px-3 py-2">
+          <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 bg-muted/50 px-3 py-2">
             <Progress
               value={progressValue}
+              aria-label={t("progress.taskProgress", { percent: progressValue })}
               className="h-1.5 min-w-[6rem] flex-1 rounded-full bg-muted"
               indicatorClassName={getTaskStateProgressIndicatorClass(taskState)}
             />
@@ -939,7 +905,7 @@ export function AgentComputerPanel({
               {isRunning ? (
                 <PulsingDot size="sm" />
               ) : taskState === "complete" ? (
-                <CircleCheck className="h-3 w-3" />
+                <CircleCheck className="h-3 w-3" aria-hidden="true" />
               ) : taskState === "error" ? (
                 <CircleX className="h-3 w-3 text-destructive" />
               ) : null}

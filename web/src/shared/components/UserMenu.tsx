@@ -73,11 +73,11 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="rounded-full border border-border p-0.5 transition-colors duration-200 hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                  aria-label={name ?? "User menu"}
+                  className="rounded-full p-0.5 ring-1 ring-profile-ring transition-shadow duration-200 hover:ring-profile-ring-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label={name ?? t("shared.userMenu.label")}
                 >
-                  <Avatar className="h-8 w-8 border border-border">
-                    <AvatarImage src={image ?? undefined} alt={name ?? "User"} />
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={image ?? undefined} alt={name ?? t("shared.userMenu.avatarAlt")} />
                     <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                     <AvatarBadge className="bg-success ring-1 ring-sidebar-bg" />
                   </Avatar>
@@ -89,7 +89,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
           <PopoverContent
             side="right"
             align="end"
-            className="w-56 animate-in fade-in duration-100 p-0"
+            className="w-56 p-0"
           >
             <ProfilePopoverContent
               name={name}
@@ -110,15 +110,15 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
         <button
           type="button"
           className={cn(
-            "flex w-full items-center gap-2.5 rounded-full px-2 py-2 text-left",
+            "group flex w-full items-center gap-2.5 rounded-full px-2 py-2 text-left",
             "transition-colors duration-200",
             "hover:bg-sidebar-hover",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
         >
-          <div className="rounded-full border border-border p-0.5 transition-colors duration-200 group-hover:border-border-strong">
-            <Avatar className="h-9 w-9 border border-border">
-              <AvatarImage src={image ?? undefined} alt={name ?? "User"} />
+          <div className="rounded-full p-0.5 ring-1 ring-profile-ring transition-shadow duration-200 group-hover:ring-profile-ring-hover">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={image ?? undefined} alt={name ?? t("shared.userMenu.avatarAlt")} />
               <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               <AvatarBadge className="bg-success ring-1 ring-sidebar-bg" />
             </Avatar>
@@ -136,7 +136,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
       <PopoverContent
         side="top"
         align="start"
-        className="w-56 animate-in fade-in duration-100 p-0"
+        className="w-56 p-0"
       >
         <ProfilePopoverContent
           name={name}
@@ -165,14 +165,14 @@ function ProfilePopoverContent({
     <div className="flex flex-col">
       {/* User info */}
       <div className="px-3 py-3">
-        <p className="text-body-sm-bold text-foreground">{name}</p>
+        <p className="truncate text-body-sm-bold text-foreground">{name}</p>
         <p className="mt-0.5 truncate text-caption-bold text-muted-foreground">{email}</p>
       </div>
 
-      <div className="border-t border-border/60" />
+
 
       {/* Actions */}
-      <div className="p-1.5">
+      <div className="px-1.5 pb-1.5">
         <button
           type="button"
           onClick={onOpenSettings}
@@ -183,7 +183,7 @@ function ProfilePopoverContent({
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
         >
-          <Settings className="h-4 w-4" />
+          <Settings className="h-4 w-4" aria-hidden="true" />
           {t("profile.settings")}
         </button>
         <button
@@ -191,12 +191,12 @@ function ProfilePopoverContent({
           onClick={() => signOut({ callbackUrl: "/login" })}
           className={cn(
             "flex w-full items-center gap-2 rounded-full px-2.5 py-2 text-body-sm",
-            "text-destructive transition-colors duration-150",
-            "hover:bg-destructive/10",
+            "text-foreground transition-colors duration-150",
+            "hover:bg-muted",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4" aria-hidden="true" />
           {t("profile.signOut")}
         </button>
       </div>

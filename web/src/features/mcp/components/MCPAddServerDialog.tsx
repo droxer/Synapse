@@ -44,12 +44,13 @@ export function MCPAddServerDialog({
   const { t } = useTranslation();
   const title = mode === "edit" ? t("mcp.editFormTitle") : t("mcp.addFormTitle");
   const submitLabel = mode === "edit" ? t("mcp.save") : t("mcp.connect");
+  const submittingLabel = mode === "edit" ? t("mcp.saving") : t("mcp.connecting");
 
   return (
     <AddEntityDialog
       open={open}
       onOpenChange={onOpenChange}
-      icon={<Blocks className="h-4 w-4 text-muted-foreground" />}
+      icon={<Blocks aria-hidden="true" className="h-4 w-4 text-muted-foreground" />}
       title={title}
     >
       <MCPServerForm
@@ -62,6 +63,7 @@ export function MCPAddServerDialog({
         headerCount={headerCount}
         submitting={submitting}
         submitLabel={submitLabel}
+        submittingLabel={submittingLabel}
         onApplySchema={onApplySchema}
         onSubmit={onSubmit}
         onCancel={onCancel}

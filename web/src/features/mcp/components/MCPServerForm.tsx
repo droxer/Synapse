@@ -3,11 +3,11 @@
 import type { ChangeEvent, ClipboardEvent } from "react";
 import { Check, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 import { ErrorBanner } from "@/shared/components/ErrorBanner";
+import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useTranslation } from "@/i18n";
-import { cn } from "@/shared/lib/utils";
 import type { MCPTransport } from "../lib/parse-mcp-config";
 
 interface MCPServerFormProps {
@@ -20,6 +20,8 @@ interface MCPServerFormProps {
   readonly headerCount: number;
   readonly submitting: boolean;
   readonly submitLabel: string;
+  /** Label shown while submitting, e.g. "Connecting…" */
+  readonly submittingLabel: string;
   readonly onApplySchema: (value?: string) => void;
   readonly onSubmit: () => void;
   readonly onCancel: () => void;
@@ -37,6 +39,7 @@ export function MCPServerForm({
   headerCount,
   submitting,
   submitLabel,
+  submittingLabel,
   onApplySchema,
   onSubmit,
   onCancel,
@@ -60,48 +63,54 @@ export function MCPServerForm({
   return (
     <div className="space-y-4">
       {error && (
-        <ErrorBanner message={error} onDismiss={onDismissError} variant="compact" />
+        <ErrorBanner
+          message={error}
+          onDismiss={onDismissError}
+          variant="compact"
+          dismissLabel={t("mcp.dismissError")}
+        />
       )}
 
       <div className="space-y-1.5">
         <Label htmlFor={`${idPrefix}-schema`} className="label-mono text-text-subtle">
           {t("mcp.schema")}
         </Label>
-        <p className="text-xs text-muted-foreground">{schemaHelper}</p>
+        <p className="text-caption text-muted-foreground">{schemaHelper}</p>
       </div>
 
-      <div className="surface-panel overflow-hidden bg-background transition-shadow duration-150 focus-within:ring-2 focus-within:ring-ring/40">
+      <div className="overflow-hidden rounded-xl border border-input bg-background transition-[border-color,box-shadow] duration-150 focus-within:border-focus focus-within:ring-2 focus-within:ring-ring/40">
         <Textarea
           id={`${idPrefix}-schema`}
           placeholder={t("mcp.schemaPlaceholder")}
           value={formSchema}
           onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onFormSchemaChange(e.target.value)}
           onPaste={handleSchemaPaste}
-          className="min-h-[10rem] resize-y rounded-none border-0 bg-transparent px-4 py-3 font-mono text-xs leading-relaxed focus-visible:border-transparent focus-visible:ring-0 focus-visible:px-4"
+          className="min-h-[10rem] resize-y rounded-none border-0 bg-transparent px-4 py-3 font-mono text-caption leading-relaxed focus-visible:border-transparent focus-visible:ring-0 focus-visible:px-4"
           autoFocus
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 bg-muted/40 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-muted/60 px-3 py-2">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <span
-              className={cn(
-                "status-pill",
-                hasParsedConfig ? "status-ok" : "status-neutral",
-              )}
+            <Badge
+              variant={hasParsedConfig ? "success" : "neutral"}
+              className="max-w-full"
+              aria-live="polite"
             >
-              <ShieldCheck className="h-3 w-3" />
-              {hasParsedConfig ? parsedName : t("mcp.waitingForConfig")}
-            </span>
+              <ShieldCheck aria-hidden="true" />
+              <span className="truncate">
+                {hasParsedConfig ? parsedName : t("mcp.waitingForConfig")}
+              </span>
+            </Badge>
             {hasParsedConfig && (
               <span className="font-mono text-micro text-text-subtle">
                 {formTransport}
               </span>
             )}
             {headerCount > 0 && (
-              <span className="status-pill status-ok">
-                <Check className="h-3 w-3" />
+              <Badge variant="success" className="tabular-nums">
+                <Check aria-hidden="true" />
                 {t("mcp.headersApplied", { count: headerCount })}
-              </span>
+              </Badge>
             )}
           </div>
           <Button
@@ -110,7 +119,7 @@ export function MCPServerForm({
             onClick={() => onApplySchema()}
             disabled={submitting || !formSchema.trim()}
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
             {t("mcp.applySchema")}
           </Button>
         </div>
@@ -124,9 +133,10 @@ export function MCPServerForm({
           size="sm"
           onClick={onSubmit}
           disabled={submitting || !formSchema.trim()}
+          aria-busy={submitting || undefined}
         >
-          {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {submitLabel}
+          {submitting && <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />}
+          {submitting ? submittingLabel : submitLabel}
         </Button>
       </div>
     </div>

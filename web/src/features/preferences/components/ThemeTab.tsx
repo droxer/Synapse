@@ -10,6 +10,8 @@ import { TabHeader } from "./TabHeader";
 
 type ThemeValue = "light" | "dark" | "system";
 
+const DEFAULT_THEME: ThemeValue = "dark";
+
 const THEME_OPTIONS: readonly {
   readonly value: ThemeValue;
   readonly icon: typeof Sun;
@@ -21,20 +23,21 @@ const THEME_OPTIONS: readonly {
   { value: "system", icon: Monitor, labelKey: "theme.system", descKey: "preferences.theme.systemDesc" },
 ];
 
-const SWATCHES: readonly { readonly token: string; readonly label: string }[] = [
-  { token: "var(--color-background)", label: "background" },
-  { token: "var(--color-muted)", label: "muted" },
-  { token: "var(--color-foreground)", label: "foreground" },
-  { token: "var(--color-primary)", label: "primary" },
-  { token: "var(--color-accent-emerald)", label: "accent" },
+const SWATCHES: readonly { readonly token: string; readonly labelKey: string }[] = [
+  { token: "var(--color-background)", labelKey: "preferences.theme.swatch.background" },
+  { token: "var(--color-muted)", labelKey: "preferences.theme.swatch.muted" },
+  { token: "var(--color-foreground)", labelKey: "preferences.theme.swatch.foreground" },
+  { token: "var(--color-primary)", labelKey: "preferences.theme.swatch.primary" },
+  { token: "var(--color-accent-emerald)", labelKey: "preferences.theme.swatch.accent" },
 ];
 
 function ThemePreview() {
+  const { t } = useTranslation();
   return (
-    <div className="overflow-hidden rounded-md border border-border bg-background">
-      <div className="flex items-baseline gap-3 border-b border-border/60 px-4 pb-3 pt-4">
+    <div className="overflow-hidden rounded-lg bg-background">
+      <div className="flex items-baseline gap-3 px-4 pb-2 pt-4">
         <span
-          className="text-[2.25rem] leading-none text-foreground"
+          className="text-heading-lg leading-none text-foreground"
           style={{ fontFamily: "var(--font-brand-family)" }}
           aria-hidden="true"
         >
@@ -44,23 +47,17 @@ function ThemePreview() {
       </div>
       <div className="px-4 py-3">
         <p className="text-body-sm text-foreground">
-          The quick brown fox jumps over the lazy dog.
+          {t("preferences.theme.previewSample")}
         </p>
         <p className="mt-1 text-caption text-muted-foreground">
-          Display + body type rendered in the active theme.
+          {t("preferences.theme.previewCaption")}
         </p>
       </div>
-      <div
-        className="flex items-stretch gap-1 border-t border-border/60 px-3 py-2.5"
-        aria-hidden="true"
-      >
-        {SWATCHES.map(({ token, label }) => (
-          <div key={label} className="flex flex-1 flex-col items-stretch gap-1">
-            <div
-              className="h-6 rounded-sm ring-1 ring-inset ring-border/60"
-              style={{ background: token }}
-            />
-            <span className="label-mono text-center text-text-subtle">{label}</span>
+      <div className="flex items-stretch gap-1 px-3 pb-3 pt-1" aria-hidden="true">
+        {SWATCHES.map(({ token, labelKey }) => (
+          <div key={labelKey} className="flex min-w-0 flex-1 flex-col items-stretch gap-1">
+            <div className="h-6 rounded-sm shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-foreground)_8%,transparent)]" style={{ background: token }} />
+            <span className="label-mono truncate text-center text-text-subtle">{t(labelKey)}</span>
           </div>
         ))}
       </div>
@@ -78,8 +75,11 @@ export function ThemeTab() {
     setMounted(true);
   }, []);
 
-  const currentTheme = mounted ? (theme as ThemeValue) ?? "dark" : "dark";
-  const selectedOption = THEME_OPTIONS.find((option) => option.value === currentTheme) ?? THEME_OPTIONS[2];
+  const currentTheme: ThemeValue = mounted ? ((theme as ThemeValue | undefined) ?? DEFAULT_THEME) : DEFAULT_THEME;
+  const selectedOption =
+    THEME_OPTIONS.find((option) => option.value === currentTheme) ??
+    THEME_OPTIONS.find((option) => option.value === DEFAULT_THEME) ??
+    THEME_OPTIONS[0];
   const SelectedIcon = selectedOption.icon;
 
   const handleSelect = (value: ThemeValue) => {
@@ -111,12 +111,12 @@ export function ThemeTab() {
       <div className="surface-panel mt-4 p-3">
         <ThemePreview />
         <div className="mt-3 flex items-center gap-1.5">
-          <SelectedIcon className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">
+          <SelectedIcon aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-body-sm-bold text-foreground">
             {t(selectedOption.labelKey)}
           </span>
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-caption text-muted-foreground">
           {t(selectedOption.descKey)}
         </p>
       </div>

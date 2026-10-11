@@ -36,6 +36,8 @@ describe("tool screenshot renderers", () => {
     expect(html).toContain("aspect-video");
     expect(html).toContain("/api/conversations/conv-1/artifacts/artifact-1");
     expect(html).toContain("/api/conversations/conv-1/artifacts/artifact-2");
+    expect(html).toContain('alt="Generated image 1/2"');
+    expect(html).toContain('alt="Generated image 2/2"');
   });
 
   it("uses the shared output-surface contract for agent-computer renderers", () => {
@@ -44,9 +46,9 @@ describe("tool screenshot renderers", () => {
     );
 
     expect(OUTPUT_CARD_BASE_CLASSES).toContain("surface-panel");
-    expect(OUTPUT_HEADER_ROW_CLASSES).toContain("border-b border-border/60");
-    expect(OUTPUT_CARD_INNER_CLASSES).toContain("rounded-lg border border-border bg-muted");
+    expect(OUTPUT_HEADER_ROW_CLASSES).not.toContain("border");
+    expect(OUTPUT_CARD_INNER_CLASSES).not.toContain("border");
     expect(computerHtml).toContain("surface-panel");
-    expect(computerHtml).toContain("rounded-lg border border-border bg-muted");
+    expect(computerHtml).toContain(OUTPUT_CARD_INNER_CLASSES);
   });
 });

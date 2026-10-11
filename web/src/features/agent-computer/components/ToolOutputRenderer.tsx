@@ -53,6 +53,8 @@ import { getToolCategory, type ToolCategory } from "../lib/tool-constants";
 import type { BrowserMetadata, ComputerUseMetadata } from "@/shared/types";
 
 const ELLIPSIS = "…";
+/** Rows rendered before "Show more" for database_query tables. */
+const TABLE_ROW_PREVIEW_LIMIT = 50;
 
 interface CategoryStyle {
   readonly icon: LucideIcon;
@@ -222,28 +224,28 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
       <TerminalWindow title={`preview${portLabel ? ` \u2014 ${portLabel}` : ""}`} className="mt-2">
         {/* Command line */}
         <div className="flex gap-2">
-          <span className="text-[var(--color-terminal-text)]">$</span>
-          <span className="text-[var(--color-terminal-text)]">{t("output.preview.serverStart")}</span>
+          <span className="text-terminal-text">$</span>
+          <span className="text-terminal-text">{t("output.preview.serverStart")}</span>
         </div>
 
         {/* Output */}
         <div className={cn("mt-2", OUTPUT_SCROLL_AREA_CLASSES)}>
-          <pre className="whitespace-pre text-[var(--color-terminal-text)]">{stripAnsi(output)}</pre>
+          <pre className="whitespace-pre text-terminal-text">{stripAnsi(output)}</pre>
         </div>
 
         {/* Status indicator */}
-        <div className="mt-3 flex items-center gap-2 border-t border-terminal-border pt-3">
+        <div className="mt-3 flex items-center gap-2">
           {isActive ? (
             <>
-              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[var(--color-terminal-text)]" />
-              <span className="text-[var(--color-terminal-text)]">
-                {t("output.preview.listening", { port: preview.port ?? "..." })}
+              <span aria-hidden="true" className="inline-flex h-2.5 w-2.5 rounded-full bg-success" />
+              <span className="text-terminal-text">
+                {t("output.preview.listening", { port: preview.port ?? ELLIPSIS })}
               </span>
             </>
           ) : (
             <>
-              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[var(--color-terminal-dim)]" />
-              <span className="text-[var(--color-terminal-dim)]">{t("output.preview.stopped")}</span>
+              <span aria-hidden="true" className="inline-flex h-2.5 w-2.5 rounded-full bg-terminal-dim" />
+              <span className="text-terminal-dim">{t("output.preview.stopped")}</span>
             </>
           )}
         </div>
@@ -257,16 +259,16 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
       <TerminalWindow title={t("output.shell.title")} className="mt-2" copyText={stripAnsi(output)}>
         {/* Output */}
         <div className={OUTPUT_SCROLL_AREA_CLASSES}>
-          <pre className="whitespace-pre text-[var(--color-terminal-text)]">
+          <pre className="whitespace-pre text-terminal-text">
             {stripAnsi(displayText)}
             {isLong && !expanded && (
-              <span className="text-[var(--color-terminal-dim)]">{`\n${ELLIPSIS}`}</span>
+              <span className="text-terminal-dim">{`\n${ELLIPSIS}`}</span>
             )}
           </pre>
         </div>
 
         {isLong && (
-          <div className="mt-2 border-t border-terminal-border pt-2">
+          <div className="mt-2">
             <ExpandToggle expanded={expanded} onToggle={handleToggle} />
           </div>
         )}
@@ -296,8 +298,8 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
     return (
       <OutputSurface>
         <OutputSurfaceHeader
-          icon={<Braces className="h-3.5 w-3.5 text-muted-foreground" />}
-          label={style.labelKey ? t(style.labelKey) : "Structured output"}
+          icon={<Braces className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />}
+          label={style.labelKey ? t(style.labelKey) : t("output.structuredOutput")}
           className="justify-between"
           action={(
             <button
@@ -309,8 +311,8 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
                 OUTPUT_SURFACE_FOCUS_CLASSES,
               )}
             >
-              {copiedJson ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copiedJson ? t("output.copied") : t("output.copy")}
+              {copiedJson ? <Check className="h-3 w-3" aria-hidden="true" /> : <Copy className="h-3 w-3" aria-hidden="true" />}
+              <span aria-live="polite">{copiedJson ? t("output.copied") : t("output.copy")}</span>
             </button>
           )}
         />
@@ -455,6 +457,8 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
         const rows = JSON.parse(jsonPart) as Record<string, unknown>[];
         if (Array.isArray(rows) && rows.length > 0) {
           const columns = Object.keys(rows[0]);
+          const hasHiddenRows = rows.length > TABLE_ROW_PREVIEW_LIMIT;
+          const visibleRows = hasHiddenRows && !expanded ? rows.slice(0, TABLE_ROW_PREVIEW_LIMIT) : rows;
           return (
             <div className={OUTPUT_CARD_BASE_CLASSES}>
               <div className={cn(OUTPUT_HEADER_ROW_CLASSES, "gap-1")}>
@@ -465,23 +469,24 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
               <div className={cn(OUTPUT_CARD_INNER_CLASSES, OUTPUT_SCROLL_AREA_CLASSES)}>
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-border/60">
+                    <tr>
                       {columns.map((col) => (
                         <th key={col} className="whitespace-nowrap px-2 py-1 text-micro font-medium text-text-subtle">{col}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((row, i) => (
-                      <tr key={i} className={cn("border-b border-border/60", i % 2 === 1 && "bg-background")}>
+                    {visibleRows.map((row, i) => (
+                      <tr key={i} className={cn(i % 2 === 0 && "bg-muted/60")}>
                         {columns.map((col) => (
-                          <td key={col} className="px-2 py-1 text-muted-foreground break-words">{String(row[col] ?? "")}</td>
+                          <td key={col} className="break-words px-2 py-1 tabular-nums text-muted-foreground">{String(row[col] ?? "")}</td>
                         ))}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              {hasHiddenRows && <ExpandToggle expanded={expanded} onToggle={handleToggle} />}
               </div>
             </div>
           );
@@ -527,20 +532,20 @@ export function ToolOutputRenderer({ output, toolName, success, contentType, con
   // Failed tool call — show error output with distinct styling
   if (success === false) {
     return (
-      <div className={cn(OUTPUT_CARD_BASE_CLASSES, "border-destructive bg-card")}>
-        <div className={cn(OUTPUT_HEADER_ROW_CLASSES, "border-destructive text-destructive")}>
-          <CircleX className="h-3 w-3" />
+      <div className="mt-2 overflow-hidden rounded-xl bg-destructive/5">
+        <div className={cn(OUTPUT_HEADER_ROW_CLASSES, "text-destructive")}>
+          <CircleX className="h-3 w-3" aria-hidden="true" />
           {t("output.toolFailed")}
         </div>
         <div className={OUTPUT_CARD_BODY_CLASSES}>
-          <div className={cn(OUTPUT_CARD_INNER_CLASSES, PROSE_CLASSES, OUTPUT_SCROLL_AREA_CLASSES, "border-destructive bg-card")}>
+          <div className={cn("rounded-lg bg-background px-2.5 py-2", PROSE_CLASSES, OUTPUT_SCROLL_AREA_CLASSES)}>
             <MarkdownRenderer content={displayText} className={TOOL_OUTPUT_MARKDOWN_CLASSES} compactCode />
             {isLong && !expanded && (
               <span className="text-text-subtle">{ELLIPSIS}</span>
             )}
           </div>
           {isLong && <ExpandToggle expanded={expanded} onToggle={handleToggle} />}
-          <p className="mt-1 text-sm text-muted-foreground">{t("conversation.retry")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("output.toolFailedHint")}</p>
         </div>
       </div>
     );

@@ -100,6 +100,7 @@ export function SkillsPage() {
   const folderInputRef = useRef<HTMLInputElement>(null);
 
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
+  const [togglingName, setTogglingName] = useState<string | null>(null);
 
   const handleInstall = async () => {
     if (!selectedFiles || selectedFiles.length === 0) return;
@@ -110,7 +111,8 @@ export function SkillsPage() {
       refetch();
       resetForm();
     } catch (err) {
-      setDialogError(err instanceof Error ? err.message : "Failed to upload skill");
+      console.error("Skill upload failed", err);
+      setDialogError(t("skills.errors.upload"));
     } finally {
       setSubmitting(false);
     }
@@ -127,6 +129,9 @@ export function SkillsPage() {
 
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    // Ignore leave events fired when the pointer moves onto a child element.
+    const next = e.relatedTarget;
+    if (next instanceof Node && e.currentTarget.contains(next)) return;
     setIsDragging(false);
   }, [setIsDragging]);
 
@@ -138,14 +143,21 @@ export function SkillsPage() {
 
     const entry = items[0].webkitGetAsEntry?.();
     if (entry?.isDirectory) {
-      const files = await readDirectoryEntries(entry as FileSystemDirectoryEntry, entry.name);
+      let files: File[];
+      try {
+        files = await readDirectoryEntries(entry as FileSystemDirectoryEntry, entry.name);
+      } catch (err) {
+        console.error("Failed to read dropped folder", err);
+        setDialogError(t("skills.errors.readFolder"));
+        return;
+      }
       const accepted = files.filter(isAcceptedFile);
       if (accepted.length > 0) {
         setSelectedFiles(accepted);
         setIsFolderUpload(true);
         setFolderName(entry.name);
       } else if (files.length > 0) {
-        setDialogError("Only .zip and .md files are supported");
+        setDialogError(t("skills.errors.unsupportedType"));
       }
     } else if (e.dataTransfer.files.length > 0) {
       const dropped = Array.from(e.dataTransfer.files);
@@ -155,10 +167,10 @@ export function SkillsPage() {
         setIsFolderUpload(false);
         setFolderName("");
       } else {
-        setDialogError("Only .zip and .md files are supported");
+        setDialogError(t("skills.errors.unsupportedType"));
       }
     }
-  }, [isAcceptedFile, setFolderName, setIsDragging, setIsFolderUpload, setSelectedFiles]);
+  }, [isAcceptedFile, setFolderName, setIsDragging, setIsFolderUpload, setSelectedFiles, t]);
 
   const handleDelete = useCallback(async () => {
     if (!skillToDelete) return;
@@ -168,21 +180,24 @@ export function SkillsPage() {
       refetch();
       setSkillToDelete(null);
     } catch (err) {
-      setPageError(
-        err instanceof Error ? err.message : "Failed to uninstall skill",
-      );
+      console.error("Skill uninstall failed", err);
+      setPageError(t("skills.errors.uninstall"));
     }
-  }, [refetch, skillToDelete]);
+  }, [refetch, skillToDelete, t]);
 
   const handleToggle = useCallback(async (name: string, enabled: boolean) => {
     setPageError(null);
+    setTogglingName(name);
     try {
       await toggleSkill(name, enabled);
       refetch();
     } catch (err) {
-      setPageError(err instanceof Error ? err.message : "Failed to toggle skill");
+      console.error("Skill toggle failed", err);
+      setPageError(t("skills.errors.toggle"));
+    } finally {
+      setTogglingName(null);
     }
-  }, [refetch]);
+  }, [refetch, t]);
 
   const bundledSkills = skills.filter((s) => s.source_type === "bundled");
   const installedSkills = skills.filter((s) => s.source_type !== "bundled");
@@ -224,7 +239,11 @@ export function SkillsPage() {
       <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4 sm:px-6">
         <div className="mx-auto max-w-6xl space-y-5">
           {pageError && (
-            <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
+            <ErrorBanner
+              message={pageError}
+              onDismiss={() => setPageError(null)}
+              dismissLabel={t("skills.dismissError")}
+            />
           )}
 
           <ProductSectionHeader
@@ -257,16 +276,14 @@ export function SkillsPage() {
               icon={Search}
               title={t("skills.noSkillsMatchingTitle", { defaultValue: "No matching skills" })}
               description={t("skills.noSkillsMatching", { filter })}
-              dashed
-              className="w-full max-w-xl mx-auto"
+              className="mx-auto w-full max-w-xl rounded-xl bg-muted py-14"
             />
           ) : skills.length === 0 ? (
             <EmptyState
               icon={Lightbulb}
               title={t("skills.noSkillsAvailable")}
               description={t("skills.noSkillsHint")}
-              dashed
-              className="w-full max-w-xl mx-auto"
+              className="mx-auto w-full max-w-xl rounded-xl bg-muted py-14"
             />
           ) : filter ? (
             <motion.div
@@ -281,6 +298,7 @@ export function SkillsPage() {
                     skill={skill}
                     onDelete={setSkillToDelete}
                     onToggle={skill.source_type === "bundled" ? undefined : handleToggle}
+                    isToggling={togglingName === skill.name}
                   />
                 </motion.div>
               ))}
@@ -320,8 +338,7 @@ export function SkillsPage() {
                     icon={Globe}
                     title={t("skills.noInstalledSkills")}
                     description={t("skills.noInstalledSkillsHint")}
-                    dashed
-                    className="w-full max-w-xl mx-auto"
+                    className="mx-auto w-full max-w-xl rounded-xl bg-muted py-14"
                   />
                 ) : (
                   <motion.div
@@ -336,6 +353,7 @@ export function SkillsPage() {
                           skill={skill}
                           onDelete={setSkillToDelete}
                           onToggle={handleToggle}
+                          isToggling={togglingName === skill.name}
                         />
                       </motion.div>
                     ))}
@@ -349,14 +367,23 @@ export function SkillsPage() {
 
       <AddEntityDialog
         open={showForm}
-        onOpenChange={(open) => { if (!open) { resetForm(); setDialogError(null); } }}
+        onOpenChange={(open) => {
+          if (open || submitting) return;
+          resetForm();
+          setDialogError(null);
+        }}
         icon={<Lightbulb className="h-4 w-4 text-muted-foreground" />}
         title={t("skills.installFormTitle")}
         description={t("skills.installFormDescription")}
       >
         <div className="space-y-4">
           {dialogError && (
-            <ErrorBanner message={dialogError} onDismiss={() => setDialogError(null)} variant="compact" />
+            <ErrorBanner
+              message={dialogError}
+              onDismiss={() => setDialogError(null)}
+              variant="compact"
+              dismissLabel={t("skills.dismissError")}
+            />
           )}
 
           <div
@@ -366,16 +393,14 @@ export function SkillsPage() {
             className={cn(
               TOOLING_DROPZONE_CLASSES,
               "cursor-default",
-              isDragging
-                ? "border-border-strong bg-muted"
-                : "border-border hover:border-border-strong",
+              isDragging ? "border-border-strong bg-muted" : "border-border",
             )}
           >
             <Upload className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground">
               {isDragging ? t("skills.dropZoneActive") : t("skills.dropZone")}
             </p>
-            <p className="text-xs text-text-subtle">{t("skills.dropZoneHint")}</p>
+            <p className="text-caption text-text-subtle">{t("skills.dropZoneHint")}</p>
             <div className="mt-2 flex items-center gap-2">
               <Button
                 type="button"
@@ -396,7 +421,7 @@ export function SkillsPage() {
                 {t("skills.chooseFolder")}
               </Button>
             </div>
-            <p className="mt-3 text-micro text-text-subtle">{t("skills.gitComingSoon")}</p>
+            <p className="mt-3 text-caption text-text-subtle">{t("skills.gitComingSoon")}</p>
           </div>
 
           <input
@@ -430,11 +455,11 @@ export function SkillsPage() {
           />
 
           {selectedFiles && selectedFiles.length > 0 && (
-            <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
+            <div className="flex min-w-0 items-center gap-2 rounded-lg bg-muted px-3 py-2">
               {isFolderUpload
                 ? <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
                 : <FileText className="h-3.5 w-3.5 text-muted-foreground" />}
-              <span className="flex-1 truncate text-xs text-foreground">
+              <span className="min-w-0 flex-1 truncate text-caption text-foreground">
                 {isFolderUpload
                   ? t("skills.selectedFolder", { name: folderName })
                   : t("skills.selectedFiles", { count: selectedFiles.length })}
@@ -447,7 +472,7 @@ export function SkillsPage() {
                   setIsFolderUpload(false);
                   setFolderName("");
                 }}
-                className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-circle text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -455,7 +480,7 @@ export function SkillsPage() {
           )}
 
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button variant="ghost" size="sm" onClick={resetForm}>
+            <Button variant="ghost" size="sm" onClick={resetForm} disabled={submitting}>
               {t("skills.cancel")}
             </Button>
             <Button
@@ -463,8 +488,8 @@ export function SkillsPage() {
               onClick={handleInstall}
               disabled={submitting || !selectedFiles || selectedFiles.length === 0}
             >
-              {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {t("skills.install")}
+              {submitting && <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />}
+              {submitting ? t("skills.installing") : t("skills.install")}
             </Button>
           </div>
         </div>
@@ -485,10 +510,7 @@ export function SkillsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("skills.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
-            >
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
               {t("skills.uninstall")}
             </AlertDialogAction>
           </AlertDialogFooter>

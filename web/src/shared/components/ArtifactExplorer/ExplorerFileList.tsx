@@ -9,15 +9,24 @@ import {
   fileExtension,
   formatFileSize,
   fileCategoryColor,
-  fileCategoryBorderColor,
 } from "@/features/agent-computer/lib/artifact-helpers";
 import { BrandFileTypeIcon } from "@/shared/components/file-type-icons/BrandFileTypeIcon";
 import { formatRelativeDate } from "@/shared/lib/format-relative-date";
 import type { ArtifactExplorerItem, ConversationNode } from "./artifactExplorerUtils";
 import { ExplorerListRow } from "./ExplorerListRow";
+import {
+  EXPLORER_FOCUS_CLASS,
+  FILE_ACTION_CLASS,
+  FILE_DELETE_ACTION_CLASS,
+} from "./explorerStyles";
 
 // Exported so LibraryPage skeleton can mirror the same grid layout
 export const GRID_COLS_CLASS = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4";
+
+const CARD_BASE_CLASS =
+  "relative group w-full text-left rounded-xl transition-[background-color,box-shadow] duration-200 ease-out";
+const CARD_IDLE_CLASS = "bg-muted hover:bg-sidebar-hover";
+const CARD_SELECTED_CLASS = "bg-sidebar-active ring-2 ring-ring/40";
 
 // ---------------------------------------------------------------------------
 // Thumbnail
@@ -271,21 +280,16 @@ function FileCard({
   const { relative: relativeDate, absolute: absoluteDate } = item.createdAt
     ? formatRelativeDate(item.createdAt, locale)
     : { relative: "", absolute: "" };
-  const accentBorderColor = fileCategoryBorderColor(item.contentType, item.name);
-  const { icon: iconColor } = fileCategoryColor(item.contentType, item.name);
 
   // ── Grid card (vertical — thumbnail on top) ───────────────────────────────
   if (layout === "grid") {
     return (
       <motion.div
-        className={[
-          "rounded-lg bg-card border overflow-hidden transition-[border-color,background-color] duration-200 ease-out cursor-pointer flex flex-col relative group text-left w-full",
-          "border-l",
-          isPreviewOpen
-            ? "ring-1 ring-ring/40 ring-offset-1 ring-offset-background border-border border-l-border-strong"
-            : "border-border hover:border-border-strong hover:bg-muted",
-        ].join(" ")}
-        style={isPreviewOpen ? undefined : { borderLeftColor: accentBorderColor }}
+        className={cn(
+          CARD_BASE_CLASS,
+          "flex flex-col overflow-hidden",
+          isPreviewOpen ? CARD_SELECTED_CLASS : CARD_IDLE_CLASS,
+        )}
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.12, delay: Math.min(index * 0.02, 0.2) }}
@@ -296,7 +300,8 @@ function FileCard({
             type="button"
             data-file-card-preview="true"
             onClick={() => onPreview(item)}
-            className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label={t("shared.explorer.preview", { name: item.name })}
+            className={cn("w-full text-left", EXPLORER_FOCUS_CLASS)}
           >
             <FileThumbnail item={item} layout="grid" />
           </button>
@@ -305,11 +310,11 @@ function FileCard({
             <button
               type="button"
               data-slot="button"
-              aria-label={`Download ${item.name}`}
-              className="touch-target absolute top-2 left-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              aria-label={t("shared.explorer.download", { name: item.name })}
+              className={cn(FILE_ACTION_CLASS, "absolute top-2 left-2 z-10")}
               onClick={(e) => { e.stopPropagation(); onDownload(item); }}
             >
-              <Download className="h-3.5 w-3.5 text-foreground" />
+              <Download aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
 
             {canDelete && (
@@ -317,20 +322,20 @@ function FileCard({
                 type="button"
                 data-slot="button"
                 aria-label={t("explorer.deleteFileLabel", { name: item.name })}
-                className="touch-target absolute bottom-2 left-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-destructive/15 hover:text-destructive hover:border-destructive/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className={cn(FILE_DELETE_ACTION_CLASS, "absolute bottom-2 left-2 z-10")}
                 onClick={(e) => { e.stopPropagation(); onOpenDeleteDialog([item.id]); }}
               >
-                <Trash2 className="h-3.5 w-3.5 text-foreground" />
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
             )}
         </div>
 
-        {/* Info area */}
+        {/* Info area — mouse convenience; keyboard users reach the card via the thumbnail button */}
         <button
           type="button"
-          data-file-card-preview="true"
           onClick={() => onPreview(item)}
-          className="w-full p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          tabIndex={-1}
+          className={cn("w-full p-3 text-left", EXPLORER_FOCUS_CLASS)}
         >
           <div className="flex flex-col gap-1">
             <p className="truncate text-xs font-medium text-foreground leading-snug" title={item.name}>
@@ -338,11 +343,11 @@ function FileCard({
             </p>
             <div className="flex items-center gap-1.5">
               {ext && (
-                <span className="shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-micro uppercase tracking-wide text-muted-foreground">
+                <span className="shrink-0 rounded bg-background px-1 py-0.5 font-mono text-micro uppercase tracking-wide text-muted-foreground">
                   {ext}
                 </span>
               )}
-              <p className="text-micro text-text-subtle truncate">
+              <p className="min-w-0 truncate text-micro text-text-subtle tabular-nums">
                 {sizeText}
                 {relativeDate && <span title={absoluteDate}> · {relativeDate}</span>}
               </p>
@@ -356,14 +361,11 @@ function FileCard({
   // ── List card (horizontal — thumbnail on left) ────────────────────────────
   return (
     <motion.div
-      className={[
-        "rounded-lg bg-card border p-2.5 transition-[border-color,background-color] duration-200 ease-out cursor-pointer flex items-center gap-3 relative group text-left w-full",
-        "border-l",
-        isPreviewOpen
-          ? "ring-1 ring-ring/40 ring-offset-1 ring-offset-background border-border border-l-border-strong bg-muted"
-          : "border-border hover:border-border-strong hover:bg-muted",
-      ].join(" ")}
-      style={isPreviewOpen ? undefined : { borderLeftColor: accentBorderColor }}
+      className={cn(
+        CARD_BASE_CLASS,
+        "flex items-center gap-3 p-2.5",
+        isPreviewOpen ? CARD_SELECTED_CLASS : CARD_IDLE_CLASS,
+      )}
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.18, delay: Math.min(index * 0.02, 0.18) }}
@@ -372,7 +374,8 @@ function FileCard({
         type="button"
         data-file-card-preview="true"
         onClick={() => onPreview(item)}
-        className="flex flex-1 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        aria-label={t("shared.explorer.preview", { name: item.name })}
+        className={cn("flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left", EXPLORER_FOCUS_CLASS)}
       >
         {/* Small thumbnail */}
         <FileThumbnail item={item} layout="list" />
@@ -384,11 +387,11 @@ function FileCard({
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
             {ext && (
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-micro uppercase text-muted-foreground">
+              <span className="shrink-0 rounded bg-background px-1.5 py-0.5 font-mono text-micro uppercase text-muted-foreground">
                 {ext}
               </span>
             )}
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="min-w-0 truncate text-xs text-muted-foreground tabular-nums">
               {sizeText}
               {relativeDate && <span title={absoluteDate}> · {relativeDate}</span>}
             </p>
@@ -403,20 +406,20 @@ function FileCard({
             type="button"
             data-slot="button"
             aria-label={t("explorer.deleteFileLabel", { name: item.name })}
-            className="touch-target h-7 w-7 rounded-full border border-border bg-background flex items-center justify-center shrink-0 transition-colors hover:border-destructive/40 hover:text-destructive hover:bg-destructive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className={FILE_DELETE_ACTION_CLASS}
             onClick={(e) => { e.stopPropagation(); onOpenDeleteDialog([item.id]); }}
           >
-            <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
           </button>
         )}
         <button
           type="button"
           data-slot="button"
-          aria-label={`Download ${item.name}`}
-          className="touch-target h-7 w-7 rounded-full border border-border bg-background flex items-center justify-center shrink-0 transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          aria-label={t("shared.explorer.download", { name: item.name })}
+          className={FILE_ACTION_CLASS}
           onClick={(e) => { e.stopPropagation(); onDownload(item); }}
         >
-          <Download className={cn("h-3.5 w-3.5", iconColor)} />
+          <Download aria-hidden="true" className="h-3.5 w-3.5" />
         </button>
       </div>
     </motion.div>
@@ -486,7 +489,9 @@ export function ExplorerFileList({
         ref={containerRef}
         className="flex-1 overflow-y-auto p-4"
         onKeyDown={handleContainerKeyDown}
+        role="region"
         aria-label={t("explorer.fileListLabel")}
+        aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
       >
         {mode === "panel" ? (
           <div className="flex flex-col gap-2">
@@ -514,18 +519,18 @@ export function ExplorerFileList({
 
               return (
                 <div key={group.id} className="mb-8 last:mb-0">
-                  <div className="flex items-center gap-3 mb-3 mt-8 first:mt-0 pb-3 border-b border-border/60">
-                    <h3 className="text-sm font-semibold text-foreground truncate flex-1">
+                  <div className="flex items-center gap-3 mb-3 mt-8 first:mt-0">
+                    <h3 className="min-w-0 flex-1 truncate text-body-sm-bold text-foreground">
                       {group.title}
                     </h3>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                       {t(groupItems.length === 1 ? "library.statsFile" : "library.statsFiles", { count: groupItems.length })}
                     </span>
                     <span className="shrink-0 text-xs text-text-subtle" title={groupAbsDate}>
                       {groupDate}
                     </span>
                   </div>
-                  <div className="flex flex-col rounded-lg border border-border overflow-hidden">
+                  <div className="flex flex-col gap-1">
                     {groupItems.map((item, i) => (
                       <ExplorerListRow
                         key={item.id}
@@ -554,11 +559,11 @@ export function ExplorerFileList({
 
               return (
                 <div key={group.id} className="mb-8 last:mb-0">
-                  <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0 pb-3 border-b border-border/60">
-                    <h3 className="text-sm font-semibold text-foreground truncate flex-1">
+                  <div className="flex items-center gap-3 mb-4 mt-8 first:mt-0">
+                    <h3 className="min-w-0 flex-1 truncate text-body-sm-bold text-foreground">
                       {group.title}
                     </h3>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                       {t(groupItems.length === 1 ? "library.statsFile" : "library.statsFiles", { count: groupItems.length })}
                     </span>
                     <span className="shrink-0 text-xs text-text-subtle" title={groupAbsDate}>

@@ -20,50 +20,51 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
   ] as const;
 
   return (
-    <div className="flex h-full items-center justify-center bg-background px-8 welcome-radial-bg">
+    <div className="flex h-full items-center justify-center bg-background px-8">
       <motion.div
         variants={channelsFadeIn}
         initial="hidden"
         animate="show"
         className="flex w-full max-w-sm flex-col items-center gap-7 text-center"
       >
-        <div className="relative flex h-28 w-28 items-center justify-center">
-          {/* Broadcast pulse — symbolizes outgoing signal */}
-          <span className="absolute inset-0 rounded-full border border-ring/30 animate-ping [animation-duration:2.6s]" />
-          <span className="absolute inset-[14%] rounded-full border border-ring/20 animate-ping [animation-duration:2.6s] [animation-delay:0.7s]" />
-          <span className="absolute inset-0 rounded-full border border-border" />
-          <span className="absolute inset-[18%] rounded-full border border-border-strong" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-xl border border-border bg-muted shadow-sm">
+        <div className="relative flex h-28 w-28 items-center justify-center" aria-hidden="true">
+          {/* Broadcast pulse — tonal discs, no outlines */}
+          <span className="absolute inset-0 rounded-full bg-primary/[0.06] motion-safe:animate-ping [animation-duration:2.6s]" />
+          <span className="absolute inset-0 rounded-full bg-surface-soft" />
+          <span className="absolute inset-[18%] rounded-full bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)]" />
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-muted">
             <ChannelProviderIcon provider="telegram" size="lg" />
           </div>
         </div>
 
         <div className="flex w-full flex-col items-center space-y-1.5">
-          <h2 className="w-full text-subtitle-lg text-foreground">{t("channels.onboarding.title")}</h2>
+          <h2 className="w-full text-balance text-subtitle-lg text-foreground">{t("channels.onboarding.title")}</h2>
           <p className="w-full text-body-sm text-muted-foreground max-w-[18rem]">
             {t("channels.onboarding.description")}
           </p>
         </div>
 
-        <div className="w-full text-left">
+        <ol className="w-full text-left">
           {steps.map((step, idx) => {
             const isActive = idx === 0;
             return (
-              <div key={step.label} className="flex gap-3.5">
+              <li key={step.label} className="flex gap-3.5" aria-current={isActive ? "step" : undefined}>
                 <div className="flex flex-col items-center">
                   <div
                     className={
                       isActive
-                        ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ring bg-ring text-caption-bold text-primary-foreground"
-                        : "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-caption-bold text-text-subtle/70 ring-1 ring-border"
+                        ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-caption-bold text-primary-foreground"
+                        : "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-caption-bold text-muted-foreground"
                     }
+                    aria-hidden="true"
                   >
                     {idx + 1}
                   </div>
                   {idx < steps.length - 1 && (
                     <div
-                      className={`mt-1 w-px flex-1 min-h-[20px] ${
-                        isActive ? "bg-ring/30" : "bg-border/60"
+                      aria-hidden="true"
+                      className={`mt-1 w-0.5 flex-1 min-h-[20px] rounded-full ${
+                        isActive ? "bg-primary/20" : "bg-muted"
                       }`}
                     />
                   )}
@@ -71,23 +72,23 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
                 <div className="pb-4 min-w-0">
                   <p
                     className={`text-body-sm-bold leading-tight ${
-                      isActive ? "text-foreground" : "text-text-subtle/80"
+                      isActive ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     {step.label}
                   </p>
                   <p
                     className={`text-caption mt-0.5 ${
-                      isActive ? "text-muted-foreground" : "text-text-subtle/60"
+                      isActive ? "text-muted-foreground" : "text-text-subtle"
                     }`}
                   >
                     {step.sub}
                   </p>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
 
         <Button
           type="button"

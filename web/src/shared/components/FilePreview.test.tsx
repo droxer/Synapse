@@ -93,7 +93,7 @@ describe("FilePreview", () => {
       },
     );
 
-    expect(html).toContain("Slide 1");
+    expect(html).toContain("shared.filePreview.slide");
     expect(html).toContain("preview/slides/1");
     expect(html).toContain("preview/slides/2");
   });
@@ -118,7 +118,7 @@ describe("FilePreview", () => {
       },
     );
 
-    expect(html).toContain("Slide 1");
+    expect(html).toContain("shared.filePreview.slide");
     expect(html).toContain("preview/slides/1");
   });
 

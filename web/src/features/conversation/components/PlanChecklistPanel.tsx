@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, AlertCircle, Minus } from "lucide-react";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/shared/lib/utils";
+import { Badge } from "@/shared/components/ui/badge";
 import type { PlanStep } from "@/shared/types";
 
 interface PlanChecklistPanelProps {
@@ -14,35 +15,35 @@ function StepIndicator({ status }: { readonly status: PlanStep["status"] }) {
   if (status === "complete") {
     return (
       <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-success/15 flex-shrink-0">
-        <Check className="h-2.5 w-2.5 text-success" strokeWidth={2.5} />
+        <Check className="h-2.5 w-2.5 text-success-text" strokeWidth={2.5} aria-hidden="true" />
       </span>
     );
   }
   if (status === "skipped") {
     return (
       <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-muted flex-shrink-0">
-        <Minus className="h-2.5 w-2.5 text-muted-foreground" strokeWidth={2.5} />
+        <Minus className="h-2.5 w-2.5 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
       </span>
     );
   }
   if (status === "error") {
     return (
       <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-destructive/10 flex-shrink-0">
-        <X className="h-2.5 w-2.5 text-destructive" strokeWidth={2.5} />
+        <X className="h-2.5 w-2.5 text-destructive" strokeWidth={2.5} aria-hidden="true" />
       </span>
     );
   }
   if (status === "replan_required") {
     return (
       <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-warning/15 flex-shrink-0">
-        <AlertCircle className="h-2.5 w-2.5 text-warning" strokeWidth={2.5} />
+        <AlertCircle className="h-2.5 w-2.5 text-warning-text" strokeWidth={2.5} aria-hidden="true" />
       </span>
     );
   }
   if (status === "running") {
     return (
       <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
-        <span className="h-1.5 w-1.5 rounded-full bg-ring animate-pulsing-dot-fade" />
+        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulsing-dot-fade" />
       </span>
     );
   }
@@ -54,6 +55,15 @@ function StepIndicator({ status }: { readonly status: PlanStep["status"] }) {
 }
 
 type TFn = (key: string, params?: Record<string, string | number>) => string;
+
+const STATUS_LABEL_KEYS: Partial<Record<PlanStep["status"], string>> = {
+  pending: "plan.statusPending",
+  running: "plan.statusRunning",
+  complete: "plan.statusComplete",
+  error: "plan.statusError",
+  skipped: "plan.statusSkipped",
+  replan_required: "plan.statusReplanRequired",
+};
 
 function getLocalizedStepName(step: PlanStep, t: TFn): string {
   return step.nameI18nKey ? t(step.nameI18nKey) : step.name;
@@ -79,7 +89,7 @@ function StepRow({ step, index, t }: { readonly step: PlanStep; readonly index: 
       transition={{ duration: 0.14, ease: "easeOut", delay: index * 0.03 }}
       className={cn(
         "group relative flex items-start gap-2.5 px-3 py-2 rounded-md transition-colors",
-        isRunning && "bg-ring/[0.04]",
+        isRunning && "bg-primary/[0.04]",
         isSkipped && "opacity-70",
         !isRunning && !isComplete && !isSkipped && !isError && !isReplanRequired && "opacity-60",
       )}
@@ -92,36 +102,37 @@ function StepRow({ step, index, t }: { readonly step: PlanStep; readonly index: 
           isSkipped && "bg-border-strong",
           isError && "bg-destructive",
           isReplanRequired && "bg-warning",
-          isRunning && "bg-ring",
+          isRunning && "bg-primary",
           !isRunning && !isComplete && !isSkipped && !isError && !isReplanRequired && "bg-border",
         )}
       />
 
       <StepIndicator status={step.status} />
+      <span className="sr-only">{t(STATUS_LABEL_KEYS[step.status] ?? "plan.statusPending")}: </span>
 
       <div className="min-w-0 flex-1">
         <p
           className={cn(
-            "text-sm leading-snug",
+            "text-body-sm break-words",
             isComplete && "text-muted-foreground line-through decoration-muted-foreground/40",
             isSkipped && "text-muted-foreground",
             isError && "text-destructive",
-            isReplanRequired && "text-warning",
-            isRunning && "text-foreground font-medium",
+            isReplanRequired && "text-warning-text",
+            isRunning && "text-body-sm-bold text-foreground",
             !isRunning && !isComplete && !isSkipped && !isError && !isReplanRequired && "text-muted-foreground",
           )}
         >
           {name}
         </p>
         {description && !isComplete && !isSkipped && (
-          <p className="mt-0.5 text-caption text-text-subtle leading-snug line-clamp-2">
+          <p className="mt-0.5 text-caption text-text-subtle line-clamp-2 break-words">
             {description}
           </p>
         )}
         {isRunning && (
-          <div className="mt-1.5 h-0.5 w-full rounded-full overflow-hidden bg-ring/10">
+          <div className="mt-1.5 h-0.5 w-full rounded-full overflow-hidden bg-primary/10" aria-hidden="true">
             <motion.div
-              className="h-full bg-ring/60 rounded-full"
+              className="h-full bg-primary/60 rounded-full"
               initial={{ x: "-100%" }}
               animate={{ x: "100%" }}
               transition={{ duration: 1.4, ease: "easeInOut", repeat: Infinity }}
@@ -132,7 +143,7 @@ function StepRow({ step, index, t }: { readonly step: PlanStep; readonly index: 
 
       {(isError || isReplanRequired) && (
         <span className="flex-shrink-0 mt-0.5">
-          <AlertCircle className={cn("h-3 w-3", isError ? "text-destructive/70" : "text-warning/70")} />
+          <AlertCircle className={cn("h-3 w-3", isError ? "text-destructive" : "text-warning-text")} aria-hidden="true" />
         </span>
       )}
     </motion.li>
@@ -159,30 +170,37 @@ export function PlanChecklistPanel({ planSteps }: PlanChecklistPanelProps) {
         </span>
 
         {/* Progress bar */}
-        <div className="flex-1 max-w-[5rem] h-1 rounded-full bg-muted overflow-hidden">
+        <div
+          role="progressbar"
+          aria-label={t("plan.title")}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progressPct}
+          className="flex-1 max-w-[5rem] h-1 rounded-full bg-muted overflow-hidden"
+        >
           <motion.div
             className={cn(
-              "h-full rounded-full transition-colors",
+              "h-full w-full origin-left rounded-full transition-colors",
               hasError ? "bg-warning" : "bg-success",
             )}
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPct}%` }}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: progressPct / 100 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           />
         </div>
 
-        <span
-          className={cn(
-            "status-pill tabular-nums",
+        <Badge
+          variant={
             hasError
-              ? "status-warn"
+              ? "warning"
               : resolvedCount === planSteps.length
-                ? "status-ok"
-                : "status-neutral",
-          )}
+                ? "success"
+                : "neutral"
+          }
+          className="tabular-nums"
         >
           {t("plan.progress", { completed: resolvedCount, total: planSteps.length })}
-        </span>
+        </Badge>
       </div>
 
       {/* Steps */}

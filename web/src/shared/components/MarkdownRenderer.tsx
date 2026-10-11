@@ -30,6 +30,17 @@ const extractText = (node: ReactNode): string => {
   return "";
 };
 
+const CODE_BLOCK_CLASS = "relative my-4 overflow-hidden rounded-xl bg-muted not-prose";
+const CODE_BLOCK_HEADER_CLASS =
+  "flex items-center justify-between px-4 pt-2 pb-0.5 font-mono text-[length:var(--md-code-font-size,var(--text-sm))] text-muted-foreground";
+const INLINE_CODE_CLASS =
+  "rounded-md bg-muted px-1.5 py-0.5 text-[length:var(--md-code-font-size,var(--text-sm))] font-mono text-foreground";
+const TABLE_HEADER_CELL_CLASS = "bg-muted px-3 py-2 text-left font-medium first:rounded-l-lg last:rounded-r-lg";
+const TABLE_CELL_CLASS = "px-3 py-2";
+const TABLE_ROW_CLASS = "even:bg-muted/40";
+const LINK_CLASS =
+  "inline-flex items-center gap-0.5 text-primary underline underline-offset-2 hover:text-accent-hover";
+
 function CopyButton({ text }: { text: string }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -52,12 +63,14 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="flex items-center gap-1 rounded-lg p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="flex items-center gap-1 rounded-full p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       aria-label={label}
       title={label}
     >
-      {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
-      <span className="sr-only">{label}</span>
+      {copied ? <Check className="h-3.5 w-3.5 text-success-text" /> : <Copy className="h-3.5 w-3.5" />}
+      <span className="sr-only" aria-live="polite">
+        {copied ? t("markdown.copied") : ""}
+      </span>
     </button>
   );
 }
@@ -76,8 +89,8 @@ function PreComponent({ children }: { children: ReactNode }) {
   const codeString = useMemo(() => extractText(children), [children]);
 
   return (
-    <div className="relative my-4 overflow-hidden rounded-xl border border-border-strong bg-muted not-prose">
-      <div className="flex items-center justify-between border-b border-border-strong bg-muted px-4 py-1.5 font-mono text-[length:var(--md-code-font-size,var(--text-sm))] text-muted-foreground">
+    <div className={CODE_BLOCK_CLASS}>
+      <div className={CODE_BLOCK_HEADER_CLASS}>
         <span>{language}</span>
         <CopyButton text={codeString} />
       </div>
@@ -97,7 +110,7 @@ const components: Components = {
     if (isInline) {
       return (
         <code
-          className="rounded-lg border border-border-strong bg-muted px-1.5 py-0.5 text-[length:var(--md-code-font-size,var(--text-sm))] font-mono text-foreground"
+          className={INLINE_CODE_CLASS}
           {...props}
         >
           {children}
@@ -110,26 +123,28 @@ const components: Components = {
       </code>
     );
   },
-  // Table components can mostly fall back to Tailwind typography's styling,
-  // but we keep custom border styling to maintain the previous crisp look.
+  // Tables separate rows by tonal fill instead of cell borders (lighter look).
   table({ children }) {
     return (
       <div className="overflow-x-auto my-6 not-prose">
-        <table className="min-w-full border-collapse text-sm">{children}</table>
+        <table className="min-w-full border-separate border-spacing-0 text-sm">{children}</table>
       </div>
     );
   },
   th({ children }) {
     return (
-      <th className="border border-border bg-muted px-3 py-1.5 text-left font-medium">
+      <th className={TABLE_HEADER_CELL_CLASS}>
         {children}
       </th>
     );
   },
   td({ children }) {
     return (
-      <td className="border border-border px-3 py-1.5">{children}</td>
+      <td className={TABLE_CELL_CLASS}>{children}</td>
     );
+  },
+  tr({ children }) {
+    return <tr className={TABLE_ROW_CLASS}>{children}</tr>;
   },
   a({ href, children }) {
     const isExternal = href?.startsWith("http://") || href?.startsWith("https://");
@@ -138,7 +153,7 @@ const components: Components = {
         href={href}
         target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
-        className="inline-flex items-center gap-0.5 text-ring underline underline-offset-2 hover:text-ring/80"
+        className={LINK_CLASS}
       >
         {children}
         {isExternal && (
@@ -179,7 +194,7 @@ function renderLightweightInlineMarkdown(content: string, keyPrefix: string): Re
       nodes.push(
         <code
           key={`${keyPrefix}-code-${matchIndex}`}
-          className="rounded-lg border border-border-strong bg-muted px-1.5 py-0.5 text-[length:var(--md-code-font-size,var(--text-sm))] font-mono text-foreground"
+          className={INLINE_CODE_CLASS}
         >
           {fullMatch.slice(1, -1)}
         </code>,
@@ -193,7 +208,7 @@ function renderLightweightInlineMarkdown(content: string, keyPrefix: string): Re
           href={href}
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noopener noreferrer" : undefined}
-          className="inline-flex items-center gap-0.5 text-ring underline underline-offset-2 hover:text-ring/80"
+          className={LINK_CLASS}
         >
           {match[3]}
         </a>,
@@ -312,9 +327,9 @@ function renderLightweightTail(content: string, className?: string): ReactNode {
       elements.push(
         <div
           key={`code-${i}`}
-          className="relative my-4 overflow-hidden rounded-xl border border-border-strong bg-muted not-prose"
+          className={CODE_BLOCK_CLASS}
         >
-          <div className="flex items-center justify-between border-b border-border-strong bg-muted px-4 py-1.5 font-mono text-[length:var(--md-code-font-size,var(--text-sm))] text-muted-foreground">
+          <div className={CODE_BLOCK_HEADER_CLASS}>
             <span>{language}</span>
           </div>
           <pre className="p-4 overflow-x-auto text-[length:var(--md-code-font-size,var(--text-sm))] font-mono bg-transparent m-0 border-none">
@@ -343,13 +358,13 @@ function renderLightweightTail(content: string, className?: string): ReactNode {
         const bodyRows = tableLines.slice(2);
         elements.push(
           <div key={`table-${i}`} className="overflow-x-auto my-6 not-prose">
-            <table className="min-w-full border-collapse text-sm">
+            <table className="min-w-full border-separate border-spacing-0 text-sm">
               <thead>
                 <tr>
                   {headerCells.map((cell, ci) => (
                     <th
                       key={ci}
-                      className="border border-border bg-muted px-3 py-1.5 text-left font-medium"
+                      className={TABLE_HEADER_CELL_CLASS}
                     >
                       {cell}
                     </th>
@@ -363,11 +378,11 @@ function renderLightweightTail(content: string, className?: string): ReactNode {
                     .map((c) => c.trim())
                     .filter((c) => c.length > 0);
                   return (
-                    <tr key={ri}>
+                    <tr key={ri} className={TABLE_ROW_CLASS}>
                       {cells.map((cell, ci) => (
                         <td
                           key={ci}
-                          className="border border-border px-3 py-1.5"
+                          className={TABLE_CELL_CLASS}
                         >
                           {cell}
                         </td>

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Plus } from "lucide-react";
 // TODO Task 10: restore lucide icons when FeatureRowSection is rebuilt
 // import { Truck, RotateCcw, ShieldCheck, CreditCard } from "lucide-react";
 
@@ -32,7 +33,7 @@ export default function DesignSystemPage() {
       </PromoBanner>
       */}
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-[80px] px-8 py-[64px] md:px-12">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-section-lg px-8 py-section md:px-12">
         <Header />
         <LogoSection />
         <ColorSection />
@@ -96,7 +97,7 @@ export default function DesignSystemPage() {
 
 function LogoSection() {
   return (
-    <Section title="Product logo" eyebrow="Brand">
+    <Section title="Product Logo" eyebrow="Brand">
       <LogoComparison />
     </Section>
   );
@@ -105,14 +106,13 @@ function LogoSection() {
 function Header() {
   return (
     <header className="flex flex-col gap-4">
-      <span className="text-body-sm-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <span className="label-mono text-muted-foreground">
         DESIGN.md gallery
       </span>
-      <h1 className="text-display-lg">A system, on canvas.</h1>
+      <h1 className="text-balance text-display-lg">A System, on Canvas</h1>
       <p className="text-subtitle-md max-w-[640px] text-muted-foreground">
-        Tokens, primitives, and signature components rebuilt to mirror the Meta-inspired
-        DESIGN.md — cobalt for action, black pills for marketing, 32px photographic cards,
-        and a 4px spacing rhythm.
+        Tokens and primitives as they actually ship — cobalt for action, black pills for
+        marketing, borderless tonal surfaces, and a 4px spacing rhythm.
       </p>
     </header>
   );
@@ -131,11 +131,11 @@ function Section({
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         {eyebrow ? (
-          <span className="text-body-sm-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <span className="label-mono text-muted-foreground">
             {eyebrow}
           </span>
         ) : null}
-        <h2 className="text-heading-lg">{title}</h2>
+        <h2 className="text-balance text-heading-lg">{title}</h2>
       </div>
       {children}
     </section>
@@ -169,9 +169,9 @@ function ColorSection() {
     <Section eyebrow="01 · Tokens" title="Colors">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {COLOR_TOKENS.map((s) => (
-          <div key={s.name} className="overflow-hidden rounded-xl border border-border">
+          <div key={s.name} className="overflow-hidden rounded-xl bg-muted">
             <div className="h-20" style={{ background: `var(${s.var})` }} />
-            <div className="bg-background px-3 py-2">
+            <div className="px-3 py-2">
               <div className="text-body-sm-bold text-foreground">{s.name}</div>
               <div className="text-caption-bold text-muted-foreground">
                 {s.var}
@@ -195,21 +195,19 @@ const TYPE_ROLES = [
   { className: "text-body-md", label: "body-md · 16 / 400 · -0.16px" },
   { className: "text-body-sm", label: "body-sm · 14 / 400 · -0.14px" },
   { className: "text-caption-bold", label: "caption-bold · 12 / 700" },
+  { className: "text-micro", label: "micro · 12 (floor — nothing smaller)" },
 ] as const;
 
 function TypographySection() {
   return (
     <Section eyebrow="02 · Tokens" title="Typography">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-8">
         {TYPE_ROLES.map((r) => (
-          <div
-            key={r.label}
-            className="flex flex-col gap-1 border-b border-border pb-4"
-          >
+          <div key={r.label} className="flex flex-col gap-1">
             <span className="text-caption-bold text-muted-foreground">
               {r.label}
             </span>
-            <span className={r.className}>Made for prescriptions. Built for comfort.</span>
+            <span className={r.className}>Delegate the task. Review the result.</span>
           </div>
         ))}
       </div>
@@ -253,12 +251,12 @@ function ButtonSection() {
   return (
     <Section eyebrow="04 · Primitives" title="Buttons">
       <div className="flex flex-wrap items-center gap-3">
-        <Button>Send</Button>
-        <Button variant="default">Shop now</Button>
-        <Button variant="secondary">Learn more</Button>
+        <Button variant="default">Send</Button>
+        <Button variant="marketing">Get Started</Button>
+        <Button variant="secondary">Learn More</Button>
         <Button variant="ghost">Cancel</Button>
         <Button variant="destructive">Delete</Button>
-        <Button variant="link">Read the docs</Button>
+        <Button variant="link">Read the Docs</Button>
         <Button disabled>Disabled</Button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -266,6 +264,12 @@ function ButtonSection() {
         <Button size="default">Continue · md</Button>
         <Button size="sm">Continue · sm</Button>
         <Button size="xs">Continue · xs</Button>
+        <Button size="icon" variant="secondary" aria-label="Add item">
+          <Plus aria-hidden="true" />
+        </Button>
+        <Button size="icon-sm" variant="ghost" aria-label="Add item (small)">
+          <Plus aria-hidden="true" />
+        </Button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="tab">
@@ -290,6 +294,7 @@ function BadgeSection() {
         <Badge variant="accent">Limited time</Badge>
         <Badge variant="warning">Almost gone</Badge>
         <Badge variant="danger">Out of stock</Badge>
+        <Badge variant="info">Syncing</Badge>
         <Badge variant="outline">New</Badge>
         <Badge variant="neutral">Beta</Badge>
       </div>
@@ -316,15 +321,15 @@ function CardSection() {
             Borderless card that lifts with a subtle shadow on hover.
           </p>
           <div>
-            <Button variant="default">Pre-order</Button>
+            <Button variant="default">Pre-Order</Button>
           </div>
         </Card>
         <Card variant="outlined">
           <h3 className="text-subtitle-lg">Outlined</h3>
           <p className="text-body-sm text-muted-foreground">
-            Bordered card for same-tone surfaces, e.g. inside a dialog.
+            Opt-in bordered card — only for same-tone surfaces, e.g. inside a dialog.
           </p>
-          <Button>Add to cart</Button>
+          <Button>Add to Cart</Button>
         </Card>
         <Card variant="sunken">
           <h3 className="text-subtitle-lg">Sunken</h3>
@@ -347,8 +352,14 @@ function InputSection() {
         </label>
         <label className="flex flex-col gap-2">
           <span className="text-body-sm-bold">Error state</span>
-          <Input aria-invalid placeholder="Please enter a valid email" />
-          <span className="text-body-sm text-destructive">That email looks off.</span>
+          <Input
+            aria-invalid
+            aria-describedby="ds-email-error"
+            placeholder="you@synapse.com"
+          />
+          <span id="ds-email-error" className="text-body-sm text-destructive">
+            That email is missing an @. Check it and try again.
+          </span>
         </label>
       </div>
       {/* TODO Task 10: restore ColorSwatch usages when gallery is rebuilt
@@ -366,14 +377,12 @@ function InputSection() {
 
 function FocusSection() {
   return (
-    <Section eyebrow="08 · Primitives" title="Focus contract">
+    <Section eyebrow="08 · Primitives" title="Focus Contract">
       <p className="text-body-sm text-muted-foreground max-w-[640px]">
         Default interactive focus: 2px ring on fb-blue with 2px canvas offset. Text inputs swap to a 2px solid fb-blue border.
       </p>
       <div className="flex flex-wrap items-center gap-4">
-        <Button className="focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-          Tab to focus
-        </Button>
+        <Button>Tab to Focus</Button>
         <Input className="max-w-xs" placeholder="Focus me" aria-label="Focus demo input" />
       </div>
     </Section>
@@ -383,7 +392,7 @@ function FocusSection() {
 function SidebarNavSection() {
   const items = ["New chat", "Library", "Channels", "Skills"];
   return (
-    <Section eyebrow="09 · Shell" title="Sidebar pill nav">
+    <Section eyebrow="09 · Shell" title="Sidebar Pill Nav">
       <p className="text-body-sm text-muted-foreground max-w-[640px]">
         Dense sidebar rows use the same pill geometry as buttons — rounded-full with sidebar-active/hover tokens.
       </p>
@@ -408,19 +417,19 @@ function SidebarNavSection() {
 
 function DarkThemeSection() {
   return (
-    <Section eyebrow="10 · Themes" title="Dark mode spot-check">
+    <Section eyebrow="10 · Themes" title="Dark Mode Spot-Check">
       <p className="text-body-sm text-muted-foreground max-w-[640px]">
         Dark tokens are synthesised (not in DESIGN.md). Validate cobalt and critical contrast before shipping new dark surfaces.
       </p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-xxxl border border-border bg-background p-6">
+        <div className="rounded-xxl bg-muted p-6">
           <span className="text-body-sm-bold text-foreground">Light canvas</span>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button size="sm">Cobalt action</Button>
             <Badge variant="danger">Error</Badge>
           </div>
         </div>
-        <div className="dark rounded-xxxl border border-border bg-background p-6">
+        <div className="dark rounded-xxl bg-background p-6">
           <span className="text-body-sm-bold text-foreground">Dark canvas (.dark)</span>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button size="sm">Cobalt action</Button>
@@ -434,7 +443,7 @@ function DarkThemeSection() {
 
 function TabsSection() {
   return (
-    <Section eyebrow="11 · Primitives" title="Segmented tabs">
+    <Section eyebrow="11 · Primitives" title="Segmented Tabs">
       <Tabs defaultValue="agents">
         <TabsList variant="default">
           <TabsTrigger value="agents">Agents</TabsTrigger>

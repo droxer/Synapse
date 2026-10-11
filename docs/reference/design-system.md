@@ -16,9 +16,10 @@ The file is structured as:
 ## Core principles
 
 - **Cobalt is reserved for action.** `--color-cobalt` (`#0064e0`) belongs on Send / Run / Submit / Continue. Black `--color-ink-button` belongs on marketing/landing primaries.
-- **Every interactive element is pill-shaped.** Buttons, badges, pill-tabs all use `--radius-full` (100px). Squared corners signal "third-party widget" and should be filtered out.
+- **Every interactive element is pill-shaped.** Buttons and badges use `--radius-full` (100px); icon-only buttons use `--radius-circle`. Squared corners signal "third-party widget" and should be filtered out.
 - **Photography geometry is 32px.** `--radius-xxxl` is the minimum for photographic feature cards.
-- **Flat by default.** Elevation is a commerce-flow signal, not a marketing flourish; only the `card-checkout-summary` chrome carries a shadow.
+- **Flat by default.** Elevation is a commerce-flow signal, not a marketing flourish; only `card-checkout-summary` and `surface-overlay` (popovers/dialogs) carry a shadow.
+- **Light, few lines.** Surfaces separate by tonal fill (`canvas` vs `surface-soft`/`muted`) and whitespace — not hairlines. Borders are reserved for form inputs (`Input`, `Textarea`, composer) and the explicit opt-in `Card variant="outlined"` / `Badge variant="outline"`. Don't add `border-b` section dividers or borders on top of a tinted fill.
 - **Stylistic sets `ss01, ss02` always pair.** Headings activate both Optimistic VF stylistic sets. Montserrat lacks them — the declaration is harmless and future-proofs an Optimistic swap.
 
 Legacy semantic aliases (`--color-background`, `--color-foreground`, `--color-primary`, …) are **kept** so the existing component layer continues to compile, but each one resolves to a DESIGN.md canonical token. New code should consume the canonical names directly.
@@ -100,6 +101,10 @@ Each role is exposed as a `text-*` utility (e.g. `<h1 className="text-hero-displ
 
 The 300-weight `text-heading-md` is the system's signature editorial subhead — it creates visual rest between 500-weight displays and 400-weight body.
 
+**Weights.** Only 300 / 400 / 500 / 700 are on-scale. Don't use `font-semibold` (600) or arbitrary weights; reach for the role utility instead.
+
+**12px floor.** Nothing renders below 12px. The legacy `text-micro` and `text-caption` utilities both resolve to 12px; `status-pill` / `chip-*` metadata inherit the same floor.
+
 ---
 
 ## Radius scale
@@ -137,33 +142,42 @@ The 300-weight `text-heading-md` is the system's signature editorial subhead —
 
 ## Components
 
-Pull from `@/shared/components/ui` and `@/shared/components/marketing`. See `/design-system` for a live gallery.
+Pull from `@/shared/components/ui`. The dev-only `/design-system` route (`web/src/app/design-system/page.tsx`) renders every variant below exactly as it ships — keep it in sync when a variant is added or removed.
 
 ### Buttons (`Button`)
 
 | Variant | Use |
 |---|---|
-| `default` | Cobalt commerce primary. Send/Run/Submit. |
-| `marketing` | Black pill primary. Landing/login CTAs. |
-| `secondary` | Outlined ghost (2px ink-deep). Hover fills with ink-deep — intentional brand statement, not a missed state. |
-| `ghost` | Soft outlined (1px hairline-soft) tertiary. |
-| `destructive` | Critical-strong fill. |
+| `default` | Cobalt commerce primary. Send/Run/Submit/Connect. |
+| `marketing` | Black ink pill (inverts to white in dark mode). Landing/login CTAs. |
+| `secondary` | Borderless `surface-soft` tonal fill; hover deepens the fill. |
+| `ghost` | Transparent; `muted` fill on hover. Tertiary / icon actions. |
+| `destructive` | `critical` fill with `on-destructive` text (AA in both themes). Use the variant — never hand-roll `bg-destructive text-white`. For `AlertDialogAction`, pass `variant="destructive"`. |
 | `link` | Inline cobalt text link. |
-| `pill-tab` / `pill-tab-active` | Category-nav chip. |
-| Sizes | `xs / sm / default / lg / tab / icon / icon-xs / icon-sm / icon-lg`. |
+| Sizes | `xs / sm / default / lg / tab` (pill, `text-button-md`) and `icon / icon-xs / icon-sm / icon-lg` (`rounded-circle`). |
+
+All variants are pill-shaped (`rounded-full`) — don't override with `rounded-md` / `rounded-lg` at call sites.
 
 ### Cards (`Card`, `variant="…"`)
 
 | Variant | Chrome |
 |---|---|
-| `product-feature` | 32px radius, 32px pad, hairline-soft border. |
-| `feature-photo` | 32px radius, no chrome — image fills. |
-| `promo-strip` | Ink-deep bg, 32px radius, 64px pad. |
-| `icon-feature` | 16px radius, 24px pad. |
-| `checkout-summary` | 16px radius, 24px pad, subtle elevation. |
-| `why-buy-tile` | 16px radius, 32×24 pad. |
-| `warranty` | Surface-soft, 24px radius. |
-| `panel` | Legacy compat for existing call sites. |
+| `default` | `card` fill, 16px radius (`rounded-xl`), borderless — separated from the page by tone. |
+| `sunken` | `muted` fill, 16px radius, borderless. Secondary content blocks. |
+| `interactive` | `card` fill, 16px radius; gains `shadow-elevated` on hover. |
+| `outlined` | Opt-in 1px `border` — only when a card sits on a same-tone surface (e.g. inside a white dialog). |
+| `panel` | Legacy alias of `default` (8px radius) for existing call sites. |
+
+**Surface utilities** (all borderless):
+
+| Utility | Chrome |
+|---|---|
+| `surface-panel` | `surface-soft` fill, 16px radius. |
+| `surface-overlay` | `popover` fill, 24px radius, `shadow-elevated` — no border. |
+| `card-product-feature` / `card-icon-feature` / `card-why-buy-tile` | `surface-soft` tonal fill, 32 / 16 / 16px radius, no border. |
+| `card-checkout-summary` | Canvas fill, 16px radius, `shadow-sticky-rail` (the one elevated card). |
+| `card-feature-photo` / `card-promo-strip` / `card-warranty` | Image-fill / ink-deep / surface-soft photographic tiles. |
+| `chip-muted`, `status-*` | Pill, tonal fill only, 12px sans. Prefer `<Badge>` in new code. |
 
 ### Inputs (`Input`)
 
@@ -171,19 +185,15 @@ Pull from `@/shared/components/ui` and `@/shared/components/marketing`. See `/de
 
 ### Badges (`Badge`)
 
-All pill, caption-bold (12px/700). Variants: `success` (default), `promo-yellow`, `attention`, `critical`, `destructive`, `secondary`, `outline`, `ghost`, `link`.
+All pill, caption-bold (12px/700), tonal fill (no border). Variants: `neutral` (default), `success`, `warning`, `danger`, `info`, `accent`, and opt-in bordered `outline`. Success/warning text uses the AA `success-text` / `warning-text` tokens; use those (not `text-success` / `text-warning`) whenever those hues are used as text or icon colour.
 
-### Tabs (`Tabs`, `TabsList variant="pill"`)
+### Tabs (`Tabs`, `TabsList variant="…"`)
 
-`variant="pill"` matches DESIGN.md `button-pill-tab` — canvas chip with hairline border, ink-deep fill on active.
+`default` — segmented control; the active trigger gets a `card` fill. `line` — transparent, active trigger shows an underline indicator.
 
-### Signature components (`@/shared/components/marketing/*`)
+### Signature components
 
-- `PromoBanner` — sticky full-width strip above the top nav (`tone="ink"` or `"yellow"`).
-- `HeroBand` — full-bleed photographic hero with overlaid copy and a dual-CTA pair.
-- `FeatureIconRow` — 4-up reassurance grid with `card-icon-feature` chrome.
-- `FooterRegion` — dense multi-column footer.
-- `ColorSwatch` — 32px circle with a 2px canvas selection ring.
+The DESIGN.md marketing set (`PromoBanner`, `HeroBand`, `FeatureIconRow`, `FooterRegion`, `ColorSwatch`) is **not currently shipped** — the `/design-system` gallery sections for them are commented out pending a rebuild.
 
 ---
 
@@ -192,8 +202,9 @@ All pill, caption-bold (12px/700). Variants: `success` (default), `promo-yellow`
 ### Do
 
 - Reserve `--color-cobalt` for action CTAs — its weight is meaningful precisely because it's scarce.
-- Use `--color-ink-button` (black) for marketing-surface primaries. Pair with `secondary` ghost outline.
-- Apply `rounded-full` to every button, every pill-tab, every badge.
+- Use `Button variant="marketing"` (ink) for marketing-surface primaries. Pair with `secondary`.
+- Apply `rounded-full` to every button and badge (it's built into the primitives).
+- Separate surfaces with tonal fill and spacing; keep borders for inputs and explicit `outlined` variants.
 - Apply `--radius-xxxl` to photographic product cards and `--radius-xl` to icon-feature tiles.
 - Switch on `ss01, ss02` together — never one without the other.
 - Use the 300-weight `text-heading-md` for editorial subheads.
@@ -206,6 +217,8 @@ All pill, caption-bold (12px/700). Variants: `success` (default), `promo-yellow`
 - Don't run feature cards without rounding — `rounded-xxxl` is the minimum for photographic surfaces.
 - Don't reduce `text-body-md` line-height below 1.50.
 - Don't apply heavy shadows to marketing cards — elevation is a commerce-flow signal.
+- Don't add hairline dividers (`border-b`, `border-r`) between sections, or a border on top of a tinted fill.
+- Don't go below 12px type or use 600 weight.
 
 ---
 

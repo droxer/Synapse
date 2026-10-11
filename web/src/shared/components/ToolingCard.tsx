@@ -45,15 +45,15 @@ export function ToolingCard({
     <article
       className={cn(
         "surface-panel group relative flex h-full flex-col p-4",
-        "transition-[border-color,background-color] duration-200 ease-out",
+        "transition-[background-color,box-shadow] duration-200 ease-out",
         disabled
-          ? "opacity-90"
-          : "hover:border-border-strong hover:bg-muted",
+          ? "opacity-60"
+          : "hover:bg-sidebar-hover hover:shadow-elevated",
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="chip-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
           {icon}
         </div>
         {(badge || headerActions) && (

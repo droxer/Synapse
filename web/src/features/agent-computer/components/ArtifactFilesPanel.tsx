@@ -13,6 +13,7 @@ import { formatFileSize, fileCategoryColor, fileCategory } from "@/features/agen
 import { BrandFileTypeIcon } from "@/shared/components/file-type-icons/BrandFileTypeIcon";
 import { buildArtifactUrl } from "@/shared/components/ArtifactExplorer/artifactExplorerUtils";
 import { Button } from "@/shared/components/ui/button";
+import { EmptyState } from "@/shared/components/EmptyState";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -84,7 +85,7 @@ function ArtifactActions({
           size="icon-sm"
           variant="ghost"
           aria-label={t("artifacts.preview")}
-          className="border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground"
           onClick={() => onPreview(artifact)}
         >
           <Eye className="h-4 w-4" />
@@ -94,7 +95,7 @@ function ArtifactActions({
         size="icon-sm"
         variant="ghost"
         aria-label={t("artifacts.downloadFile")}
-        className="border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground"
         onClick={() => {
           if (url) downloadFile(url, artifact.name);
         }}
@@ -106,7 +107,7 @@ function ArtifactActions({
           size="icon-sm"
           variant="ghost"
           aria-label={t("explorer.deleteFileLabel", { name: artifact.name })}
-          className="border-transparent text-muted-foreground hover:border-border hover:text-destructive"
+          className="text-muted-foreground hover:text-destructive"
           onClick={() => onDelete([artifact.id])}
         >
           <Trash2 className="h-4 w-4" />
@@ -163,16 +164,16 @@ function ArtifactListRow({
       )}
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-medium text-foreground">{artifact.name}</p>
+          <p className="truncate text-sm font-medium text-foreground" title={artifact.name}>{artifact.name}</p>
           {isFresh ? (
-            <span className="shrink-0 text-micro font-medium text-success">
+            <span className="status-pill status-ok shrink-0">
               {t("artifacts.new")}
             </span>
           ) : null}
         </div>
         <ArtifactMeta artifact={artifact} />
         {artifact.directory ? (
-          <p className="truncate text-xs text-muted-foreground">{artifact.directory}</p>
+          <p className="truncate text-xs text-muted-foreground" title={artifact.directory}>{artifact.directory}</p>
         ) : null}
       </div>
       <ArtifactActions
@@ -196,6 +197,8 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
 
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [deleteTargetIds, setDeleteTargetIds] = useState<readonly string[] | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [freshArtifactIds, setFreshArtifactIds] = useState<ReadonlySet<string>>(new Set());
   const previousFingerprintByIdRef = useRef<ReadonlyMap<string, string>>(new Map());
 
@@ -258,28 +261,38 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
   }, [conversationId, selectedFileId]);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!deleteTargetIds?.length) return;
+    if (!deleteTargetIds?.length || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError(null);
     const ok = await performDelete(deleteTargetIds);
-    if (ok) setDeleteTargetIds(null);
-  }, [deleteTargetIds, performDelete]);
+    setIsDeleting(false);
+    if (ok) {
+      setDeleteTargetIds(null);
+    } else {
+      setDeleteError(t("artifacts.deleteFailed"));
+    }
+  }, [deleteTargetIds, isDeleting, performDelete, t]);
+
+  const handleDeleteDialogChange = useCallback((open: boolean) => {
+    if (open || isDeleting) return;
+    setDeleteTargetIds(null);
+    setDeleteError(null);
+  }, [isDeleting]);
 
   if (normalizedArtifacts.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center px-4">
-        <div className="w-full max-w-sm text-center">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-            <Sparkles className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <p className="mt-3 text-sm font-medium text-foreground">{t("artifacts.noFiles")}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t("library.noArtifactsHint")}</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={Sparkles}
+        title={t("artifacts.noFiles")}
+        description={t("library.noArtifactsHint")}
+        className="h-full"
+      />
     );
   }
 
   return (
     <>
-      <div className="flex h-full flex-col overflow-y-auto bg-background px-3 py-3 sm:px-4">
+      <div className="flex h-full flex-col overflow-y-auto overscroll-contain bg-background px-3 py-3 sm:px-4">
         <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-2">
           <span className="label-mono text-muted-foreground">{t("artifacts.recentOutputs")}</span>
           <span className="text-sm font-medium text-foreground">
@@ -288,13 +301,13 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
               : t("artifacts.filesCount", { count: normalizedArtifacts.length })}
           </span>
           {freshArtifactIds.size > 0 ? (
-            <span className="text-micro font-medium text-success">
+            <span className="text-micro font-medium text-success-text">
               {t("artifacts.newSinceOpen", { count: freshArtifactIds.size })}
             </span>
           ) : null}
         </div>
 
-        <div className="divide-y divide-border/70">
+        <div className="space-y-1">
           {normalizedArtifacts.map((artifact) => (
             <ArtifactListRow
               key={artifact.id}
@@ -319,7 +332,7 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
         onRequestDelete={conversationId ? () => setDeleteTargetIds(selectedArtifact ? [selectedArtifact.id] : null) : undefined}
       />
 
-      <AlertDialog open={Boolean(deleteTargetIds?.length)} onOpenChange={(open) => !open && setDeleteTargetIds(null)}>
+      <AlertDialog open={Boolean(deleteTargetIds?.length)} onOpenChange={handleDeleteDialogChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("explorer.deleteConfirmTitle")}</AlertDialogTitle>
@@ -327,10 +340,13 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
               {t("explorer.deleteConfirmDesc", { count: deleteTargetIds?.length ?? 0 })}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError ? (
+            <p role="alert" className="text-sm text-destructive">{deleteError}</p>
+          ) : null}
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("explorer.cancel")}</AlertDialogCancel>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              {t("explorer.deleteConfirm")}
+            <AlertDialogCancel disabled={isDeleting}>{t("explorer.cancel")}</AlertDialogCancel>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting} aria-busy={isDeleting}>
+              {isDeleting ? t("artifacts.deleting") : t("explorer.deleteConfirm")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

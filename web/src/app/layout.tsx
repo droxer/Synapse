@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { inter, geistMono, notoSansSC, notoSansTC } from "./fonts";
+import { montserrat, geistMono, notoSansSC, notoSansTC } from "./fonts";
 import { Providers } from "./providers";
 import { THEME_FAVICON_BOOTSTRAP } from "@/shared/lib/theme-favicon-bootstrap";
 import "./globals.css";
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1317" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,8 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html
+      lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${geistMono.variable} ${notoSansSC.variable} ${notoSansTC.variable}`}
+      className={`${montserrat.variable} ${geistMono.variable} ${notoSansSC.variable} ${notoSansTC.variable}`}
     >
       <head>
         <Script id="sync-theme-favicon" strategy="beforeInteractive">

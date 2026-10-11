@@ -26,7 +26,7 @@ const PHASE_CONFIG: Record<
 > = {
   thinking: {
     icon: Brain,
-    dotClass: "bg-ring",
+    dotClass: "bg-primary",
   },
   writing: {
     icon: Pencil,
@@ -34,7 +34,7 @@ const PHASE_CONFIG: Record<
   },
   using_tool: {
     icon: Wrench,
-    dotClass: "bg-ring",
+    dotClass: "bg-primary",
   },
 };
 
@@ -111,13 +111,13 @@ export function AssistantLoadingSkeleton({ phase }: AssistantLoadingSkeletonProp
             animate={shouldReduceMotion ? {} : { opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
           >
-            <Icon className="h-3 w-3" />
+            <Icon className="h-3 w-3" aria-hidden="true" />
           </motion.span>
         ) : (
-          <Icon className="h-3 w-3" />
+          <Icon className="h-3 w-3" aria-hidden="true" />
         )}
-        <span className="font-medium">{label}</span>
-        <span className="flex items-center gap-0.5">
+        <span className="text-caption-bold">{label}</span>
+        <span className="flex items-center gap-0.5" aria-hidden="true">
           {[0, 1, 2].map((i) => (
             <motion.span
               key={i}

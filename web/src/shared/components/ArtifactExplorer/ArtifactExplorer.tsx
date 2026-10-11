@@ -61,6 +61,8 @@ export function ArtifactExplorer({
   const { selectedFileId, selectFile } = useArtifactExplorer();
 
   const [deleteTargetIds, setDeleteTargetIds] = useState<readonly string[] | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteFailed, setDeleteFailed] = useState(false);
 
   // ── Build normalized item list ──────────────────────────────────────────
 
@@ -194,13 +196,21 @@ export function ArtifactExplorer({
   );
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!deleteTargetIds?.length) return;
+    if (!deleteTargetIds?.length || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteFailed(false);
     const ok = await performDelete(deleteTargetIds);
-    if (ok) setDeleteTargetIds(null);
-  }, [deleteTargetIds, performDelete]);
+    setIsDeleting(false);
+    if (ok) {
+      setDeleteTargetIds(null);
+    } else {
+      setDeleteFailed(true);
+    }
+  }, [deleteTargetIds, isDeleting, performDelete]);
 
   const openDeleteDialog = useCallback((ids: readonly string[]) => {
     if (ids.length === 0 || !canDelete) return;
+    setDeleteFailed(false);
     setDeleteTargetIds([...ids]);
   }, [canDelete]);
 
@@ -270,7 +280,10 @@ export function ArtifactExplorer({
       <AlertDialog
         open={deleteTargetIds !== null}
         onOpenChange={(open) => {
-          if (!open) setDeleteTargetIds(null);
+          if (!open && !isDeleting) {
+            setDeleteTargetIds(null);
+            setDeleteFailed(false);
+          }
         }}
       >
         <AlertDialogContent size="sm">
@@ -280,14 +293,21 @@ export function ArtifactExplorer({
               {t("explorer.deleteConfirmDesc", { count: deleteTargetIds?.length ?? 0 })}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <p role="alert" aria-live="assertive" className="text-sm text-destructive empty:hidden">
+            {deleteFailed ? t("shared.explorer.deleteFailed") : ""}
+          </p>
           <AlertDialogFooter>
-            <AlertDialogCancel size="sm">{t("explorer.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel size="sm" disabled={isDeleting}>
+              {t("explorer.cancel")}
+            </AlertDialogCancel>
             <Button
               variant="destructive"
               size="sm"
+              disabled={isDeleting}
+              aria-busy={isDeleting}
               onClick={() => void handleConfirmDelete()}
             >
-              {t("explorer.deleteConfirm")}
+              {isDeleting ? t("shared.explorer.deleting") : t("explorer.deleteConfirm")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
