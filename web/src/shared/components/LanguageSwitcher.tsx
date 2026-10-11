@@ -14,7 +14,6 @@ import { useTranslation, LOCALES, LOCALE_LABELS, type Locale } from "@/i18n";
 const LOCALE_SHORT: Record<Locale, string> = {
   en: "EN",
   "zh-CN": "\u7B80",
-  "zh-TW": "\u7E41",
 };
 
 interface LanguageSwitcherProps {

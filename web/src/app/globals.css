@@ -156,7 +156,7 @@
 
   /* Font families — DESIGN.md aligns to Optimistic VF; we substitute Montserrat as its
      designated fallback (humanist-geometric, free on Google Fonts). */
-  --font-cjk-sans: var(--font-noto-sans-sc), var(--font-noto-sans-tc), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC";
+  --font-cjk-sans: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC";
   --font-sans: var(--font-montserrat, Montserrat), var(--font-cjk-sans), Montserrat, Helvetica, Arial, "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -553,11 +553,7 @@
 }
 
 html:lang(zh-CN) {
-  --font-cjk-sans: var(--font-noto-sans-sc), var(--font-noto-sans-tc), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC";
-}
-
-html:lang(zh-TW) {
-  --font-cjk-sans: var(--font-noto-sans-tc), var(--font-noto-sans-sc), "PingFang TC", "Noto Sans CJK TC", "Microsoft JhengHei", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC";
+  --font-cjk-sans: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC";
 }
 
 /* ─── Custom Tailwind Utilities ─── */
@@ -1358,7 +1354,6 @@ pre, code {
 }
 
 /* CJK glyphs should keep native spacing; Latin-only tightening above stays for en UI. */
-html:lang(zh-CN) :where(h1, h2, h3, h4, h5, h6, p:not(.label-mono):not(.brand-wordmark), li, .prose, .conversation-markdown, .markdown-reasoning),
-html:lang(zh-TW) :where(h1, h2, h3, h4, h5, h6, p:not(.label-mono):not(.brand-wordmark), li, .prose, .conversation-markdown, .markdown-reasoning) {
+html:lang(zh-CN) :where(h1, h2, h3, h4, h5, h6, p:not(.label-mono):not(.brand-wordmark), li, .prose, .conversation-markdown, .markdown-reasoning) {
   letter-spacing: 0;
 }

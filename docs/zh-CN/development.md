@@ -249,7 +249,7 @@ Synapse/
 │   │   │   ├── stores/              # app-store（Zustand）
 │   │   │   ├── types/               # events.ts（AgentEvent、EventType、TaskState）
 │   │   │   └── lib/                 # utils、a11y
-│   │   └── i18n/                    # 国际化（en、zh-CN、zh-TW）
+│   │   └── i18n/                    # 国际化（en、zh-CN）
 │   │       └── locales/             # 翻译字典
 │   ├── next.config.ts               # 将 API 代理到后端
 │   └── package.json

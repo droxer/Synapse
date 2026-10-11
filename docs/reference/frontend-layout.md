@@ -15,7 +15,7 @@
 | `src/features/skills/` | Installed/bundled skills UI, search/filtering, install/upload/toggle/detail pages, file browser |
 | `src/features/mcp/` | MCP server list, add/edit dialog, JSON config parsing, enable/disable/remove flows |
 | `src/features/channels/` | Channel UI and API |
-| `src/i18n/` | Locale provider and dictionaries for `en`, `zh-CN`, and `zh-TW` |
+| `src/i18n/` | Locale provider and dictionaries for `en` and `zh-CN` |
 | `src/shared/stores/app-store.ts` | Zustand persistent store |
 
 ## Agent-computer surface (detail)

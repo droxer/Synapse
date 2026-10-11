@@ -144,7 +144,6 @@ _CLARIFICATION_PREFIXES = (
 _SUPPORTED_TURN_LOCALES = {
     "en": "English",
     "zh-CN": "Simplified Chinese",
-    "zh-TW": "Traditional Chinese",
 }
 _PLANNER_PRESERVED_TOOL_NAMES = (
     "task_complete",
@@ -522,15 +521,16 @@ class PlannerOrchestrator(LoopPolicy):
             registry=self._registry,
         )
         try:
-            activation, _matched = (
-                await self._skill_controller.match_and_activate_turn_start(
-                    user_message=user_message,
-                    selected_skills=selected_skills,
-                    prompt_assembly=prompt_assembly,
-                    registry=self._registry,
-                    cache_prompt=cache_prompt,
-                    attachments=attachments,
-                )
+            (
+                activation,
+                _matched,
+            ) = await self._skill_controller.match_and_activate_turn_start(
+                user_message=user_message,
+                selected_skills=selected_skills,
+                prompt_assembly=prompt_assembly,
+                registry=self._registry,
+                cache_prompt=cache_prompt,
+                attachments=attachments,
             )
         except Exception as exc:
             await self._emitter.emit(

@@ -247,7 +247,7 @@ Synapse/
 │       │   └── font-assets/ # 内置本地 Geist/Noto 字体资源
 │       ├── features/  # 功能模块（对话、智能体面板、技能、MCP、资料库、频道）
 │       ├── shared/    # 共享组件、hooks、状态管理、类型定义
-│       └── i18n/      # 国际化（en、zh-CN、zh-TW）
+│       └── i18n/      # 国际化（en、zh-CN）
 ├── container/         # 沙盒 Dockerfiles
 ├── docs/              # 文档
 └── Makefile           # 开发命令

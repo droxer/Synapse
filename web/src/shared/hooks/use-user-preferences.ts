@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { useTranslation, type Locale } from "@/i18n";
+import { useTranslation, LOCALES, type Locale } from "@/i18n";
 
 interface Preferences {
   theme?: string;
@@ -36,7 +36,7 @@ export function useUserPreferences() {
         if (data.theme) {
           setTheme(data.theme);
         }
-        if (data.locale) {
+        if (data.locale && (LOCALES as readonly string[]).includes(data.locale)) {
           setLocale(data.locale as Locale);
         }
       })

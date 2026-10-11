@@ -245,7 +245,7 @@ Synapse/
 │       │   └── font-assets/ # Bundled local Geist/Noto font assets
 │       ├── features/  # Feature modules (conversation, agent-computer, skills, mcp, library, channels)
 │       ├── shared/    # Shared components, hooks, stores, types
-│       └── i18n/      # Internationalization (en, zh-CN, zh-TW)
+│       └── i18n/      # Internationalization (en, zh-CN)
 ├── container/         # Sandbox Dockerfiles
 ├── docs/              # Documentation
 └── Makefile           # Dev commands

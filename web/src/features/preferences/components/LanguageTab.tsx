@@ -27,12 +27,6 @@ const LOCALE_META: Record<
     script: "简",
     preview: "我能为你构建什么？",
   },
-  "zh-TW": {
-    native: "繁體中文",
-    name: "Traditional Chinese",
-    script: "繁",
-    preview: "我能為你建構什麼？",
-  },
 };
 
 export function LanguageTab() {
@@ -57,7 +51,7 @@ export function LanguageTab() {
       <div
         role="radiogroup"
         aria-labelledby="language-title"
-        className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3"
+        className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2"
       >
         {LOCALES.map((loc) => {
           const isActive = loc === locale;

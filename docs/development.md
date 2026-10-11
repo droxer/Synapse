@@ -252,7 +252,7 @@ Synapse/
 │   │   │   ├── stores/              # app-store (Zustand)
 │   │   │   ├── types/               # events.ts (AgentEvent, EventType, TaskState)
 │   │   │   └── lib/                 # utils, a11y
-│   │   └── i18n/                    # Internationalization (en, zh-CN, zh-TW)
+│   │   └── i18n/                    # Internationalization (en, zh-CN)
 │   │       └── locales/             # Translation dictionaries
 │   ├── next.config.ts               # API proxy to backend
 │   └── package.json
