@@ -1,23 +1,10 @@
 import localFont from "next/font/local";
-import { Montserrat } from "next/font/google";
 
-export const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  variable: "--font-montserrat",
-  display: "swap",
-});
-
+// Sans text (Latin + CJK) uses the native system stack in globals.css, matching
+// eveland.ai — no web font download. Only the mono face is bundled.
 export const geistMono = localFont({
   src: "./font-assets/geist-mono-variable.woff2",
   variable: "--font-geist-mono",
-  weight: "100 900",
-  display: "swap",
-});
-
-export const notoSansSC = localFont({
-  src: "./font-assets/noto-sans-sc-variable.otf",
-  variable: "--font-noto-sans-sc",
   weight: "100 900",
   display: "swap",
 });

@@ -1,6 +1,6 @@
 # Synapse Frontend Design Guide
 
-This document is the canonical product UI style guide for Synapse. The visual system is a **full brand pivot** to the Meta-inspired commerce/hardware-showcase aesthetic defined in [`/DESIGN.md`](../DESIGN.md): stark white canvas, cobalt commerce CTAs, pill buttons, 32-pt photographic cards, and a Montserrat type stack standing in for the proprietary Optimistic VF.
+This document is the canonical product UI style guide for Synapse. The visual system is a **full brand pivot** to the Meta-inspired commerce/hardware-showcase aesthetic defined in [`/DESIGN.md`](../DESIGN.md): stark white canvas, cobalt commerce CTAs, pill buttons, 32-pt photographic cards, and a native system type stack (matching eveland.ai) in place of the proprietary Optimistic VF.
 
 ## 1) Scope and Precedence
 
@@ -76,7 +76,7 @@ Use `ring-1` only inside dense product chrome where a thinner ring is intentiona
 
 ### 3.5 Typography contract
 
-- **Sans stack** (`--font-sans`): Montserrat (`next/font/google`, weights 300/400/500/700) → Noto Sans CJK SC/TC → system fallbacks. Substitutes for the proprietary Optimistic VF; the `ss01, ss02` stylistic-set declarations on headings are harmless on Montserrat and future-proof an Optimistic swap.
+- **Sans stack** (`--font-sans`): native system stack matching eveland.ai — `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial` → `--font-cjk-sans` (PingFang SC/TC → Hiragino Sans GB → Microsoft YaHei/JhengHei → Noto Sans CJK) → `sans-serif`. No web font download. The `ss01, ss02` stylistic-set declarations on headings are harmless and future-proof an Optimistic swap.
 - **Mono stack** (`--font-mono`): Geist Mono → system mono. Reserved for code blocks and tabular numerics.
 
 #### Type roles
@@ -85,22 +85,22 @@ Every role is exposed as a single `@utility` class — use these instead of raw 
 
 | Utility | Size | Weight | LH | Tracking |
 |---|---|---|---|---|
-| `text-hero-display` | 64 | 500 | 1.16 | 0 |
-| `text-display-lg` | 48 | 500 | 1.17 | 0 |
-| `text-heading-lg` | 36 | 500 | 1.28 | 0 |
-| `text-heading-md` | 28 | **300** (editorial light) | 1.21 | 0 |
-| `text-heading-sm` | 24 | 500 | 1.25 | 0 |
-| `text-subtitle-lg` | 18 | 700 | 1.44 | 0 |
-| `text-subtitle-md` | 18 | 400 | 1.44 | 0 |
-| `text-body-md` | 16 | 400 | 1.5 | -0.16px |
-| `text-body-md-bold` | 16 | 700 | 1.5 | -0.16px |
-| `text-body-sm` | 14 | 400 | 1.43 | -0.14px |
-| `text-body-sm-bold` | 14 | 700 | 1.43 | -0.14px |
-| `text-caption-bold` | 12 | 700 | 1.33 | 0 |
-| `text-button-md` | 14 | 700 | 1.43 | -0.14px |
-| `text-link-md` | 16 | 700 | 1.5 | -0.16px |
+| `text-hero-display` | clamp(38px, 4.6vw, 68px) · zh 34–58px | 500 | 1.04 · zh 1.12 | -0.075em |
+| `text-display-lg` | clamp(32px, 4.2vw, 56px) · zh 28–48px | 500 | 1.18 · zh 1.28 | -0.055em · zh -0.03em |
+| `text-heading-lg` | 32px → 40px at ≥768px | 450 | 2.5rem → 3rem | -0.04em → -0.05em |
+| `text-heading-md` | clamp(20px, 2.3vw, 32px) · zh 18–28px | 460 | 1.35 | -0.035em · zh -0.02em |
+| `text-heading-sm` | 25px | 520 | 1.25 | -0.04em |
+| `text-subtitle-lg` | 17px | 620 | 1.45 | -0.01em |
+| `text-subtitle-md` | 17px | 400 | 1.65 | 0 |
+| `text-body-md` | 16px | 400 | 1.75 | 0 |
+| `text-body-md-bold` | 16px | 620 | 1.75 | 0 |
+| `text-body-sm` | 14px | 400 | 1.43 | 0 |
+| `text-body-sm-bold` | 14px | 500 | 1.43 | 0 |
+| `text-caption-bold` | 12px | 620 | 1.33 | 0 |
+| `text-button-md` | 13px | 620 | 1.43 | 0 |
+| `text-link-md` | 13px | 620 | 1.43 | 0 |
 
-Bare `<h1>`–`<h6>` tags inherit `font-feature-settings: "ss01", "ss02"` and `font-weight: 500` (700 for h3–h6) but **deliberately have no tag-level `font-size`** — pick a role utility per element. The 300-weight `text-heading-md` is the system's editorial signature.
+Bare `<h1>`–`<h6>` tags inherit `font-feature-settings: "ss01", "ss02"` and `font-weight: 500` (700 for h3–h6) but **deliberately have no tag-level `font-size`** — pick a role utility per element. Role values follow eveland.ai.
 
 ### 3.6 Spacing contract
 
@@ -121,7 +121,7 @@ Do not add diffuse atmosphere shadows to marketing or product cards.
 ### 3.8 CJK safety
 
 Chinese (`zh-CN`) typography:
-- Letter-spacing on Latin body roles (`-0.14px`/`-0.16px`) is zeroed for CJK selectors at the bottom of `globals.css`.
+- Latin display tracking is zeroed for CJK headings/paragraphs at the bottom of `globals.css`; `text-display-lg` and `text-heading-md` keep eveland.ai's lighter zh tracking via `:lang(zh)`.
 - **Layout rule**: centered CJK copy must use **block flow + `text-align: center`** (`cjk-safe-centered` / `cjk-safe-centered-constrained` utilities). Do **not** use `flex items-center` or `grid justify-items: center` on the text container — both shrink cross-axis size to min-content (~1 glyph for CJK), causing vertical text. In horizontal rows, **`flex-1 min-w-0` and `grid-cols-[minmax(0,1fr)_…]` also collapse CJK** — the `minmax(0, …)` / `min-w-0` minimum allows tracks to shrink below glyph width. Use plain `1fr` columns, or flex rows **without** `min-w-0` on the label (push trailing icons with `ml-auto`).
 
 ## 4) Usage Rules (Do / Don't)
@@ -240,7 +240,7 @@ Known drift, to be normalised in subsequent passes:
 
 1. **Overlay primitives** (`Popover`, `HoverCard`, `Select`) still use the prior `surface-overlay` chrome at 24px radius — leave as-is for now; product-feature card variants are reserved for content cards, not menus.
 2. **Dark mode** values are synthesised, not from DESIGN.md. Spot-validate cobalt/critical contrast on dark canvases before shipping new dark surfaces.
-3. **Optimistic VF** licensing: if/when acquired, swap `--font-montserrat` for the Optimistic loader and the `ss01, ss02` stylistic sets activate automatically.
+3. **Optimistic VF** licensing: if/when acquired, prepend the Optimistic loader variable to `--font-sans` and the `ss01, ss02` stylistic sets activate automatically.
 4. **Animation timings** are not extracted from spec — current defaults: 150ms ease-out for surface transitions, 300ms ease-in-out for accordions. Codify if/when DESIGN.md adds a motion contract.
 5. **Legacy dense utilities** (`status-pill`, `chip-muted`) remain for unmigrated dense product surfaces; prefer `Badge` for new code.
 
@@ -260,7 +260,7 @@ When changing design tokens or visual standards:
 ### Spec + tokens
 - [`/DESIGN.md`](../DESIGN.md) — canonical Meta-aligned spec
 - `web/src/app/globals.css` — live tokens, role utilities, card chrome utilities, search-pill utility
-- `web/src/app/fonts.ts` — Montserrat + Geist Mono + Noto Sans loaders
+- `web/src/app/fonts.ts` — Geist Mono loader (sans text uses system fonts)
 - `docs/reference/design-system.md` — token tables
 
 ### Shared shell / components

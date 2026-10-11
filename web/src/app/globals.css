@@ -154,13 +154,14 @@
   --ring-profile: var(--color-profile-ring);
   --ring-profile-hover: var(--color-profile-ring-hover);
 
-  /* Font families — DESIGN.md aligns to Optimistic VF; we substitute Montserrat as its
-     designated fallback (humanist-geometric, free on Google Fonts). */
-  --font-cjk-sans: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC";
-  --font-sans: var(--font-montserrat, Montserrat), var(--font-cjk-sans), Montserrat, Helvetica, Arial, "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  /* Font families — native system stack, matching eveland.ai. Latin resolves to
+     SF Pro / Segoe UI / Roboto; CJK falls through to the OS face (PingFang on macOS,
+     Microsoft YaHei/JhengHei on Windows, Noto Sans CJK on Linux). No web font download. */
+  --font-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC";
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, var(--font-cjk-sans), sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-brand-family: var(--font-montserrat, Montserrat), Montserrat, system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-brand-family: var(--font-sans);
 
   /* DESIGN.md typography roles are defined as full @utility classes below
      (font-family + size + weight + line-height + letter-spacing), so we deliberately
@@ -553,7 +554,7 @@
 }
 
 html:lang(zh-CN) {
-  --font-cjk-sans: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC";
+  --font-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC";
 }
 
 /* ─── Custom Tailwind Utilities ─── */
@@ -586,103 +587,139 @@ html:lang(zh-CN) {
   background-color: var(--color-surface-soft);
 }
 
-/* ─── DESIGN.md typography roles ─── */
+/* ─── Typography roles — sizes, weights, and tracking match eveland.ai ───
+   Display roles use fluid clamp() sizes with tight negative tracking; `:lang(zh)`
+   steps sizes down, opens line-height, and relaxes tracking for CJK glyphs
+   (eveland.ai's zh-CN overrides). Body copy carries no tracking. */
 @utility text-hero-display {
+  /* eveland .hero h1 */
   font-family: var(--font-sans);
-  font-size: 64px;
+  font-size: clamp(38px, 4.6vw, 68px);
   font-weight: 500;
-  line-height: 1.16;
-  letter-spacing: 0;
+  line-height: 1.04;
+  letter-spacing: -0.075em;
   font-feature-settings: "ss01", "ss02";
+
+  &:lang(zh) {
+    font-size: clamp(34px, 4vw, 58px);
+    line-height: 1.12;
+  }
 }
 @utility text-display-lg {
+  /* eveland .manifesto-statement */
   font-family: var(--font-sans);
-  font-size: 48px;
+  font-size: clamp(32px, 4.2vw, 56px);
   font-weight: 500;
-  line-height: 1.17;
+  line-height: 1.18;
+  letter-spacing: -0.055em;
   font-feature-settings: "ss01", "ss02";
+
+  &:lang(zh) {
+    font-size: clamp(28px, 3.6vw, 48px);
+    line-height: 1.28;
+    letter-spacing: -0.03em;
+  }
 }
 @utility text-heading-lg {
+  /* eveland docs page h1 */
   font-family: var(--font-sans);
-  font-size: 36px;
-  font-weight: 500;
-  line-height: 1.28;
+  font-size: 2rem;
+  font-weight: 450;
+  line-height: 2.5rem;
+  letter-spacing: -0.04em;
   font-feature-settings: "ss01", "ss02";
+
+  @media (min-width: 48rem) {
+    font-size: 2.5rem;
+    line-height: 3rem;
+    letter-spacing: -0.05em;
+  }
 }
 @utility text-heading-md {
-  /* Editorial light-weight subhead — DESIGN.md signature */
+  /* eveland .manifesto-substatement */
   font-family: var(--font-sans);
-  font-size: 28px;
-  font-weight: 300;
-  line-height: 1.21;
+  font-size: clamp(20px, 2.3vw, 32px);
+  font-weight: 460;
+  line-height: 1.35;
+  letter-spacing: -0.035em;
   font-feature-settings: "ss01", "ss02";
+
+  &:lang(zh) {
+    font-size: clamp(18px, 2vw, 28px);
+    letter-spacing: -0.02em;
+  }
 }
 @utility text-heading-sm {
+  /* eveland .deployment-flow h3 */
   font-family: var(--font-sans);
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 25px;
+  font-weight: 520;
   line-height: 1.25;
+  letter-spacing: -0.04em;
   font-feature-settings: "ss01", "ss02";
 }
 @utility text-subtitle-lg {
+  /* eveland 17px lead size at its 620 emphasis weight */
   font-family: var(--font-sans);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.44;
+  font-size: 17px;
+  font-weight: 620;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
 }
 @utility text-subtitle-md {
+  /* eveland .proof-section p */
   font-family: var(--font-sans);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 400;
-  line-height: 1.44;
+  line-height: 1.65;
 }
 @utility text-body-md {
+  /* eveland .flow-copy p */
   font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: -0.16px;
+  line-height: 1.75;
 }
 @utility text-body-md-bold {
   font-family: var(--font-sans);
   font-size: 16px;
-  font-weight: 700;
-  line-height: 1.5;
-  letter-spacing: -0.16px;
+  font-weight: 620;
+  line-height: 1.75;
 }
 @utility text-body-sm {
+  /* eveland docs nav / toc */
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 400;
   line-height: 1.43;
-  letter-spacing: -0.14px;
 }
 @utility text-body-sm-bold {
+  /* eveland docs toc heading / page actions */
   font-family: var(--font-sans);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.43;
-  letter-spacing: -0.14px;
 }
 @utility text-caption-bold {
+  /* eveland .hero-install-link / .foundation-list a */
   font-family: var(--font-sans);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 620;
   line-height: 1.33;
 }
 @utility text-button-md {
+  /* eveland .button */
   font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 620;
   line-height: 1.43;
-  letter-spacing: -0.14px;
 }
 @utility text-link-md {
+  /* eveland .text-link */
   font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.5;
-  letter-spacing: -0.16px;
+  font-size: 13px;
+  font-weight: 620;
+  line-height: 1.43;
 }
 
 /* CJK-safe centered copy — block flow + text-align (NOT flex/grid centering on children).
@@ -878,19 +915,17 @@ html:lang(zh-CN) {
 }
 
 @utility heading-display {
+  /* eveland .hero h1 */
   font-family: var(--font-sans);
-  font-size: 2rem;
+  font-size: clamp(38px, 4.6vw, 68px);
   font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: 0;
+  line-height: 1.04;
+  letter-spacing: -0.075em;
   text-wrap: balance;
 
-  @media (min-width: 40rem) {
-    font-size: 2.75rem;
-  }
-
-  @media (min-width: 64rem) {
-    font-size: 3.25rem;
+  &:lang(zh) {
+    font-size: clamp(34px, 4vw, 58px);
+    line-height: 1.12;
   }
 }
 
@@ -946,7 +981,7 @@ p, span, input, textarea, label, li, td {
   font-family: var(--font-sans);
 }
 
-/* DESIGN.md: headings use Optimistic VF with ss01/ss02. Montserrat does not ship those
+/* DESIGN.md: headings use Optimistic VF with ss01/ss02. The system stack ignores those
    stylistic sets — the declaration is harmless and future-proofs an Optimistic VF swap.
    We deliberately do NOT set font-size on the bare tag selector — role utilities
    (`text-heading-lg`, `text-subtitle-lg`, etc.) or Tailwind sizing classes drive that. */
@@ -977,10 +1012,6 @@ body {
   font-size: var(--text-sm);
   line-height: 1.6;
   touch-action: manipulation;
-}
-
-:where(p, li, .prose) {
-  letter-spacing: -0.011em;
 }
 
 /* DESIGN.md geometry contract (see docs/design.md §3.3):

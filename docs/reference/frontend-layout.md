@@ -44,7 +44,7 @@
 
 ## Fonts and locale bootstrapping
 
-`src/app/fonts.ts` loads local Geist and Noto Sans SC/TC assets from `src/app/font-assets/`. `src/app/layout.tsx` applies the font variables and uses a `beforeInteractive` script to sync the persisted locale onto `<html lang>` before hydration.
+`src/app/fonts.ts` loads the local Geist Mono asset from `src/app/font-assets/`; sans text (Latin + CJK) uses the system stack in `globals.css`. `src/app/layout.tsx` applies the font variables and uses a `beforeInteractive` script to sync the persisted locale onto `<html lang>` before hydration.
 
 ## Related
 
