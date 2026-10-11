@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { useTranslation } from "@/i18n";
 import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { RetryableError } from "./RetryableError";
 import { getChannelStatus, type ChannelProviderStatus } from "@/features/channels/api/channel-api";
 import { ChannelProviderIcon } from "@/features/channels/components/ChannelProviderIcon";
 import { TabHeader } from "./TabHeader";
@@ -22,6 +24,7 @@ function ChannelIntegrationRow({
   const { t } = useTranslation();
   const configured = status?.configured ?? false;
   const linked = status?.linked ?? false;
+  const statusVariant = linked ? "success" : configured ? "info" : "neutral";
   const statusLabel = linked
     ? t("channels.integrations.linked")
     : configured
@@ -29,16 +32,14 @@ function ChannelIntegrationRow({
       : t("channels.integrations.notConfigured");
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+    <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
       <ChannelProviderIcon provider={provider} size="lg" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-body-sm-bold text-foreground">
             {t(`channels.${provider}.title`)}
           </p>
-          <span className="shrink-0 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-micro font-medium uppercase text-muted-foreground">
-            {statusLabel}
-          </span>
+          <Badge variant={statusVariant}>{statusLabel}</Badge>
         </div>
         <p className="mt-0.5 truncate text-caption text-muted-foreground">
           {status?.bot_username ?? t(`channels.${provider}.description`)}
@@ -64,13 +65,15 @@ export function ChannelsTab({ onOpenTelegram, onOpenDiscord }: ChannelsTabProps)
   const [error, setError] = useState<string | null>(null);
 
   const loadStatus = useCallback(async () => {
+    setLoading(true);
     try {
       setError(null);
       const status = await getChannelStatus();
       setTelegramStatus(status.providers.telegram ?? null);
       setDiscordStatus(status.providers.discord ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("channels.integrations.errorLoad"));
+      console.error("Failed to load channel status", err);
+      setError(t("preferences.channels.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -90,15 +93,18 @@ export function ChannelsTab({ onOpenTelegram, onOpenDiscord }: ChannelsTabProps)
       />
 
       {error && (
-        <div className="mb-4 rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive">
-          {error}
-        </div>
+        <RetryableError
+          className="mb-4"
+          message={error}
+          onRetry={() => void loadStatus()}
+        />
       )}
 
       {loading ? (
-        <div className="space-y-3">
-          <div className="h-16 rounded-lg skeleton-shimmer" />
-          <div className="h-16 rounded-lg skeleton-shimmer" />
+        <div className="space-y-3" aria-busy="true">
+          <span className="sr-only" role="status">{t("preferences.loading")}</span>
+          <div className="h-16 rounded-xl skeleton-shimmer" />
+          <div className="h-16 rounded-xl skeleton-shimmer" />
         </div>
       ) : (
         <div className="space-y-3">
@@ -115,8 +121,8 @@ export function ChannelsTab({ onOpenTelegram, onOpenDiscord }: ChannelsTabProps)
         </div>
       )}
 
-      <div className="mt-5 flex items-start gap-2 rounded-lg border border-border bg-muted p-3 text-caption text-muted-foreground">
-        <MessageCircle className="mt-0.5 h-4 w-4 shrink-0" />
+      <div className="mt-5 flex items-start gap-2 px-1 text-caption text-muted-foreground">
+        <MessageCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
         <p>{t("preferences.channels.help")}</p>
       </div>
 

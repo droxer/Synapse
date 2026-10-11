@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { ChannelProviderIcon } from "./ChannelProviderIcon";
 
 type ProviderKey = "telegram" | "discord";
@@ -43,46 +44,44 @@ export function ProviderConfigShell({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-full sm:max-w-[28rem] rounded-lg border border-border bg-background p-0 gap-0"
+        className="w-full sm:max-w-[28rem] p-0 gap-0"
       >
-        <div className="flex items-center gap-3.5 px-6 py-4 border-b border-border/60">
-          <ChannelProviderIcon
-            provider={provider}
-            size="lg"
-            className="rounded-xl ring-1 ring-border"
-          />
+        <div className="flex items-center gap-3.5 px-6 pt-5 pb-2">
+          <ChannelProviderIcon provider={provider} size="lg" />
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-subtitle-lg text-foreground">{title}</DialogTitle>
-            <DialogDescription className="text-caption text-muted-foreground truncate">
+            <DialogDescription className="text-caption text-muted-foreground break-words">
               {description}
             </DialogDescription>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             aria-label={t("a11y.close")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="text-muted-foreground hover:text-foreground"
           >
-            <X className="h-4 w-4" />
-          </button>
+            <X aria-hidden="true" />
+          </Button>
         </div>
 
-        <div className="relative px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="relative px-6 pt-3 pb-6 space-y-4 max-h-[70vh] overflow-y-auto">
           {error && (
             <div
               role="alert"
-              className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive"
+              className="flex items-start gap-2 rounded-lg bg-danger-subtle px-3 py-2 text-body-sm text-destructive"
             >
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span className="leading-snug">{error}</span>
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 break-words">{error}</span>
             </div>
           )}
 
           {loading ? (
-            <div className="space-y-3">
-              <div className="h-10 rounded-md skeleton-shimmer" />
-              <div className="h-24 rounded-md skeleton-shimmer" />
-              <div className="h-10 rounded-md skeleton-shimmer" />
+            <div className="space-y-3" aria-busy="true">
+              <div className="h-10 rounded-lg skeleton-shimmer" />
+              <div className="h-24 rounded-xl skeleton-shimmer" />
+              <div className="h-10 rounded-full skeleton-shimmer" />
             </div>
           ) : (
             children
@@ -90,6 +89,15 @@ export function ProviderConfigShell({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function ProviderStatusBadge({ label, tone }: { label: string; tone: "ok" | "warn" }) {
+  return (
+    <Badge variant={tone === "ok" ? "neutral" : "warning"} className="shrink-0">
+      {tone === "warn" && <span className="h-1 w-1 rounded-full bg-warning" aria-hidden="true" />}
+      {label}
+    </Badge>
   );
 }
 
@@ -107,21 +115,12 @@ export function ProviderBotInfoRow({
   statusTone,
 }: ProviderBotInfoRowProps) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
+    <div className="flex items-center justify-between gap-3 rounded-xl bg-surface-soft p-3">
       <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="text-body-sm-bold text-foreground tracking-tight truncate">{displayName}</p>
+        <p className="text-body-sm-bold text-foreground truncate" title={displayName}>{displayName}</p>
         <p className="text-caption text-muted-foreground font-mono truncate">{maskedToken}</p>
       </div>
-      <span
-        className={
-          statusTone === "ok"
-            ? "shrink-0 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-micro font-medium uppercase text-muted-foreground"
-            : "shrink-0 inline-flex items-center gap-1 rounded-sm bg-warning/10 px-1.5 py-0.5 text-micro font-medium uppercase text-warning ring-1 ring-warning/25"
-        }
-      >
-        {statusTone === "warn" && <span className="h-1 w-1 rounded-full bg-warning" />}
-        {statusLabel}
-      </span>
+      <ProviderStatusBadge label={statusLabel} tone={statusTone} />
     </div>
   );
 }
@@ -143,34 +142,33 @@ export function ProviderHelpAccordion({
   onToggle,
   externalLink,
 }: ProviderHelpAccordionProps) {
+  const { t } = useTranslation();
+  const newTabLabel = t("a11y.opensInNewTab");
   const panelId = `${id}-panel`;
   return (
-    <div className="rounded-md border border-border overflow-hidden bg-muted">
+    <div className="rounded-xl overflow-hidden bg-surface-soft">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex w-full items-center justify-between px-3 py-2 text-body-sm-bold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-body-sm-bold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
       >
-        <span className="flex items-center gap-2">
-          <ExternalLink className="h-3.5 w-3.5" />
-          {title}
-        </span>
-        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <span>{title}</span>
+        {open ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
       </button>
       {open && (
         <div
           id={panelId}
-          className="border-t border-border/60 px-4 py-3 space-y-2 leading-normal text-muted-foreground"
+          className="px-4 pb-3 space-y-2 text-muted-foreground"
         >
           <ol className="space-y-2">
             {steps.map((step, idx) => (
               <li key={idx} className="flex items-start gap-2.5">
-                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border bg-background text-micro font-semibold text-muted-foreground">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-background text-micro tabular-nums text-muted-foreground" aria-hidden="true">
                   {idx + 1}
                 </span>
-                <span className="text-caption text-foreground">{step}</span>
+                <span className="min-w-0 break-words text-caption text-foreground">{step}</span>
               </li>
             ))}
           </ol>
@@ -179,10 +177,11 @@ export function ProviderHelpAccordion({
               href={externalLink.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-caption-bold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
+              className="mt-1 inline-flex items-center gap-1 text-caption-bold text-primary hover:text-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
             >
               {externalLink.label}
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              <span className="sr-only">{newTabLabel}</span>
             </a>
           )}
         </div>
@@ -213,28 +212,34 @@ export function ProviderTokenSnippet({
   caption,
   deepLink,
 }: ProviderTokenSnippetProps) {
+  const { t } = useTranslation();
+  const newTabLabel = t("a11y.opensInNewTab");
   return (
-    <div className="rounded-lg border border-primary/30 bg-gradient-to-b from-primary/[0.04] to-transparent p-3 space-y-2.5">
+    <div className="rounded-xl bg-accent-subtle p-3 space-y-2.5">
       {caption && (
-        <p className="text-caption text-muted-foreground leading-snug px-0.5">{caption}</p>
+        <p className="text-caption text-muted-foreground px-0.5">{caption}</p>
       )}
-      <div className="flex items-stretch rounded-md border border-border overflow-hidden bg-background">
-        <code className="flex-1 min-w-0 px-3 py-2.5 font-mono text-caption text-foreground truncate">
+      <div className="flex items-center gap-2 rounded-lg bg-background p-1 pl-3">
+        <code className="flex-1 min-w-0 py-1.5 font-mono text-caption text-foreground break-all">
           {command}
         </code>
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="xs"
           onClick={onCopy}
-          aria-label={copied ? copiedLabel : copyLabel}
-          className="flex shrink-0 items-center justify-center gap-1.5 border-l border-border bg-muted px-3 py-2.5 text-caption-bold text-muted-foreground transition-colors hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
+          className="shrink-0"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-foreground" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
           {copied ? copiedLabel : copyLabel}
-        </button>
+        </Button>
+        <span className="sr-only" role="status" aria-live="polite">
+          {copied ? copiedLabel : ""}
+        </span>
       </div>
       <div className="flex items-center justify-between gap-2 px-0.5">
         <span className="inline-flex items-center gap-1 text-micro text-muted-foreground">
-          <Timer className="h-3 w-3" />
+          <Timer className="h-3 w-3" aria-hidden="true" />
           {expiryLabel}
         </span>
         {deepLink && (
@@ -242,10 +247,11 @@ export function ProviderTokenSnippet({
             href={deepLink.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-caption-bold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
+            className="inline-flex items-center gap-1 text-caption-bold text-primary hover:text-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
           >
             {deepLink.label}
-            <ExternalLink className="h-3 w-3" />
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            <span className="sr-only">{newTabLabel}</span>
           </a>
         )}
       </div>
@@ -269,22 +275,24 @@ export function ProviderLinkedAccountRow({
   disabled,
 }: ProviderLinkedAccountRowProps) {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-card p-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-body-sm-bold text-muted-foreground">
+    <div className="flex items-center gap-3 rounded-xl bg-surface-soft p-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background text-body-sm-bold text-muted-foreground" aria-hidden="true">
         {displayName.charAt(0).toUpperCase()}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-body-sm-bold text-foreground truncate">{displayName}</p>
+        <p className="text-body-sm-bold text-foreground truncate" title={displayName}>{displayName}</p>
         <p className="text-caption text-text-subtle">{linkedAtLabel}</p>
       </div>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={onUnlink}
         disabled={disabled}
-        className="shrink-0 rounded-md border border-border bg-card px-2.5 py-1 text-caption-bold text-destructive transition-colors hover:border-destructive hover:bg-destructive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
+        className="shrink-0 text-destructive hover:bg-danger-subtle hover:text-destructive"
       >
         {unlinkLabel}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -305,11 +313,11 @@ export function ProviderDangerZone({
   disabled,
 }: ProviderDangerZoneProps) {
   return (
-    <div className="rounded-md border border-dashed border-destructive/40 bg-destructive/[0.03] p-3">
+    <div className="rounded-xl bg-danger-subtle p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-caption-bold uppercase tracking-wider text-destructive">{title}</p>
-          <p className="mt-0.5 text-caption text-muted-foreground leading-snug">{description}</p>
+          <p className="mt-0.5 text-caption text-muted-foreground">{description}</p>
         </div>
         <Button
           type="button"
@@ -317,7 +325,7 @@ export function ProviderDangerZone({
           size="sm"
           disabled={disabled}
           onClick={onAction}
-          className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          className="shrink-0 text-destructive hover:bg-danger-subtle hover:text-destructive"
         >
           {actionLabel}
         </Button>
@@ -328,8 +336,8 @@ export function ProviderDangerZone({
 
 export function ProviderHeaderSkeleton({ provider }: { provider: ProviderKey }) {
   return (
-    <div className="flex items-center gap-3.5 px-6 py-4 border-b border-border/60">
-      <ChannelProviderIcon provider={provider} size="lg" className="rounded-xl ring-1 ring-border opacity-60" />
+    <div className="flex items-center gap-3.5 px-6 pt-5 pb-2" aria-hidden="true">
+      <ChannelProviderIcon provider={provider} size="lg" className="opacity-60" />
       <div className="min-w-0 flex-1 space-y-1.5">
         <div className="h-3 w-24 skeleton-shimmer rounded" />
         <div className="h-2.5 w-40 skeleton-shimmer rounded" />
@@ -355,26 +363,17 @@ export function ProviderTriggerCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex w-full flex-col gap-2 overflow-hidden rounded-lg border border-border bg-card p-3 text-left transition-[border-color,background-color] duration-200 ease-out hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group relative flex w-full flex-col gap-2 overflow-hidden rounded-xl bg-surface-soft p-3 text-left transition-[background-color] duration-200 ease-out hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2.5 min-w-0">
           <ChannelProviderIcon provider={provider} size="md" />
           <div className="space-y-0.5 min-w-0">
             <span className="text-body-sm-bold text-foreground block">{title}</span>
-            <span
-              className={
-                status.tone === "ok"
-                  ? "inline-flex items-center gap-1.5 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-micro font-medium uppercase text-muted-foreground"
-                  : "inline-flex items-center gap-1 rounded-sm bg-warning/10 px-1.5 py-0.5 text-micro font-medium uppercase text-warning ring-1 ring-warning/25"
-              }
-            >
-              {status.tone === "warn" && <span className="h-1 w-1 rounded-full bg-warning" />}
-              {status.label}
-            </span>
+            <ProviderStatusBadge label={status.label} tone={status.tone} />
           </div>
         </div>
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors group-hover:bg-muted group-hover:text-foreground">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-circle bg-background text-muted-foreground transition-colors group-hover:text-foreground" aria-hidden="true">
           <ChevronDown className="h-3.5 w-3.5 -rotate-90" />
         </div>
       </div>

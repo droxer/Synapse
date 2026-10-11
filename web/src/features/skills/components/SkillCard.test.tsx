@@ -57,7 +57,8 @@ describe("SkillCard style contract", () => {
     expect(html).toContain("status-pill");
     expect(html).toContain("chip-xs");
     expect(html).toContain("status-neutral");
-    expect(html).toContain("aria-label=\"Disable skill Frontend Design\"");
+    expect(html).toContain("aria-label=\"Frontend Design: Enabled\"");
+    expect(html).toContain("role=\"switch\"");
     expect(html).not.toContain("fine-hover-action");
   });
 });

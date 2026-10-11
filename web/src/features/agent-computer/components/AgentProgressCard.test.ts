@@ -107,6 +107,14 @@ function createTestTranslator(): TFn {
         return "unknown";
       case "progress.usingTool":
         return `using ${params?.name ?? ""} tool`;
+      case "progress.previewAvailableAt":
+        return `Preview available at ${params?.url ?? ""}`;
+      case "progress.contextCompactedDetail":
+        return `Context compacted (${params?.original ?? ""} → ${params?.compacted ?? ""})`;
+      case "progress.dependencyFailedFull":
+        return `Failed installing ${params?.manager ?? ""} dependencies for ${params?.skill ?? ""}: ${params?.packages ?? ""}`;
+      case "progress.previewStopped":
+        return "Preview stopped";
       default:
         return key;
     }
@@ -259,7 +267,7 @@ describe("buildSteps runtime phrase mapping", () => {
     const steps = buildSteps(events, buildToolCallIndexes([]), [], noPlanSteps, t, agentNameMap);
     expect(steps.map((step) => step.title)).toEqual([
       "Preview available at /api/conversations/c1/preview/",
-      "Context compacted (12 -> 4)",
+      "Context compacted (12 → 4)",
       "Failed installing npm dependencies for Frontend Design: framer-motion",
       "Preview stopped",
     ]);

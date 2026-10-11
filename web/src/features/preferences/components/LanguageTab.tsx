@@ -72,17 +72,16 @@ export function LanguageTab() {
               onClick={() => handleSelect(loc)}
               className={cn(
                 /* Block card — no flex-1/min-w-0 or minmax(0,1fr) on CJK labels. */
-                "group relative block w-full rounded-xl border p-5 text-left transition-[border-color,background-color,box-shadow,transform] duration-200 ease-out",
+                "group relative block w-full rounded-xl p-5 text-left transition-colors duration-200 ease-out",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                "hover:-translate-y-0.5 hover:border-border-strong hover:shadow-sm",
                 isActive
-                  ? "border-primary/35 bg-primary/5 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_18%,transparent)]"
-                  : "border-border bg-background",
+                  ? "bg-primary/5"
+                  : "bg-muted hover:bg-[color-mix(in_srgb,var(--color-muted),var(--color-foreground)_4%)]",
               )}
             >
               {isActive ? (
                 <span className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </span>
               ) : null}
 
@@ -92,7 +91,7 @@ export function LanguageTab() {
                   "block text-heading-md transition-colors duration-200",
                   isActive
                     ? "text-primary/70"
-                    : "text-border group-hover:text-text-subtle",
+                    : "text-muted-foreground-dim group-hover:text-muted-foreground",
                 )}
               >
                 {meta.script}
@@ -109,19 +108,16 @@ export function LanguageTab() {
         })}
       </div>
 
-      <section
-        aria-live="polite"
-        className="surface-panel mt-8 overflow-hidden"
-      >
-        <div className="border-b border-border bg-muted px-4 py-2.5">
+      <section className="surface-panel mt-8 overflow-hidden">
+        <div className="px-4 pt-4">
           <p className="label-mono text-text-subtle">{t("preferences.language.preview")}</p>
         </div>
-        <div className="relative px-5 py-6 sm:px-6 sm:py-8">
+        <div className="relative px-5 pb-6 pt-4 sm:px-6 sm:pb-8 sm:pt-5">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,color-mix(in_srgb,var(--color-primary)_8%,transparent),transparent)]"
           />
-          <p className="cjk-safe-centered relative text-heading-md text-foreground">
+          <p aria-live="polite" className="cjk-safe-centered relative text-heading-md text-foreground">
             {activeMeta.preview}
           </p>
           <p className="cjk-safe-centered relative mt-3 text-caption-bold text-muted-foreground">

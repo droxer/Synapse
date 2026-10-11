@@ -2,6 +2,7 @@
 
 import { Trash2, Blocks, Radio, Wrench, Globe, Pencil } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -41,15 +42,16 @@ export function MCPServerCard({
   const isDisabled = server.enabled === false;
 
   const badge = (
-    <span
+    <Badge
+      variant="neutral"
       className={cn(
-        "status-pill status-neutral chip-xs shrink-0 transition-opacity duration-200",
+        "font-mono transition-opacity duration-200",
         isDisabled && "opacity-60",
       )}
     >
-      <TransportIcon className="mr-1 h-2.5 w-2.5" />
+      <TransportIcon aria-hidden="true" />
       {transport.label}
-    </span>
+    </Badge>
   );
 
   const headerActions = (
@@ -64,7 +66,7 @@ export function MCPServerCard({
               className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => onEdit(server)}
             >
-              <Pencil className="h-3 w-3" />
+              <Pencil aria-hidden="true" className="h-3 w-3" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -73,15 +75,22 @@ export function MCPServerCard({
         </Tooltip>
       )}
       {onDelete && (
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={`${t("mcp.remove")} ${server.name}`}
-          className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => onDelete(server.name)}
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t("mcp.removeServer", { name: server.name })}
+              className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => onDelete(server.name)}
+            >
+              <Trash2 aria-hidden="true" className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {t("mcp.removeServer", { name: server.name })}
+          </TooltipContent>
+        </Tooltip>
       )}
     </>
   );
@@ -101,6 +110,7 @@ export function MCPServerCard({
       onClick={() => onToggle(server.name, isDisabled)}
     >
       <span
+        aria-hidden="true"
         className={cn(
           "h-1.5 w-1.5 rounded-full transition-colors duration-150",
           isDisabled ? "bg-border-strong" : "bg-success",
@@ -114,6 +124,7 @@ export function MCPServerCard({
     <ToolingCard
       icon={
         <Blocks
+          aria-hidden="true"
           className={cn("h-4 w-4", isDisabled ? "text-text-subtle" : "text-muted-foreground")}
         />
       }
@@ -123,18 +134,19 @@ export function MCPServerCard({
       body={
         <div
           className={cn(
-            "flex items-center gap-3 text-xs",
+            "flex min-w-0 items-center gap-3 text-caption",
             isDisabled ? "text-text-subtle" : "text-muted-foreground",
           )}
         >
           <span className="flex items-center gap-1">
-            <Wrench className="h-3 w-3" />
+            <Wrench aria-hidden="true" className="h-3 w-3" />
             {server.tool_count === 1
               ? t("mcp.toolCount", { count: 1 })
               : t("mcp.toolsCount", { count: server.tool_count })}
           </span>
           <span className="flex items-center gap-1.5">
             <span
+              aria-hidden="true"
               className={cn(
                 "h-1.5 w-1.5 rounded-full",
                 isDisabled
@@ -151,7 +163,7 @@ export function MCPServerCard({
         </div>
       }
       footerLeft={
-        <span className="truncate font-mono text-micro text-text-subtle">
+        <span className="min-w-0 truncate font-mono text-micro text-text-subtle">
           {server.url || " "}
         </span>
       }

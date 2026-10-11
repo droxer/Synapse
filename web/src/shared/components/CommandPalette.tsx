@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FOCUSABLE_SELECTOR } from "@/shared/lib/a11y";
 import { useAppStore } from "@/shared/stores";
 import { useTranslation } from "@/i18n";
+import { Kbd } from "@/shared/components/ui/kbd";
+import { useModifierKeyLabel } from "@/shared/hooks/use-modifier-key-label";
 import {
   Search,
   Plus,
@@ -42,11 +44,7 @@ const GROUP_HEADING_CLASS =
   "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:label-mono [&_[cmdk-group-heading]]:text-muted-foreground";
 
 function ShortcutHint({ keys }: { readonly keys: string }) {
-  return (
-    <kbd className="ml-auto shrink-0 rounded-full border border-border bg-muted px-1.5 py-0.5 font-mono text-micro text-muted-foreground">
-      {keys}
-    </kbd>
-  );
+  return <Kbd className="ml-auto">{keys}</Kbd>;
 }
 
 export function CommandPalette({
@@ -59,6 +57,8 @@ export function CommandPalette({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const modifierKey = useModifierKeyLabel();
   const conversationHistory = useAppStore((s) => s.conversationHistory);
 
   const recentConversations = conversationHistory.slice(0, 5);
@@ -121,6 +121,18 @@ export function CommandPalette({
     return () => document.removeEventListener("keydown", handleTrap);
   }, [open]);
 
+  // Remember the element that opened the palette and restore focus to it on close.
+  useEffect(() => {
+    if (open) {
+      returnFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      return;
+    }
+    const target = returnFocusRef.current;
+    returnFocusRef.current = null;
+    if (target?.isConnected) target.focus();
+  }, [open]);
+
   const handleSelect = (prompt: string) => {
     setOpen(false);
     onNewTask(prompt);
@@ -159,20 +171,18 @@ export function CommandPalette({
               onClick={(event) => event.stopPropagation()}
             >
               {/* Search input */}
-              <div className="flex items-center gap-2 border-b border-border/60 px-4">
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <div className="flex items-center gap-2 px-4">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <Command.Input
                   placeholder={t("command.placeholder")}
-                  className="h-12 w-full bg-transparent text-sm text-foreground placeholder:text-text-subtle outline-none focus-visible:outline-none"
+                  className="h-12 w-full bg-transparent text-body-sm text-foreground placeholder:text-placeholder outline-none focus-visible:outline-none"
                   aria-label={t("command.placeholder")}
                   autoFocus
                 />
-                <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-micro text-muted-foreground">
-                  {t("command.escapeKey")}
-                </kbd>
+                <Kbd>{t("command.escapeKey")}</Kbd>
               </div>
 
-              <Command.List className="max-h-[320px] overflow-y-auto overscroll-contain p-2">
+              <Command.List className="max-h-[320px] overflow-y-auto overscroll-contain px-2 pb-2">
                 <Command.Empty className="px-4 py-8 text-center text-sm text-muted-foreground">
                   {t("command.noResults")}
                 </Command.Empty>
@@ -230,7 +240,7 @@ export function CommandPalette({
                   >
                     <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {t("command.newTask")}
-                    <ShortcutHint keys="⌘N" />
+                    <ShortcutHint keys={`${modifierKey}N`} />
                   </Command.Item>
                 </Command.Group>
 
@@ -248,7 +258,7 @@ export function CommandPalette({
                         className={ITEM_CLASS}
                       >
                         <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{conversation.title}</span>
+                        <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
                       </Command.Item>
                     ))}
                   </Command.Group>
@@ -256,9 +266,9 @@ export function CommandPalette({
               </Command.List>
 
               {/* Footer hint */}
-              <div className="flex items-center justify-between border-t border-border/60 bg-muted/40 px-4 py-2">
+              <div className="flex items-center justify-between bg-muted/60 px-4 py-2">
                 <span className="text-xs text-muted-foreground">
-                  {t("command.navigateHint")} <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-micro text-muted-foreground">↑↓</kbd> · {t("command.selectHint")} <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-micro text-muted-foreground">↵</kbd>
+                  {t("command.navigateHint")} <Kbd className="bg-background">↑↓</Kbd> · {t("command.selectHint")} <Kbd className="bg-background">↵</Kbd>
                 </span>
               </div>
             </Command>

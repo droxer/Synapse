@@ -34,18 +34,8 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
       {/* Atmosphere: faint radial wash */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 [background:radial-gradient(ellipse_60%_50%_at_50%_42%,rgba(16,185,129,0.06),transparent_70%)]"
+        className="pointer-events-none absolute inset-0 [background:radial-gradient(ellipse_60%_50%_at_50%_42%,color-mix(in_srgb,var(--color-success)_6%,transparent),transparent_70%)]"
       />
-      {/* Concentric rings centered behind the icon */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute left-1/2 top-1/2 h-[420px] w-[420px] max-w-[80vw] max-h-[80vh] -translate-x-1/2 -translate-y-1/2"
-        >
-          <span className="absolute inset-0 rounded-full border border-border/70" />
-          <span className="absolute inset-[14%] rounded-full border border-border/50" />
-          <span className="absolute inset-[28%] rounded-full border border-border/30" />
-        </div>
-      </div>
 
       {/* Centered content via absolute positioning — avoids flex/grid intrinsic-size collapse on CJK text */}
       <div className="absolute inset-0 overflow-y-auto">
@@ -54,31 +44,29 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
             variants={channelsFadeIn}
             initial="hidden"
             animate="show"
-            style={{ width: "28rem", maxWidth: "100%" }}
-            className="relative z-10 text-center"
+            className="relative z-10 w-[28rem] max-w-full text-center"
           >
-            <div className="mx-auto mb-6 relative flex h-20 w-20 items-center justify-center">
-              <span className="absolute inset-0 rounded-2xl bg-success/10 animate-ping [animation-duration:2.4s]" />
-              <span className="absolute inset-[10%] rounded-2xl bg-success/5 animate-ping [animation-duration:2.4s] [animation-delay:0.6s]" />
-              <div className="relative flex h-14 w-24 items-center justify-center gap-2 rounded-2xl border border-border bg-card shadow-sm">
+            <div className="mx-auto mb-6 relative flex h-20 w-20 items-center justify-center" aria-hidden="true">
+              <span className="absolute inset-0 rounded-2xl bg-success/10 motion-safe:animate-ping [animation-duration:2.4s]" />
+              <div className="relative flex h-14 w-24 items-center justify-center gap-2 rounded-2xl bg-surface-soft">
                 <ChannelProviderIcon provider="telegram" size="lg" />
                 <ChannelProviderIcon provider="discord" size="lg" />
               </div>
             </div>
 
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 backdrop-blur-sm">
-              <span className="relative inline-flex h-1.5 w-1.5">
-                <span className="absolute inset-0 rounded-full bg-success/50 animate-ping" />
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-success-subtle px-3 py-1">
+              <span className="relative inline-flex h-1.5 w-1.5" aria-hidden="true">
+                <span className="absolute inset-0 rounded-full bg-success/50 motion-safe:animate-ping" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
               </span>
-              <span className="text-caption-bold uppercase tracking-wider text-success">
+              <span className="text-caption-bold uppercase tracking-wider text-success-text">
                 {t("channels.header.live")}
               </span>
             </div>
 
-            <h3 className="mt-3 text-subtitle-lg text-foreground">
+            <h2 className="mt-3 text-balance text-subtitle-lg text-foreground">
               {t("channels.listening.activeTitle")}
-            </h3>
+            </h2>
             <p className="mt-1.5 text-body-sm text-muted-foreground">
               {t("channels.listening.activeDescription")}
             </p>
@@ -89,7 +77,7 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
                   key={item.provider}
                   type="button"
                   onClick={item.onOpen}
-                  className="w-full rounded-xl border border-border bg-card/80 p-4 text-left backdrop-blur-sm transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="w-full rounded-xl bg-surface-soft p-4 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 shrink-0">
@@ -101,7 +89,7 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
                       </p>
                       <p className="mt-0.5 text-caption text-muted-foreground">
                         {item.hint}{" "}
-                        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-caption text-foreground">
+                        <code className="rounded-sm bg-background px-1.5 py-0.5 font-mono text-caption text-foreground">
                           {item.command}
                         </code>
                       </p>
@@ -109,9 +97,9 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
                   </div>
                 </button>
               ))}
-              <div className="rounded-xl border border-border bg-muted/70 px-4 py-3 text-caption text-muted-foreground">
+              <p className="px-4 py-2 text-caption text-muted-foreground">
                 {t("channels.listening.manageHint")}
-              </div>
+              </p>
             </div>
           </motion.div>
         </div>

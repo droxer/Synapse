@@ -17,7 +17,8 @@ describe("ToolArgsDisplay typography", () => {
 
     expect(html).toContain("text-micro text-text-subtle");
     expect(html).toContain("text-sm text-foreground");
-    expect(html).toContain("text-sm text-success");
+    expect(html).toContain(">true</span>");
+    expect(html).not.toContain("text-success");
     expect(html).not.toContain("text-xs");
   });
 

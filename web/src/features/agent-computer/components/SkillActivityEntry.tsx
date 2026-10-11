@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Check, CircleX } from "lucide-react";
+import { ChevronRight, Check } from "lucide-react";
 import { MarkdownRenderer } from "@/shared/components/MarkdownRenderer";
 import { cn } from "@/shared/lib/utils";
 import { TOOLING_ACTIVITY_ROW_CLASSES } from "@/shared/lib/tooling-ui-styles";
@@ -19,6 +19,7 @@ import {
   getToolCallVisualClasses,
 } from "../lib/format-tools";
 import { getSkillIcon } from "../lib/tool-visual-icons";
+import { RunningBadge, ToolStatusGlyph } from "./ToolStatusGlyph";
 import type { ToolCallInfo } from "@/shared/types";
 
 /* ── helpers ── */
@@ -52,7 +53,7 @@ function ErrorMessage({ output, t }: { readonly output: string; readonly t: (key
         <button
           type="button"
           onClick={() => setExpanded((p) => !p)}
-          className="mt-0.5 rounded text-micro font-medium text-destructive transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="mt-0.5 rounded text-micro font-medium text-destructive underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-label={expanded ? t("skills.activity.hideError") : t("skills.activity.showError")}
           aria-expanded={expanded}
         >
@@ -114,55 +115,17 @@ export function SkillActivityEntry({ toolCall }: SkillActivityEntryProps) {
     >
         {/* Main content */}
         <div className="flex items-start gap-2.5 py-0.5">
-          {/* Icon container */}
-          <div
-            role="img"
-            aria-label={isError ? t("skills.activity.skillFailed") : isComplete ? t("skills.activity.skillLoaded") : t("skills.activity.skillLoading")}
-            className={cn(
-              "relative mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md",
-              isError
-                ? "bg-muted"
-                : isComplete
-                  ? "bg-muted"
-                  : "bg-muted",
-            )}
-          >
-            {isError ? (
-              <>
-                <SkillGlyph aria-hidden="true" className="h-3.5 w-3.5 text-destructive" strokeWidth={2.25} />
-                <CircleX
-                  className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-destructive"
-                  strokeWidth={2.5}
-                  aria-hidden
-                />
-              </>
-            ) : isComplete ? (
-              <motion.div
-                initial={{ opacity: 0, rotate: -90 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                transition={{ duration: 0.12, ease: "easeOut", delay: 0.1 }}
-                className="relative flex items-center justify-center"
-              >
-                <SkillGlyph aria-hidden="true" className="h-3.5 w-3.5 text-foreground" strokeWidth={2.25} />
-                <Check
-                  className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-success"
-                  strokeWidth={3}
-                  aria-hidden
-                />
-              </motion.div>
-            ) : (
-              <>
-                <SkillGlyph aria-hidden="true" className="h-3.5 w-3.5 text-ring" strokeWidth={2.25} />
-                <span className="absolute inset-0 rounded-md bg-ring/20 animate-pulsing-dot-fade" />
-              </>
-            )}
-          </div>
+          <ToolStatusGlyph
+            glyph={SkillGlyph}
+            tone={isError ? "error" : isComplete ? "complete" : "running"}
+            label={isError ? t("skills.activity.skillFailed") : isComplete ? t("skills.activity.skillLoaded") : t("skills.activity.skillLoading")}
+          />
 
           {/* Text content */}
           <div className="min-w-0 flex-1">
             {/* Row 1: Name + status + source badge */}
-            <div className="flex items-center gap-2">
-              <span className={cn("text-sm font-medium", visual.text)}>
+            <div className="flex min-w-0 items-center gap-2">
+              <span className={cn("min-w-0 truncate text-sm font-medium", visual.text)} title={displayName}>
                 {displayName}
               </span>
 
@@ -172,21 +135,19 @@ export function SkillActivityEntry({ toolCall }: SkillActivityEntryProps) {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.15 }}
                 >
-                  <span className="inline-flex items-center gap-1 text-micro font-medium text-success">
-                    <Check className="h-2.5 w-2.5" />
+                  <span className="inline-flex shrink-0 items-center gap-1 text-micro font-medium text-success-text">
+                    <Check className="h-2.5 w-2.5" aria-hidden="true" />
                     {t("skills.activity.loaded")}
                   </span>
                 </motion.div>
               )}
 
               {!isResolved && (
-                <span className="text-micro font-medium text-ring">
-                  {t("skills.activity.loading")}
-                </span>
+                <RunningBadge>{t("skills.activity.loading")}</RunningBadge>
               )}
 
               {isError && (
-                <span className="text-micro font-medium text-destructive">
+                <span className="shrink-0 text-micro font-medium text-destructive">
                   {t("skills.activity.failed")}
                 </span>
               )}
@@ -279,14 +240,13 @@ export function SkillActivityEntry({ toolCall }: SkillActivityEntryProps) {
         <AnimatePresence>
           {showRaw && toolCall.output && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              initial={{ opacity: 0, y: -2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2 }}
               transition={{ duration: 0.12, ease: "easeInOut" }}
-              className="overflow-hidden"
             >
-              <div className="border-t border-border/60 px-2 py-2">
-                <pre className="max-h-48 md:max-h-64 overflow-auto font-mono text-micro leading-relaxed text-text-subtle">
+              <div className="mt-1.5 rounded-lg bg-muted px-2.5 py-2">
+                <pre className="max-h-48 overflow-auto overscroll-contain whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-muted-foreground md:max-h-64">
                   {toolCall.output}
                 </pre>
               </div>

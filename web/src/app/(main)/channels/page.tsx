@@ -14,6 +14,7 @@ import { getProviderLabel } from "@/features/channels/components/ChannelProvider
 import { getChannelStatus } from "@/features/channels/api/channel-api";
 import type { ChannelConversation } from "@/features/channels/api/channel-api";
 import { Button } from "@/shared/components/ui/button";
+import { ErrorBanner } from "@/shared/components/ErrorBanner";
 import { useIsMobile } from "@/shared/hooks/use-media-query";
 import { useTranslation } from "@/i18n";
 import {
@@ -27,8 +28,12 @@ type ChannelModal = null | "integrations" | "telegram" | "discord";
 
 function PageSkeleton() {
   return (
-    <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background">
-      <aside className="hidden w-[320px] shrink-0 flex-col gap-0.5 border-r border-border/60 px-2 py-2 md:flex">
+    <div
+      className="flex h-full min-h-0 flex-1 overflow-hidden bg-background"
+      role="status"
+      aria-busy="true"
+    >
+      <aside className="hidden w-[320px] shrink-0 flex-col gap-0.5 bg-sidebar-bg px-2 py-2 md:flex">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex items-center gap-3 rounded-md px-2.5 py-2.5">
             <div className="h-9 w-9 shrink-0 rounded-lg skeleton-shimmer" />
@@ -105,9 +110,10 @@ export default function ChannelsPage() {
     }).catch((err) => {
       setConversations([]);
       setConversationCount(0);
-      setError(err instanceof Error ? err.message : "Failed to load channels");
+      console.error("[channels] Failed to load channel status:", err);
+      setError(t("channels.loadFailed"));
     });
-  }, [reloadChannelStatus]);
+  }, [reloadChannelStatus, t]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -197,7 +203,7 @@ export default function ChannelsPage() {
   }, [isMobile]);
 
   const renderThreadList = () => (
-    <aside className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden border-r border-border/60 bg-sidebar-bg md:w-auto">
+    <aside className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden bg-sidebar-bg md:w-auto">
       <div className="px-4 py-3">
         <p className="label-mono text-muted-foreground">
           {t("channels.list.title")}
@@ -223,7 +229,7 @@ export default function ChannelsPage() {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {showMobileBackBar && (
-          <div className="flex shrink-0 items-center gap-2 border-b border-border/60 bg-background px-3 py-2">
+          <div className="flex shrink-0 items-center gap-2 bg-muted/40 px-3 py-2">
             <Button
               type="button"
               variant="ghost"
@@ -231,7 +237,7 @@ export default function ChannelsPage() {
               onClick={() => setMobileChatOpen(false)}
               className="gap-1.5 text-muted-foreground hover:text-foreground"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft aria-hidden="true" className="h-4 w-4" />
               {t("channels.mobile.backToThreads")}
             </Button>
             <div className="min-w-0 flex-1">
@@ -351,8 +357,8 @@ export default function ChannelsPage() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {error && (
-          <div className="mx-4 mt-4 rounded-lg border border-destructive bg-destructive/5 px-4 py-2.5 text-body-sm text-destructive">
-            {error}
+          <div className="mx-4 mt-4">
+            <ErrorBanner message={error} onDismiss={() => setError(null)} />
           </div>
         )}
         {renderContent()}

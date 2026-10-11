@@ -21,7 +21,7 @@ const badgeVariants = cva(
     "rounded-full border border-transparent px-2.5 py-1",
     "text-caption-bold whitespace-nowrap",
     "transition-[color,box-shadow]",
-    "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "[a&]:focus-visible:ring-2 [a&]:focus-visible:ring-ring/40 [a&]:focus-visible:ring-offset-2 [a&]:focus-visible:ring-offset-background",
     "aria-invalid:border-destructive aria-invalid:ring-destructive/20",
     "[&>svg]:pointer-events-none [&>svg]:size-3",
   ].join(" "),
@@ -29,8 +29,8 @@ const badgeVariants = cva(
     variants: {
       variant: {
         neutral: "bg-muted text-muted-foreground",
-        success: "bg-success-subtle text-success",
-        warning: "bg-warning-subtle text-warning",
+        success: "bg-success-subtle text-success-text",
+        warning: "bg-warning-subtle text-warning-text",
         danger: "bg-danger-subtle text-destructive",
         info: "bg-info-subtle text-info",
         accent: "bg-accent-subtle text-primary",

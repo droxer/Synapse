@@ -3,6 +3,7 @@
 import { Logo } from "@/shared/components/Logo";
 import { type LogoVariant } from "@/shared/components/logo-variants";
 import { cn } from "@/shared/lib/utils";
+import { Badge } from "@/shared/components/ui/badge";
 
 const PREVIEW_SIZES = [16, 28, 56] as const;
 
@@ -57,7 +58,7 @@ function PreviewSurface({
   return (
     <div className="flex flex-col gap-2">
       <span className="text-caption-bold text-muted-foreground">{label}</span>
-      <div className={cn("flex h-24 items-center justify-center rounded-xl border border-border/60", className)}>
+      <div className={cn("flex h-24 items-center justify-center rounded-xl", className)}>
         {children}
       </div>
     </div>
@@ -73,15 +74,13 @@ function VariantCard({
   const copy = VARIANT_COPY[id];
 
   return (
-    <article className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
+    <article className="surface-panel flex flex-col gap-5 rounded-2xl p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-subtitle-lg">{copy.title}</h3>
+            <h3 className="text-subtitle-lg text-balance">{copy.title}</h3>
             {badge ? (
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-caption-bold text-muted-foreground">
-                {badge}
-              </span>
+              <Badge>{badge}</Badge>
             ) : null}
           </div>
           <p className="mt-1 text-body-sm text-muted-foreground">{copy.note}</p>
@@ -91,7 +90,7 @@ function VariantCard({
 
       <div className="grid gap-3 sm:grid-cols-3">
         {PREVIEW_SIZES.map((size) => (
-          <div key={size} className="flex flex-col items-center gap-2 rounded-xl bg-muted/30 px-3 py-4">
+          <div key={size} className="flex flex-col items-center gap-2 rounded-xl bg-background px-3 py-4">
             <Logo
               size={size}
               variant={variant}
@@ -99,7 +98,7 @@ function VariantCard({
               animated={animated}
               className={size === 28 ? "rounded-full" : size === 56 ? "rounded-lg" : undefined}
             />
-            <span className="text-caption-bold text-muted-foreground">{size}px</span>
+            <span className="text-caption-bold text-muted-foreground tabular-nums">{size}px</span>
           </div>
         ))}
       </div>
@@ -108,17 +107,17 @@ function VariantCard({
         <PreviewSurface label="Theme auto" className="bg-background">
           <Logo size={40} variant={variant} tone="auto" animated={animated} />
         </PreviewSurface>
-        <PreviewSurface label="On light" className="bg-white">
+        <PreviewSurface label="On light" className="bg-[var(--logo-white)]">
           <Logo size={40} variant={variant} tone="on-light" animated={animated} />
         </PreviewSurface>
-        <PreviewSurface label="On dark" className="bg-[#101114]">
+        <PreviewSurface label="On dark" className="bg-[var(--logo-black)]">
           <Logo size={40} variant={variant} tone="on-dark" animated={animated} />
         </PreviewSurface>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
+      <div className="rounded-xl bg-background px-4 py-3">
         <p className="text-body-sm-bold">Sidebar lockup preview</p>
-        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background px-4 py-3">
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-sidebar-bg px-4 py-3">
           <Logo
             size={28}
             variant={variant}

@@ -86,27 +86,28 @@ export function InputPrompt({
         role="dialog"
         aria-modal="true"
         aria-labelledby="input-prompt-title"
+        aria-describedby="input-prompt-question"
         className="surface-overlay relative z-10 w-full max-w-[42rem] animate-modal-in overflow-hidden p-0"
       >
-        <div className="border-l-2 border-l-border-active px-4 py-3.5 sm:px-5 sm:py-4">
+        <div className="px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="mb-2.5 flex items-center gap-2.5">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-              <CircleHelp className="h-4 w-4" />
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-circle bg-muted text-muted-foreground">
+              <CircleHelp className="h-4 w-4" aria-hidden="true" />
             </div>
             <div className="min-w-0">
               <h3
                 id="input-prompt-title"
-                className="truncate text-sm font-semibold leading-5 text-foreground"
+                className="text-body-sm-bold break-words text-foreground"
               >
                 {title ?? t("inputPrompt.title")}
               </h3>
-              <p className="text-xs leading-4 text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 {t("inputPrompt.subtitle")}
               </p>
             </div>
           </div>
 
-          <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+          <p id="input-prompt-question" className="mb-3 whitespace-pre-wrap break-words text-body-sm text-foreground">
             {question}
           </p>
 
@@ -117,15 +118,15 @@ export function InputPrompt({
                   key={option.id ?? option.value ?? option.label ?? idx}
                   type="button"
                   variant="secondary"
-                  className="h-auto min-h-9 items-start justify-start whitespace-normal rounded-md px-3 py-2 text-left"
+                  className="h-auto min-h-10 items-start justify-start whitespace-normal rounded-xl px-4 py-2 text-left"
                   onClick={() => onSubmit(option.value ?? option.label)}
                 >
                   <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-sm font-medium leading-5 text-foreground">
+                    <span className="text-body-sm-bold text-foreground">
                       {option.label}
                     </span>
                     {option.description && (
-                      <span className="text-xs leading-4 text-muted-foreground">
+                      <span className="text-caption text-muted-foreground">
                         {option.description}
                       </span>
                     )}
@@ -144,16 +145,18 @@ export function InputPrompt({
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
                 placeholder={t("inputPrompt.placeholder")}
                 aria-label={t("inputPrompt.ariaLabel")}
-                className="h-9 flex-1 px-3"
+                name="prompt-response"
+                autoComplete="off"
+                className="h-11 flex-1 px-3"
               />
               <Button
                 type="submit"
                 disabled={!value.trim()}
                 size="icon"
-                className="size-9 rounded-md"
+                className="size-11"
                 aria-label={t("inputPrompt.send")}
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-4 w-4" aria-hidden="true" />
               </Button>
             </form>
           )}

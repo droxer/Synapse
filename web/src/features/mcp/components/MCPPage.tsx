@@ -74,7 +74,7 @@ export function MCPPage() {
   return (
     <div className="flex h-full flex-col bg-background">
       <ProductPageHeader
-        icon={<Blocks className="h-5 w-5 text-muted-foreground" />}
+        icon={<Blocks aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
         eyebrow={t("mcp.mcpServers")}
         title={t("mcp.title")}
         description={t("mcp.subtitle")}
@@ -83,6 +83,7 @@ export function MCPPage() {
             label={t("topbar.connected")}
             icon={
               <span
+                aria-hidden="true"
                 className={cn(
                   "block h-2 w-2 rounded-full",
                   connectedCount > 0 ? "bg-success" : "bg-border-strong",
@@ -90,12 +91,12 @@ export function MCPPage() {
               />
             }
             value={
-              <>
+              <span className="tabular-nums">
                 {connectedCount}
-                <span className="ml-1 text-sm text-muted-foreground">/ {servers.length}</span>
-              </>
+                <span className="ml-1 text-body-sm text-muted-foreground">/ {servers.length}</span>
+              </span>
             }
-            description={`HTTP ${httpCount} · SSE ${sseCount}`}
+            description={<span className="tabular-nums">{`HTTP ${httpCount} · SSE ${sseCount}`}</span>}
           />
         }
         statsClassName="grid-cols-1 lg:min-w-[18rem]"
@@ -104,7 +105,11 @@ export function MCPPage() {
       <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
         <div className="mx-auto max-w-6xl space-y-5">
           {error && (
-            <ErrorBanner message={error} onDismiss={() => setError(null)} />
+            <ErrorBanner
+              message={error}
+              onDismiss={() => setError(null)}
+              dismissLabel={t("mcp.dismissError")}
+            />
           )}
 
           <ProductSectionHeader
@@ -123,7 +128,7 @@ export function MCPPage() {
                   size="sm"
                   onClick={() => setShowForm(true)}
                 >
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  <Plus aria-hidden="true" className="h-3.5 w-3.5" />
                   {t("mcp.addServer")}
                 </Button>
               </>
@@ -136,14 +141,14 @@ export function MCPPage() {
             <EmptyState
               icon={Search}
               description={t("mcp.noServersMatching", { filter })}
-              dashed
+              className="rounded-xl bg-muted/50 py-14"
             />
           ) : servers.length === 0 ? (
             <EmptyState
               icon={Unplug}
               title={t("mcp.noServers")}
               description={t("mcp.noServersHint")}
-              dashed
+              className="rounded-xl bg-muted/50 py-14"
             />
           ) : (
             <motion.div
@@ -200,10 +205,7 @@ export function MCPPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("mcp.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
-            >
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
               {t("mcp.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>

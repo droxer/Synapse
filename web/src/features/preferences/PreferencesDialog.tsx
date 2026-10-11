@@ -77,7 +77,7 @@ export function PreferencesDialog({ open, onOpenChange }: PreferencesDialogProps
 
           <div className="flex h-[min(86vh,48rem)] min-h-[28rem] w-full min-w-0 flex-col md:flex-row">
             <nav
-              className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/60 bg-muted p-2 md:w-56 md:flex-col md:gap-0.5 md:overflow-x-visible md:border-b-0 md:border-r md:p-3"
+              className="flex shrink-0 gap-1 overflow-x-auto bg-muted p-2 md:w-56 md:flex-col md:gap-0.5 md:overflow-x-visible md:p-3"
               aria-label={t("preferences.title")}
             >
               <p className="label-mono hidden px-3 pb-3 pt-3 text-text-subtle md:block">
@@ -92,7 +92,7 @@ export function PreferencesDialog({ open, onOpenChange }: PreferencesDialogProps
                     aria-current={isActive ? "page" : undefined}
                     onClick={() => setActiveId(id)}
                     className={cn(
-                      "group relative flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-body-sm transition-colors duration-150",
+                      "group relative flex shrink-0 items-center gap-2.5 rounded-full px-3 py-2 text-body-sm transition-colors duration-150",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                       isActive
                         ? "bg-background text-foreground md:font-medium"

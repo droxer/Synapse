@@ -188,9 +188,9 @@ const swatches = [
   ["Primary", "bg-primary text-primary-foreground"],
   ["Secondary", "bg-muted text-foreground"],
   ["Muted", "bg-muted text-muted-foreground"],
-  ["Success", "bg-success text-primary-foreground"],
-  ["Warning", "bg-warning text-primary-foreground"],
-  ["Error", "bg-destructive text-primary-foreground"],
+  ["Success", "bg-success-subtle text-success-text"],
+  ["Warning", "bg-warning-subtle text-warning-text"],
+  ["Error", "bg-critical text-on-destructive"],
 ] as const;
 
 export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewTheme }) {
@@ -208,24 +208,24 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
     };
   }, [theme]);
 
-  const themeLabel = theme === "dark" ? "Dark theme" : "Light theme";
+  const themeLabel = theme === "dark" ? "Dark Theme" : "Light Theme";
 
   return (
     <main id="main" className="min-h-screen bg-background text-foreground">
       <ProductPageHeader
-        className="border-b border-border/60 py-4"
-        icon={<Bot className="h-5 w-5 text-muted-foreground" />}
+        className="py-4"
+        icon={<Bot aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
         eyebrow="Local visual fixture"
-        title={`Frontend design review: ${themeLabel}`}
+        title={`Frontend Design Review: ${themeLabel}`}
         description="Development-only route for reviewing authenticated Synapse UI states without OAuth."
         actions={
           <>
             <Button type="button" size="sm">
-              <Bot className="h-4 w-4" />
-              Primary action
+              <Bot aria-hidden="true" className="h-4 w-4" />
+              Primary Action
             </Button>
             <Button type="button" variant="secondary" size="sm">
-              <Settings2 className="h-4 w-4" />
+              <Settings2 aria-hidden="true" className="h-4 w-4" />
               Secondary
             </Button>
           </>
@@ -233,7 +233,7 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
       />
 
       <section className="mx-auto grid max-w-6xl gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="h-[min(48rem,calc(100vh-9rem))] min-h-[34rem] overflow-hidden rounded-lg border border-border bg-background">
+        <div className="h-[min(48rem,calc(100vh-9rem))] min-h-[34rem] overflow-hidden rounded-xl bg-background shadow-elevated">
           <ConversationWorkspace
             conversationId="design-review-fixture"
             conversationTitle="Design review fixture"
@@ -256,14 +256,14 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
         <aside className="space-y-4">
           <div className="surface-panel p-4">
             <div className="mb-3 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">Token and state checks</h2>
+              <FileText aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-body-sm-bold">Token and State Checks</h2>
             </div>
             <div className="space-y-3">
               <Progress value={72} indicatorClassName="bg-primary" aria-label="Fixture progress 72%" />
               <div className="grid grid-cols-2 gap-2">
                 {swatches.map(([label, className]) => (
-                  <div key={label} className={cn("rounded-full border border-border px-2 py-2 text-caption-bold", className)}>
+                  <div key={label} className={cn("rounded-full px-2 py-2 text-caption-bold", className)}>
                     {label}
                   </div>
                 ))}
@@ -277,7 +277,7 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
             description="Conversation, progress, DONE state, artifact panel, and token states."
           />
 
-          <div className="h-[22rem] overflow-hidden rounded-lg border border-border">
+          <div className="h-[22rem] overflow-hidden rounded-xl bg-muted">
             <ArtifactFilesPanel artifacts={artifacts} conversationId={null} />
           </div>
         </aside>

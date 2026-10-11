@@ -445,7 +445,7 @@ describe("getConversationWorkspaceLayoutClasses", () => {
       contentWidthClass: "max-w-[44rem]",
       workspaceLayoutClass:
         "grid grid-rows-[minmax(0,1fr)_minmax(20rem,42%)] lg:grid-cols-[minmax(0,1fr)_minmax(22rem,var(--agent-panel-width))] lg:grid-rows-1",
-      panelBorderClass: "border-t lg:border-l lg:border-t-0",
+      panelBorderClass: "bg-surface-soft",
     });
   });
 
@@ -454,7 +454,7 @@ describe("getConversationWorkspaceLayoutClasses", () => {
       contentWidthClass: "max-w-[40rem]",
       workspaceLayoutClass:
         "grid grid-rows-[minmax(0,1fr)_minmax(18rem,40%)] md:grid-cols-[minmax(0,1fr)_minmax(20rem,36%)] md:grid-rows-1",
-      panelBorderClass: "border-t md:border-l md:border-t-0",
+      panelBorderClass: "bg-surface-soft",
     });
   });
 
@@ -478,13 +478,13 @@ describe("getConversationWorkspaceLayoutClasses", () => {
 
 describe("getAgentComputerPanelClassName", () => {
   it("keeps the desktop panel in the split layout", () => {
-    expect(getAgentComputerPanelClassName("border-t lg:border-l lg:border-t-0", false)).toBe(
-      "relative z-10 flex min-h-0 min-w-0 flex-col overflow-hidden border-border bg-background border-t lg:border-l lg:border-t-0",
+    expect(getAgentComputerPanelClassName("bg-surface-soft", false)).toBe(
+      "relative z-10 flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface-soft",
     );
   });
 
   it("uses a full-screen panel path on mobile", () => {
-    expect(getAgentComputerPanelClassName("border-t lg:border-l lg:border-t-0", true)).toBe(
+    expect(getAgentComputerPanelClassName("bg-surface-soft", true)).toBe(
       "fixed inset-0 z-50 flex min-h-0 min-w-0 flex-col overflow-hidden bg-background",
     );
   });

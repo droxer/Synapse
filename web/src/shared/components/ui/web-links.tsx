@@ -47,14 +47,14 @@ export function WebLinks({ query, results, className, resultsLabel, searchLabel 
           <span className="font-medium text-foreground">{`"${query}"`}</span>
         </span>
         <span className={cn("flex items-center gap-1", OUTPUT_SURFACE_META_CLASSES)}>
-          <Globe className="h-3 w-3" />
+          <Globe className="h-3 w-3" aria-hidden="true" />
           {resolvedSearchLabel}
         </span>
       </div>
       <div className={OUTPUT_SURFACE_BODY_CLASSES}>
         <ul className="space-y-1.5">
           {results.map((r) => (
-            <li key={r.url} className={cn("group transition-colors", OUTPUT_SURFACE_INNER_DENSE_CLASSES, "hover:border-border-strong hover:bg-background")}>
+            <li key={r.url} className={cn("group transition-colors", OUTPUT_SURFACE_INNER_DENSE_CLASSES, "bg-background/60 hover:bg-background")}>
               <a
                 href={r.url}
                 target="_blank"
@@ -65,14 +65,14 @@ export function WebLinks({ query, results, className, resultsLabel, searchLabel 
                   <p className="text-sm font-medium text-foreground group-hover:underline">
                     {r.title || getDomain(r.url)}
                   </p>
-                  <p className="text-micro text-text-subtle">{getDomain(r.url)}</p>
+                  <p className="text-micro text-placeholder">{getDomain(r.url)}</p>
                   {r.content && (
                     <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                       {r.content}
                     </p>
                   )}
                 </div>
-                <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 text-text-subtle group-hover:text-muted-foreground" />
+                <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 text-placeholder group-hover:text-muted-foreground" />
               </a>
             </li>
           ))}

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Monitor, ExternalLink } from "lucide-react";
+import { Globe, ExternalLink } from "lucide-react";
 import { useTranslation } from "@/i18n";
 import { MarkdownRenderer } from "@/shared/components/MarkdownRenderer";
 import { Progress } from "@/shared/components/ui/progress";
 import { ExpandToggle } from "@/shared/components/ui/expand-toggle";
 import { cn } from "@/shared/lib/utils";
 import {
+  OUTPUT_SURFACE_FOCUS_CLASSES,
   OutputSurface,
   OutputSurfaceBody,
   OutputSurfaceHeader,
@@ -31,9 +32,10 @@ interface BrowserOutputProps {
   readonly artifactIds?: string[];
 }
 
-function extractHostname(url: string): string | null {
+function extractHttpUrl(url: string): URL | null {
   try {
-    return new URL(url).hostname;
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed : null;
   } catch {
     return null;
   }
@@ -56,22 +58,33 @@ export function BrowserOutput({
   const maxSteps = browserMetadata?.maxSteps ?? 0;
   const isDone = browserMetadata?.isDone ?? false;
   const url = browserMetadata?.url;
-  const hostname = url ? extractHostname(url) : null;
+  const parsedUrl = url ? extractHttpUrl(url) : null;
+  const hostname = parsedUrl?.hostname ?? null;
   const progressValue = maxSteps > 0 ? Math.round((steps / maxSteps) * 100) : 0;
   const hasScreenshot = artifactIds && artifactIds.length > 0 && conversationId;
 
   return (
     <OutputSurface>
       <OutputSurfaceHeader
-        icon={<Monitor className="h-3.5 w-3.5 text-muted-foreground" />}
+        icon={<Globe className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />}
         label={t("output.category.browser")}
         meta={isDone ? t("output.browser.done") : t("output.browser.incomplete")}
         action={
-          hostname ? (
-            <span className="inline-flex items-center gap-1 text-micro text-text-subtle">
-              <ExternalLink className="h-2.5 w-2.5" />
-              {hostname}
-            </span>
+          parsedUrl && hostname ? (
+            <a
+              href={parsedUrl.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={parsedUrl.href}
+              className={cn(
+                "inline-flex min-w-0 max-w-[12rem] items-center gap-1 rounded-sm text-micro text-text-subtle underline-offset-2 hover:text-foreground hover:underline",
+                OUTPUT_SURFACE_FOCUS_CLASSES,
+              )}
+            >
+              <ExternalLink className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{hostname}</span>
+              <span className="sr-only">{t("a11y.opensNewTab")}</span>
+            </a>
           ) : null
         }
         className="items-center"
@@ -90,7 +103,12 @@ export function BrowserOutput({
         {/* Step progress */}
         {maxSteps > 0 && (
           <div className="mb-2 flex items-center gap-2">
-            <Progress value={progressValue} className="h-1.5 flex-1" indicatorClassName="bg-ring" />
+            <Progress
+              value={progressValue}
+              className="h-1.5 flex-1"
+              indicatorClassName="bg-primary"
+              aria-label={t("output.browser.steps", { completed: steps, total: maxSteps })}
+            />
             <span className="text-micro font-mono text-muted-foreground tabular-nums">
               {t("output.browser.steps", { completed: steps, total: maxSteps })}
             </span>

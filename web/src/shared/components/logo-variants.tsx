@@ -34,19 +34,19 @@ export function logoPaletteForTone(tone: LogoTone, variant?: LogoVariant): LogoP
   if (variant === "glyph") {
     if (tone === "auto") {
       return {
-        background: "var(--background, #FFFFFF)",
-        glyph: "var(--foreground, var(--logo-black, #0A0A0A))",
+        background: "var(--color-background, var(--logo-white, #FFFFFF))",
+        glyph: "var(--color-foreground, var(--logo-black, #0A0A0A))",
       };
     }
     if (tone === "on-light") {
       return {
-        background: "#FFFFFF",
+        background: "var(--logo-white, #FFFFFF)",
         glyph: "var(--logo-black, #0A0A0A)",
       };
     }
     if (tone === "on-dark") {
       return {
-        background: "#101114",
+        background: "var(--logo-black, #0A0A0A)",
         glyph: "var(--logo-white, #FFFFFF)",
       };
     }

@@ -67,14 +67,14 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
       <AppSidebar />
 
       {isMobile && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-border bg-background px-3 py-2 md:hidden">
+        <div className="flex shrink-0 items-center gap-2 bg-background px-3 py-2 md:hidden">
           <button
             type="button"
             onClick={openSidebar}
             aria-label={t("a11y.openNavigationMenu")}
-            className="flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="flex size-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <Menu className="h-5 w-5" />
+            <Menu aria-hidden="true" className="h-5 w-5" />
           </button>
           <span className="text-body-sm-bold text-foreground">
             Synapse
@@ -84,7 +84,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
 
       <main
         id="main"
-        aria-label="Main content"
+        aria-label={t("a11y.mainContent")}
         className="flex flex-1 flex-col overflow-hidden"
       >
         <div className="flex-1 overflow-hidden">{children}</div>

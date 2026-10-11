@@ -22,7 +22,7 @@ interface LanguageSwitcherProps {
 }
 
 export function LanguageSwitcher({ collapsed = false }: LanguageSwitcherProps) {
-  const { locale, setLocale } = useTranslation();
+  const { locale, setLocale, t } = useTranslation();
   const groupRef = useRef<HTMLDivElement>(null);
 
   /** Arrow-key roving tabindex handler for the radiogroup */
@@ -63,7 +63,7 @@ export function LanguageSwitcher({ collapsed = false }: LanguageSwitcherProps) {
             size="icon-sm"
             onClick={() => setLocale(nextLocale)}
             className="text-muted-foreground transition-colors duration-200 hover:text-foreground hover:bg-sidebar-hover"
-            aria-label={`Switch to ${LOCALE_LABELS[nextLocale]}`}
+            aria-label={t("shared.language.switchTo", { language: LOCALE_LABELS[nextLocale] })}
           >
             <span
               className="text-xs font-semibold leading-none"
@@ -84,9 +84,9 @@ export function LanguageSwitcher({ collapsed = false }: LanguageSwitcherProps) {
   return (
     <div
       ref={groupRef}
-      className="flex items-center gap-0.5 rounded-md p-0.5"
+      className="flex items-center gap-0.5 rounded-full bg-muted p-0.5"
       role="radiogroup"
-      aria-label="Language"
+      aria-label={t("shared.language.label")}
     >
       {LOCALES.map((loc, index) => {
         const isActive = loc === locale;
@@ -102,11 +102,11 @@ export function LanguageSwitcher({ collapsed = false }: LanguageSwitcherProps) {
             onClick={() => setLocale(loc)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={cn(
-              "flex-1 rounded-sm px-2.5 py-1 text-xs font-medium transition-[color,background-color] duration-150 ease-out",
+              "flex-1 rounded-full px-2.5 py-1 text-xs font-medium transition-[color,background-color,box-shadow] duration-150 ease-out",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               isActive
-                ? "bg-background text-foreground ring-1 ring-border"
-                : "text-text-subtle hover:text-foreground",
+                ? "bg-background text-foreground shadow-sm"
+                                : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
             )}
           >
             {LOCALE_SHORT[loc]}

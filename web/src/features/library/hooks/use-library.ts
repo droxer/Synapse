@@ -2,12 +2,17 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAppStore } from "@/shared/stores";
+import { useTranslation } from "@/i18n";
 import type { LibraryGroup } from "../types";
 import { fetchLibrary } from "../api/library-api";
 
 const PAGE_SIZE = 20;
 
 export function useLibrary() {
+  const { t } = useTranslation();
+  // Ref keeps `load` stable across locale changes (no refetch on language switch).
+  const tRef = useRef(t);
+  tRef.current = t;
   const libraryRefetchEpoch = useAppStore((s) => s.libraryRefetchEpoch);
   const [groups, setGroups] = useState<readonly LibraryGroup[]>([]);
   const [total, setTotal] = useState(0);
@@ -29,7 +34,8 @@ export function useLibrary() {
         );
         setTotal(data.total);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load library");
+        console.error("[library] Failed to load library:", err);
+        setError(tRef.current("library.loadFailed"));
       } finally {
         if (!silent) setIsLoading(false);
       }

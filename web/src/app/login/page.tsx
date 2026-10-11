@@ -3,12 +3,14 @@
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle } from "lucide-react";
 import { Logo } from "@/shared/components/Logo";
 import { Button } from "@/shared/components/ui/button";
+import { ErrorBanner } from "@/shared/components/ErrorBanner";
+import { useTranslation } from "@/i18n";
 import { isTauri, openInSystemBrowser, getFrontendUrl } from "@/lib/tauri";
 
 function LoginForm() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const rawCallback = searchParams.get("callbackUrl") ?? "/";
   // Validate callbackUrl is a safe relative path (prevent open redirect)
@@ -17,6 +19,7 @@ function LoginForm() {
       ? rawCallback
       : "/";
   const error = searchParams.get("error");
+  const [errorDismissed, setErrorDismissed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [waitingForBrowser, setWaitingForBrowser] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -132,9 +135,9 @@ function LoginForm() {
             <div className="flex items-center gap-3">
               <Logo size={56} tone="auto" className="rounded-lg" />
               <div>
-                <p className="brand-wordmark">{`Synapse`}</p>
+                <p className="brand-wordmark">Synapse</p>
                 <p className="mt-1 text-caption text-muted-foreground">
-                  Workspace sign-in
+                  {t("login.workspaceSignIn")}
                 </p>
               </div>
             </div>
@@ -143,27 +146,24 @@ function LoginForm() {
             <div className="flex flex-col gap-6">
 
               <div className="flex w-full flex-col items-center space-y-2 text-center">
-                <p className="label-mono text-text-subtle">Account Access</p>
-                <h1 className="w-full text-heading-sm text-foreground">
-                  Welcome to Synapse
+                <p className="label-mono text-text-subtle">{t("login.eyebrow")}</p>
+                <h1 className="w-full text-balance text-heading-sm text-foreground">
+                  {t("login.welcome")}
                 </h1>
                 <p className="w-full text-body-sm text-muted-foreground">
-                  Sign in to continue
+                  {t("login.subtitle")}
                 </p>
               </div>
 
-            {error && (
-              <div
-                role="alert"
-                className="flex w-full items-start gap-2 rounded-lg border border-destructive bg-destructive/10 px-4 py-3 text-body-sm text-destructive"
-              >
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>
-                  {error === "OAuthAccountNotLinked"
-                    ? "This email is already associated with another account."
-                    : "An error occurred during sign in. Please try again."}
-                </span>
-              </div>
+            {error && !errorDismissed && (
+              <ErrorBanner
+                message={
+                  error === "OAuthAccountNotLinked"
+                    ? t("login.errorAccountNotLinked")
+                    : t("login.errorGeneric")
+                }
+                onDismiss={() => setErrorDismissed(true)}
+              />
             )}
 
             {/* Google sign in button */}
@@ -173,15 +173,16 @@ function LoginForm() {
                     type="button"
                     onClick={handleSignIn}
                     disabled={isLoading}
-                    variant="secondary"
+                    variant="marketing"
                     size="lg"
-                    className="w-full justify-center gap-3 border-border-strong bg-background hover:border-border-strong hover:bg-muted"
+                    className="w-full justify-center gap-3"
+                    aria-busy={isLoading || undefined}
                   >
                   {isLoading ? (
-                    <span role="status">
-                      <div className="h-5 w-5 rounded-full skeleton-shimmer bg-text-subtle/30" />
-                      <span className="sr-only">Signing in...</span>
-                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="block h-5 w-5 rounded-full bg-on-ink-button/30 skeleton-shimmer"
+                    />
                   ) : (
                     <svg
                       className="h-5 w-5"
@@ -207,7 +208,9 @@ function LoginForm() {
                       />
                     </svg>
                   )}
-                  {isLoading ? "Signing in…" : "Sign in with Google"}
+                  <span aria-live="polite">
+                    {isLoading ? t("login.signingIn") : t("login.signInGoogle")}
+                  </span>
                   </Button>
                 </div>
               )}
@@ -216,11 +219,11 @@ function LoginForm() {
               {waitingForBrowser && (
                 <div className="flex w-full flex-col items-center gap-3 rounded-lg bg-muted/50 px-4 py-4 text-center">
                   <span role="status">
-                    <div className="h-5 w-5 rounded-full skeleton-shimmer bg-muted" />
-                    <span className="sr-only">Waiting for browser authentication...</span>
+                    <span aria-hidden="true" className="block h-5 w-5 rounded-full skeleton-shimmer bg-muted" />
+                    <span className="sr-only">{t("login.waitingBrowser")}</span>
                   </span>
                   <p className="w-full text-body-sm text-muted-foreground">
-                    Complete sign-in in your browser, then return here.
+                    {t("login.completeInBrowser")}
                   </p>
                   <Button
                     type="button"
@@ -235,7 +238,7 @@ function LoginForm() {
                     size="sm"
                     className="text-caption-bold text-text-subtle hover:text-foreground"
                   >
-                    Cancel
+                    {t("login.cancel")}
                   </Button>
                 </div>
               )}
@@ -247,16 +250,19 @@ function LoginForm() {
   );
 }
 
+function LoginFallback() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background" role="status">
+      <div aria-hidden="true" className="h-8 w-full max-w-[28rem] rounded-full skeleton-shimmer bg-muted" />
+      <span className="sr-only">{t("login.loading")}</span>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background" role="status">
-          <div className="h-8 w-full max-w-[28rem] rounded-full skeleton-shimmer bg-muted" />
-          <span className="sr-only">Loading...</span>
-        </div>
-      }
-    >
+    <Suspense fallback={<LoginFallback />}>
       <LoginForm />
     </Suspense>
   );

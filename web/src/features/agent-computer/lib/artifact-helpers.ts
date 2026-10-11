@@ -213,21 +213,6 @@ export function fileCategoryColor(contentType: string, name?: string): FileCateg
   return { icon: "text-muted-foreground", bg: "bg-muted" };
 }
 
-/** Border color CSS variable string for artifact file category accent. */
-const BORDER_COLOR_MAP: Record<string, string> = {
-  "text-primary": "var(--color-accent-purple)",
-  "text-destructive": "var(--color-accent-rose)",
-  "text-success": "var(--color-accent-emerald)",
-  "text-warning": "var(--color-accent-amber)",
-  "text-foreground": "var(--color-user-accent)",
-  "text-muted-foreground": "var(--color-muted-foreground)",
-};
-
-export function fileCategoryBorderColor(contentType: string, name?: string): string {
-  const { icon } = fileCategoryColor(contentType, name);
-  return BORDER_COLOR_MAP[icon] ?? "var(--color-border)";
-}
-
 export function isPreviewable(contentType: string): boolean {
   return (
     contentType.startsWith("image/") ||

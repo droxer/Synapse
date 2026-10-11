@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { MarkdownRenderer } from "@/shared/components/MarkdownRenderer";
 import { useTranslation } from "@/i18n";
+import { cn } from "@/shared/lib/utils";
 import { getFileIcon } from "./FileTree";
 
 interface FileContentViewerProps {
@@ -80,7 +81,7 @@ export function FileContentViewer({
   content,
   isLoading,
 }: FileContentViewerProps) {
-  const { t: _t } = useTranslation();
+  const { t } = useTranslation();
 
   const rendered = useMemo(() => {
     if (isLoading) return null;
@@ -128,7 +129,7 @@ export function FileContentViewer({
     return (
       <div className="flex h-full flex-col">
         {/* Breadcrumb skeleton */}
-        <div className="shrink-0 border-b border-border/60 px-4 py-2.5">
+        <div className="shrink-0 px-4 py-2.5" aria-busy="true">
           <div className="flex items-center gap-2">
             <div className="h-3.5 w-3.5 skeleton-shimmer rounded" />
             <div className="h-3.5 w-48 skeleton-shimmer rounded" />
@@ -153,22 +154,31 @@ export function FileContentViewer({
   return (
     <div className="flex h-full flex-col">
       {/* Breadcrumb header */}
-      <div className="shrink-0 border-b border-border/60 px-4 py-2.5">
-        <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+      <nav aria-label={t("skills.filePathLabel")} className="shrink-0 bg-muted/50 px-4 py-2.5">
+        <div className="flex min-w-0 items-center gap-1.5 font-mono text-caption text-muted-foreground">
           <FileIcon aria-hidden="true" className="h-3.5 w-3.5 shrink-0 opacity-60" />
-          {segments.map((seg, i) => (
-            <span key={i} className="flex items-center gap-1">
-              {i > 0 && <span className="opacity-40">/</span>}
-              <span className={i === segments.length - 1 ? "text-foreground" : ""}>
-                {seg}
-              </span>
-            </span>
-          ))}
+          <ol className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+            {segments.map((seg, i) => {
+              const isLast = i === segments.length - 1;
+              return (
+                <li
+                  key={`${i}-${seg}`}
+                  className={cn("flex items-center gap-1", isLast ? "min-w-0" : "min-w-0 max-w-[10rem] shrink")}
+                  aria-current={isLast ? "page" : undefined}
+                >
+                  {i > 0 && <span aria-hidden="true" className="opacity-40">/</span>}
+                  <span className={cn("truncate", isLast && "text-foreground")} title={seg}>
+                    {seg}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
         </div>
-      </div>
+      </nav>
 
       {/* Content */}
-      <div className={`flex-1 overflow-y-auto ${isCode ? "p-0" : isMd ? "p-6" : "p-4"}`}>
+      <div className={cn("flex-1 overflow-y-auto", isCode ? "p-0" : isMd ? "p-6" : "p-4")}>
         {rendered}
       </div>
     </div>

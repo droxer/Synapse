@@ -49,7 +49,7 @@ export function getToolCallTone(tc: ToolCallInfo): ToolCallTone {
   return "running";
 }
 
-/** Shared hover for activity rows — design guide: border-strong + muted wash (not shadow lift). */
+/** Shared hover for activity rows — muted tonal wash, no border or shadow lift. */
 const ACTIVITY_ROW_HOVER = TOOLING_ACTIVITY_ROW_HOVER_CLASSES;
 
 export function getToolCallVisualClasses(tone: ToolCallTone): {
@@ -60,19 +60,19 @@ export function getToolCallVisualClasses(tone: ToolCallTone): {
   switch (tone) {
     case "error":
       return {
-        row: "border border-destructive/40 bg-destructive/5",
+        row: "bg-critical-strong/5",
         rowHover: ACTIVITY_ROW_HOVER,
         text: "text-destructive",
       };
     case "complete":
       return {
-        row: "border border-transparent bg-transparent",
+        row: "bg-transparent",
         rowHover: ACTIVITY_ROW_HOVER,
         text: "text-foreground",
       };
     default:
       return {
-        row: "border border-transparent bg-transparent",
+        row: "bg-transparent",
         rowHover: ACTIVITY_ROW_HOVER,
         text: "text-foreground",
       };

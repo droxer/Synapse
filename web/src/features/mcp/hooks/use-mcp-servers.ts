@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   fetchMCPServers,
   addMCPServer,
@@ -19,6 +19,9 @@ import { buildMCPServerConfigFromJson } from "../lib/mcp-submit-config";
 
 export function useMCPServers() {
   const { t } = useTranslation();
+  // Ref lets stable callbacks read the current locale without re-creating them.
+  const tRef = useRef(t);
+  tRef.current = t;
   const [servers, setServers] = useState<readonly MCPServer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +48,8 @@ export function useMCPServers() {
       const data = await fetchMCPServers();
       setServers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load servers");
+      console.error("[mcp] Failed to load servers:", err);
+      setError(tRef.current("mcp.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -126,7 +130,8 @@ export function useMCPServers() {
       resetForm();
       await loadServers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add server");
+      console.error("[mcp] Failed to add server:", err);
+      setError(tRef.current("mcp.addFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -161,7 +166,8 @@ export function useMCPServers() {
       resetForm();
       await loadServers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update server");
+      console.error("[mcp] Failed to update server:", err);
+      setError(tRef.current("mcp.updateFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -183,9 +189,8 @@ export function useMCPServers() {
       setServerToDelete(null);
       await loadServers();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to remove server",
-      );
+      console.error("[mcp] Failed to remove server:", err);
+      setError(tRef.current("mcp.removeFailed"));
     }
   }, [serverToDelete, loadServers]);
 
@@ -195,7 +200,8 @@ export function useMCPServers() {
       await toggleMCPServer(name, enabled);
       await loadServers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to toggle server");
+      console.error("[mcp] Failed to toggle server:", err);
+      setError(tRef.current("mcp.toggleFailed"));
     }
   }, [loadServers]);
 

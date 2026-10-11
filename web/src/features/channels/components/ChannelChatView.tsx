@@ -157,6 +157,7 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
   const [pendingMessages, setPendingMessages] = useState<ChatMessage[]>([]);
   const [isWaitingForAgent, setIsWaitingForAgent] = useState(false);
   const [userCancelled, setUserCancelled] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const eventCountRef = useRef(effectiveEvents.length);
 
   // Clear waiting state when new events arrive
@@ -189,6 +190,7 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
       eventCountRef.current = effectiveEvents.length;
       setIsWaitingForAgent(true);
       setUserCancelled(false);
+      setActionError(null);
       setPendingMessages((prev) => [...prev, { role: "user", content: message, timestamp: Date.now() }]);
       setIsLive(true);
 
@@ -202,33 +204,39 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
         });
       } catch (err) {
         setIsWaitingForAgent(false);
-        setPendingMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: `Error: ${err instanceof Error ? err.message : "Unknown error"}`, timestamp: Date.now() },
-        ]);
+        setActionError(
+          t("channels.chat.sendFailed", {
+            detail: err instanceof Error && err.message ? err.message : t("channels.chat.unknownError"),
+          }),
+        );
       }
     },
-    [conversationId, effectiveEvents.length, handlePromptSubmit, pendingAsk],
+    [conversationId, effectiveEvents.length, handlePromptSubmit, pendingAsk, t],
   );
 
   const handleCancel = useCallback(() => {
     setIsWaitingForAgent(false);
     setUserCancelled(true);
-    cancelTurn(conversationId).catch(() => {});
-  }, [conversationId]);
+    cancelTurn(conversationId).catch((err: unknown) => {
+      console.error("Failed to cancel channel turn", err);
+      setActionError(t("channels.chat.cancelFailed"));
+    });
+  }, [conversationId, t]);
 
   const handleRetry = useCallback(async () => {
     try {
+      setActionError(null);
       clearLastTurn();
       const result = await retryTurn(conversationId);
       if (result.status === "retrying") {
         eventCountRef.current = effectiveEvents.length;
         setIsWaitingForAgent(true);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Failed to retry channel turn", err);
+      setActionError(t("channels.chat.retryFailed"));
     }
-  }, [conversationId, effectiveEvents.length, clearLastTurn]);
+  }, [conversationId, effectiveEvents.length, clearLastTurn, t]);
 
   const displayName = conversation.display_name ?? conversation.provider_chat_id;
   const providerLabel = getProviderLabel(conversation.provider);
@@ -236,17 +244,27 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+      {actionError && (
+        <p role="alert" className="mx-4 mt-3 rounded-lg bg-danger-subtle px-3 py-2 text-caption break-words text-destructive">
+          {actionError}
+        </p>
+      )}
       {pendingAsk && (
-        <div className="border-b border-border/60 bg-muted px-4 py-3">
+        <section
+          role="region"
+          aria-live="polite"
+          aria-label={pendingAsk.title ?? t("inputPrompt.title")}
+          className="bg-muted px-4 py-3"
+        >
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground">
-              <MessageCircle className="h-4 w-4" />
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-circle bg-background text-muted-foreground">
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="label-mono text-muted-foreground">
                 {pendingAsk.title ?? t("inputPrompt.title")}
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-body-sm text-foreground">
+              <p className="mt-1 whitespace-pre-wrap break-words text-body-sm text-foreground">
                 {pendingAsk.question}
               </p>
               <p className="mt-1 text-caption text-muted-foreground">
@@ -261,7 +279,7 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
                       key={option.id ?? option.value ?? option.label ?? idx}
                       type="button"
                       onClick={() => void handlePromptSubmit(option.value ?? option.label)}
-                      className="flex min-h-10 w-full items-start rounded-md border border-border bg-background px-3 py-2 text-left transition-colors hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      className="flex min-h-10 w-full items-start rounded-xl bg-background px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <span className="text-body-sm-bold text-foreground">
@@ -278,13 +296,13 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
                 </div>
               )}
               {respondError && (
-                <p className="mt-2 text-caption text-destructive">
+                <p role="alert" className="mt-2 text-caption break-words text-destructive">
                   {respondError}
                 </p>
               )}
             </div>
           </div>
-        </div>
+        </section>
       )}
 
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">

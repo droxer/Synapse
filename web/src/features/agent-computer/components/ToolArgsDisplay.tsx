@@ -5,7 +5,6 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useTranslation } from "@/i18n";
 import { formatArgValue } from "../lib/format-tools";
-import { OUTPUT_CARD_DENSE_CLASSES } from "../lib/format-tools";
 import type { TFn } from "@/shared/types/i18n";
 import { OUTPUT_SURFACE_FOCUS_CLASSES } from "@/shared/components/ui/output-surface";
 
@@ -63,26 +62,29 @@ interface ToolArgsDisplayProps {
 function ValueToggle({
   expanded,
   onToggle,
+  argLabel,
   t,
 }: {
   readonly expanded: boolean;
   readonly onToggle: () => void;
-  readonly t: (key: string) => string;
+  readonly argLabel: string;
+  readonly t: TFn;
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-label={expanded ? t("a11y.collapse") : t("a11y.expand")}
+      aria-expanded={expanded}
+      aria-label={expanded ? t("a11y.collapseArg", { name: argLabel }) : t("a11y.expandArg", { name: argLabel })}
       className={cn(
-        "ml-1 inline-flex items-center rounded-md px-0.5 text-micro text-muted-foreground transition-colors hover:bg-background hover:text-foreground",
+        "ml-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-md px-1 align-middle text-micro text-muted-foreground transition-colors hover:bg-background hover:text-foreground",
         OUTPUT_SURFACE_FOCUS_CLASSES,
       )}
     >
       {expanded ? (
-        <ChevronUp className="h-3 w-3" />
+        <ChevronUp className="h-3 w-3" aria-hidden="true" />
       ) : (
-        <ChevronDown className="h-3 w-3" />
+        <ChevronDown className="h-3 w-3" aria-hidden="true" />
       )}
     </button>
   );
@@ -112,8 +114,7 @@ export function ToolArgsDisplay({ input, compact = false }: ToolArgsDisplayProps
   return (
     <div
       className={cn(
-        OUTPUT_CARD_DENSE_CLASSES,
-        "border-l border-border/60 bg-muted",
+        "rounded-lg bg-muted px-2 py-1.5",
         compact && "px-2 py-1",
       )}
     >
@@ -127,6 +128,7 @@ export function ToolArgsDisplay({ input, compact = false }: ToolArgsDisplayProps
       >
         {entries.map(([key, value]) => {
           const strValue = formatArgValue(value);
+          const argLabel = normalizeArgKey(key, t);
           const isLong = strValue.length > VALUE_TRUNCATE;
           const isExpanded = expandedKeys.has(key);
           const isMultiline =
@@ -140,7 +142,7 @@ export function ToolArgsDisplay({ input, compact = false }: ToolArgsDisplayProps
             <div key={key} className="contents">
               {/* Key */}
               <span className="select-none whitespace-nowrap pt-px text-micro text-text-subtle">
-                {normalizeArgKey(key, t)}
+                {argLabel}
               </span>
 
               {/* Value */}
@@ -158,14 +160,7 @@ export function ToolArgsDisplay({ input, compact = false }: ToolArgsDisplayProps
                     )}
                   </pre>
                 ) : typeof value === "boolean" ? (
-                  <span
-                    className={cn(
-                      "text-sm",
-                      value
-                        ? "text-success"
-                        : "text-destructive",
-                    )}
-                  >
+                  <span className="text-sm text-foreground">
                     {String(value)}
                   </span>
                 ) : (
@@ -180,6 +175,7 @@ export function ToolArgsDisplay({ input, compact = false }: ToolArgsDisplayProps
                   <ValueToggle
                     expanded={isExpanded}
                     onToggle={() => toggleKey(key)}
+                    argLabel={argLabel}
                     t={t}
                   />
                 )}

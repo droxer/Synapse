@@ -11,7 +11,8 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { getChannelStatus, type ChannelProviderStatus } from "../api/channel-api";
-import { ChannelProviderIcon, getProviderColor } from "./ChannelProviderIcon";
+import { Badge } from "@/shared/components/ui/badge";
+import { ChannelProviderIcon, getProviderColor, getProviderTextColor } from "./ChannelProviderIcon";
 
 interface ChannelIntegrationsDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ function ProviderTile({
   const configured = status?.configured ?? false;
   const linked = status?.linked ?? false;
   const brand = getProviderColor(provider);
+  const brandText = getProviderTextColor(provider);
 
   const stateLabel = linked
     ? t("channels.integrations.linked")
@@ -49,16 +51,11 @@ function ProviderTile({
     <button
       type="button"
       onClick={onOpen}
-      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-lg border border-border bg-card p-4 text-left transition-[border-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-xl bg-surface-soft p-4 text-left transition-[background-color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       style={{
         ["--tile-brand" as string]: brand,
       }}
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${brand}80, transparent)` }}
-      />
       <span
         aria-hidden
         className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-60"
@@ -66,29 +63,26 @@ function ProviderTile({
       />
 
       <div className="flex items-center justify-between">
-        <ChannelProviderIcon provider={provider} size="lg" className="rounded-xl ring-1 ring-border" />
+        <ChannelProviderIcon provider={provider} size="lg" />
         {(configured || linked) && (
-          <span
-            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-micro font-medium uppercase text-muted-foreground"
-            title={stateLabel}
-          >
-            <Check className="h-3 w-3" style={{ color: brand }} />
+          <Badge variant="neutral" title={stateLabel}>
+            <Check aria-hidden="true" style={{ color: brandText }} />
             {stateLabel}
-          </span>
+          </Badge>
         )}
         {!configured && !linked && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-micro font-medium uppercase text-warning ring-1 ring-warning/25">
-            <span className="h-1 w-1 rounded-full bg-warning" />
+          <Badge variant="warning">
+            <span className="h-1 w-1 rounded-full bg-warning" aria-hidden="true" />
             {stateLabel}
-          </span>
+          </Badge>
         )}
       </div>
 
       <div className="space-y-1">
-        <p className="text-subtitle-lg text-foreground tracking-tight">
+        <p className="text-subtitle-lg text-foreground">
           {t(`channels.${provider}.title`)}
         </p>
-        <p className="text-caption text-muted-foreground leading-snug">
+        <p className="text-caption text-muted-foreground">
           {t(`channels.integrations.${provider}ValueProp`)}
         </p>
       </div>
@@ -103,10 +97,10 @@ function ProviderTile({
       <div className="mt-auto flex items-center justify-between pt-2">
         <span
           className="inline-flex items-center gap-1 text-caption-bold transition-colors"
-          style={{ color: brand }}
+          style={{ color: brandText }}
         >
           {actionLabel}
-          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
         </span>
       </div>
     </button>
@@ -115,7 +109,7 @@ function ProviderTile({
 
 function ProviderTileSkeleton() {
   return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+    <div className="rounded-xl bg-surface-soft p-4 space-y-3" aria-hidden="true">
       <div className="flex items-center justify-between">
         <div className="h-10 w-10 rounded-xl skeleton-shimmer" />
         <div className="h-5 w-20 rounded-full skeleton-shimmer" />
@@ -151,7 +145,8 @@ export function ChannelIntegrationsDialog({
       setTelegramStatus(status.providers.telegram ?? null);
       setDiscordStatus(status.providers.discord ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("channels.integrations.errorLoad"));
+      const detail = err instanceof Error ? err.message : "";
+      setError(detail ? `${t("channels.integrations.errorLoad")} ${detail}` : t("channels.integrations.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -183,12 +178,12 @@ export function ChannelIntegrationsDialog({
           {error && (
             <div
               role="alert"
-              className="rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive"
+              className="rounded-lg bg-danger-subtle px-3 py-2 text-body-sm text-destructive break-words"
             >
               {error}
             </div>
           )}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy={loading}>
             {loading ? (
               <>
                 <ProviderTileSkeleton />

@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 @plugin "@tailwindcss/typography";
 @import "katex/dist/katex.min.css";
 /* highlight.js theme is fully defined below using app design tokens — no external theme import */
@@ -92,6 +95,22 @@
   --color-placeholder: var(--color-stone);
   --color-muted-foreground-dim: var(--color-stone);
 
+  /* Compat aliases — names still consumed by components; resolve to canonical tokens. */
+  --color-text-subtle: var(--color-stone);
+  --color-text-muted: var(--color-steel);
+  --color-accent-hover: var(--color-cobalt-deep);
+  --color-accent-active: var(--color-cobalt-selected);
+  --color-info: var(--color-cobalt);
+  --color-accent-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
+  --color-info-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
+  --color-success-subtle: color-mix(in srgb, var(--color-success) 12%, transparent);
+  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  --color-danger-subtle: color-mix(in srgb, var(--color-critical) 10%, transparent);
+  /* Foreground-safe status text (AA on canvas). Fill tokens above stay for backgrounds. */
+  --color-warning-text: #8a5a00;
+  --color-success-text: #1e7a36;
+  --color-on-destructive: #ffffff;
+
   --color-accent-emerald: var(--color-success);
   --color-accent-amber: var(--color-attention);
   --color-accent-rose: var(--color-critical);
@@ -138,10 +157,10 @@
   /* Font families — DESIGN.md aligns to Optimistic VF; we substitute Montserrat as its
      designated fallback (humanist-geometric, free on Google Fonts). */
   --font-cjk-sans: var(--font-noto-sans-sc), var(--font-noto-sans-tc), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC";
-  --font-sans: var(--font-montserrat), var(--font-cjk-sans), Montserrat, Helvetica, Arial, "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  --font-sans: var(--font-montserrat, Montserrat), var(--font-cjk-sans), Montserrat, Helvetica, Arial, "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-brand-family: var(--font-montserrat), Montserrat, system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-brand-family: var(--font-montserrat, Montserrat), Montserrat, system-ui, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   /* DESIGN.md typography roles are defined as full @utility classes below
      (font-family + size + weight + line-height + letter-spacing), so we deliberately
@@ -164,8 +183,8 @@
   --lh-relaxed: 1.625;
 
   /* Legacy aliases (used by text-micro / text-caption utilities) */
-  --font-size-micro: 0.625rem;
-  --font-size-micro--line-height: 1.4;
+  --font-size-micro: 0.75rem;   /* 12px — DESIGN.md caption floor */
+  --font-size-micro--line-height: 1.33;
   --font-size-caption: var(--text-xs);
   --font-size-caption--line-height: var(--lh-normal);
 
@@ -341,6 +360,22 @@
   --color-border-active: var(--color-charcoal);
   --color-placeholder: var(--color-stone);
   --color-muted-foreground-dim: var(--color-stone);
+
+  /* Compat aliases — names still consumed by components; resolve to canonical tokens. */
+  --color-text-subtle: var(--color-stone);
+  --color-text-muted: var(--color-steel);
+  --color-accent-hover: var(--color-cobalt-deep);
+  --color-accent-active: var(--color-cobalt-selected);
+  --color-info: var(--color-cobalt);
+  --color-accent-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
+  --color-info-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
+  --color-success-subtle: color-mix(in srgb, var(--color-success) 12%, transparent);
+  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  --color-danger-subtle: color-mix(in srgb, var(--color-critical) 10%, transparent);
+  /* Foreground-safe status text (AA on canvas). Fill tokens above stay for backgrounds. */
+  --color-warning-text: #8a5a00;
+  --color-success-text: #1e7a36;
+  --color-on-destructive: #ffffff;
   --color-accent-emerald: var(--color-success);
   --color-accent-amber: var(--color-attention);
   --color-accent-rose: var(--color-critical);
@@ -434,9 +469,9 @@
   --color-border: var(--color-hairline-soft);
   --color-input: var(--color-hairline);
   --color-ring: var(--color-focus);
-  --color-card: #14161b;
+  --color-card: var(--color-surface-soft);
   --color-card-foreground: var(--color-ink-deep);
-  --color-popover: #16181e;
+  --color-popover: color-mix(in srgb, var(--color-surface-soft), var(--color-ink-deep) 4%);
   --color-popover-foreground: var(--color-ink-deep);
 
   --radius-xs: 2px;
@@ -455,6 +490,22 @@
   --color-border-active: var(--color-charcoal);
   --color-placeholder: var(--color-stone);
   --color-muted-foreground-dim: var(--color-stone);
+
+  /* Compat aliases — names still consumed by components; resolve to canonical tokens. */
+  --color-text-subtle: var(--color-stone);
+  --color-text-muted: var(--color-steel);
+  --color-accent-hover: var(--color-cobalt-deep);
+  --color-accent-active: var(--color-cobalt-selected);
+  --color-info: var(--color-cobalt);
+  --color-accent-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
+  --color-info-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
+  --color-success-subtle: color-mix(in srgb, var(--color-success) 12%, transparent);
+  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  --color-danger-subtle: color-mix(in srgb, var(--color-critical) 10%, transparent);
+  /* Foreground-safe status text (AA on canvas). Fill tokens above stay for backgrounds. */
+  --color-warning-text: var(--color-warning);
+  --color-success-text: var(--color-success);
+  --color-on-destructive: #0a1317;
   --color-accent-emerald: var(--color-success);
   --color-accent-amber: var(--color-attention);
   --color-accent-rose: var(--color-critical);
@@ -533,10 +584,10 @@ html:lang(zh-TW) {
   line-height: var(--font-size-caption--line-height);
 }
 
+/* Borderless tonal panel — separates from the canvas by fill, not a hairline. */
 @utility surface-panel {
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  background-color: var(--color-card);
+  background-color: var(--color-surface-soft);
 }
 
 /* ─── DESIGN.md typography roles ─── */
@@ -660,10 +711,9 @@ html:lang(zh-TW) {
 
 /* ─── DESIGN.md card chrome ─── */
 @utility card-product-feature {
-  background-color: var(--color-canvas);
+  background-color: var(--color-surface-soft);
   border-radius: var(--radius-xxxl);
   padding: 32px;
-  border: 1px solid var(--color-hairline-soft);
 }
 @utility card-feature-photo {
   background-color: var(--color-canvas);
@@ -679,23 +729,20 @@ html:lang(zh-TW) {
   padding: 64px;
 }
 @utility card-icon-feature {
-  background-color: var(--color-canvas);
+  background-color: var(--color-surface-soft);
   border-radius: var(--radius-xl);
   padding: 24px;
-  border: 1px solid var(--color-hairline-soft);
 }
 @utility card-checkout-summary {
   background-color: var(--color-canvas);
   border-radius: var(--radius-xl);
   padding: 24px;
-  border: 1px solid var(--color-hairline-soft);
   box-shadow: var(--shadow-sticky-rail);
 }
 @utility card-why-buy-tile {
-  background-color: var(--color-canvas);
+  background-color: var(--color-surface-soft);
   border-radius: var(--radius-xl);
   padding: 32px 24px;
-  border: 1px solid var(--color-hairline-soft);
 }
 @utility card-warranty {
   background-color: var(--color-surface-soft);
@@ -721,7 +768,6 @@ html:lang(zh-TW) {
 
 
 @utility surface-overlay {
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-2xl);
   background-color: var(--color-popover);
   box-shadow: var(--shadow-elevated);
@@ -739,8 +785,7 @@ html:lang(zh-TW) {
 }
 
 @utility chip-muted {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   background-color: var(--color-muted);
   color: var(--color-muted-foreground);
 }
@@ -749,9 +794,9 @@ html:lang(zh-TW) {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  border-radius: var(--radius-md);
-  padding: 0.125rem 0.375rem;
-  font-family: var(--font-mono);
+  border-radius: var(--radius-full);
+  padding: 0.125rem 0.5rem;
+  font-family: var(--font-sans);
   font-size: var(--font-size-micro);
   font-weight: 500;
   line-height: var(--font-size-micro--line-height);
@@ -763,43 +808,36 @@ html:lang(zh-TW) {
    draw from one consistent palette in both light and dark themes. */
 
 @utility status-neutral {
-  border: 1px solid var(--color-border);
   background-color: var(--color-muted);
   color: var(--color-muted-foreground);
 }
 
 @utility status-info {
-  border: 1px solid color-mix(in srgb, var(--color-focus), transparent 70%);
-  background-color: color-mix(in srgb, var(--color-focus), transparent 90%);
-  color: var(--color-focus);
+  background-color: color-mix(in srgb, var(--color-cobalt), transparent 90%);
+  color: var(--color-cobalt);
 }
 
 @utility status-primary {
-  border: 1px solid color-mix(in srgb, var(--color-primary), transparent 70%);
   background-color: color-mix(in srgb, var(--color-primary), transparent 90%);
   color: var(--color-primary);
 }
 
 @utility status-ai {
-  border: 1px solid var(--color-ai-border);
   background-color: var(--color-ai-surface);
   color: var(--color-foreground);
 }
 
 @utility status-ok {
-  border: 1px solid color-mix(in srgb, var(--color-accent-emerald), transparent 70%);
   background-color: color-mix(in srgb, var(--color-accent-emerald), transparent 90%);
-  color: var(--color-accent-emerald);
+  color: var(--color-success-text);
 }
 
 @utility status-warn {
-  border: 1px solid color-mix(in srgb, var(--color-accent-amber), transparent 70%);
-  background-color: color-mix(in srgb, var(--color-accent-amber), transparent 90%);
-  color: var(--color-accent-amber);
+  background-color: color-mix(in srgb, var(--color-accent-amber), transparent 86%);
+  color: var(--color-warning-text);
 }
 
 @utility status-error {
-  border: 1px solid color-mix(in srgb, var(--color-destructive), transparent 70%);
   background-color: color-mix(in srgb, var(--color-destructive), transparent 90%);
   color: var(--color-destructive);
 }
@@ -837,7 +875,7 @@ html:lang(zh-TW) {
 @utility label-mono {
   font-family: var(--font-mono);
   font-size: var(--font-size-caption);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
@@ -846,7 +884,7 @@ html:lang(zh-TW) {
 @utility heading-display {
   font-family: var(--font-sans);
   font-size: 2rem;
-  font-weight: 740;
+  font-weight: 500;
   line-height: 1.05;
   letter-spacing: 0;
   text-wrap: balance;
@@ -1119,7 +1157,7 @@ pre, code {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xxl);
   background-color: var(--color-card);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-elevated);
   transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
 }
 
@@ -1228,7 +1266,7 @@ pre, code {
 .conversation-markdown :where(h1, h2, h3, h4) {
   margin-top: 1.1rem;
   margin-bottom: 0.55rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.015em;
 }
 
@@ -1286,7 +1324,7 @@ pre, code {
 .markdown-reasoning h5,
 .markdown-reasoning h6 {
   margin: 0.9em 0 0.35em;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-foreground);
   opacity: 0.92;
 }
@@ -1305,7 +1343,6 @@ pre, code {
 .markdown-reasoning pre {
   margin: 0.45em 0;
   background: color-mix(in srgb, var(--color-background), var(--color-ai-surface) 28%);
-  border: 1px solid color-mix(in srgb, var(--color-border-strong), transparent 24%);
   border-radius: var(--radius-lg);
   padding: 0.7em 0.9em;
 }

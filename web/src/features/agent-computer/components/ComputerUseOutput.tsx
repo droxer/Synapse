@@ -30,45 +30,37 @@ function formatActionDescription(
   }
 
   const { action, x, y, text, endX, endY } = meta;
+  const hasPoint = x != null && y != null;
 
   switch (action) {
     case "click":
-      return x != null && y != null
-        ? t("output.computer.click", { x, y })
-        : t("output.computer.click", { x: 0, y: 0 });
     case "double_click":
-      return x != null && y != null
-        ? t("output.computer.double_click", { x, y })
-        : t("output.computer.double_click", { x: 0, y: 0 });
     case "right_click":
-      return x != null && y != null
-        ? t("output.computer.right_click", { x, y })
-        : t("output.computer.right_click", { x: 0, y: 0 });
-    case "type":
-      return text ? t("output.computer.type", { text }) : t("output.computer.type", { text: "" });
-    case "key":
-      return text ? t("output.computer.key", { text }) : t("output.computer.key", { text: "" });
-    case "scroll_up":
-      return t("output.computer.scroll_up");
-    case "scroll_down":
-      return t("output.computer.scroll_down");
     case "move":
-      return x != null && y != null
-        ? t("output.computer.move", { x, y })
-        : t("output.computer.move", { x: 0, y: 0 });
+      return hasPoint
+        ? t(`output.computer.${action}`, { x, y })
+        : actionLabel(action, t);
+    case "type":
+    case "key":
+      return text ? t(`output.computer.${action}`, { text }) : actionLabel(action, t);
+    case "scroll_up":
+    case "scroll_down":
+      return t(`output.computer.${action}`);
     case "drag":
-      return x != null && y != null && endX != null && endY != null
+      return hasPoint && endX != null && endY != null
         ? t("output.computer.drag", { x, y, endX, endY })
-        : t("output.computer.drag", { x: 0, y: 0, endX: 0, endY: 0 });
+        : actionLabel(action, t);
     default:
-      return `${action}`;
+      return actionLabel(action, t);
   }
 }
 
-/** Human-readable action label for badges */
-function actionLabel(action?: string): string {
-  if (!action) return "screenshot";
-  return action.replace(/_/g, " ");
+/** Human-readable, translated action label for the header meta slot. */
+function actionLabel(action: string | undefined, t: TFn): string {
+  const key = `output.computer.action.${action ?? "screenshot"}`;
+  const translated = t(key);
+  if (translated !== key) return translated;
+  return (action ?? "screenshot").replace(/_/g, " ");
 }
 
 interface ComputerUseOutputProps {
@@ -100,9 +92,9 @@ export function ComputerUseOutput({
   return (
     <OutputSurface>
       <OutputSurfaceHeader
-        icon={<Monitor className="h-3.5 w-3.5 text-muted-foreground" />}
+        icon={<Monitor className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />}
         label={t("output.category.computer")}
-        meta={actionLabel(action)}
+        meta={actionLabel(action, t)}
       />
 
       <OutputSurfaceBody>

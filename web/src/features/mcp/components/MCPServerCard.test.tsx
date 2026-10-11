@@ -23,6 +23,8 @@ jest.mock("@/i18n", () => ({
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { MCPServerCard } = require("./MCPServerCard");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { TooltipProvider } = require("@/shared/components/ui/tooltip");
 
 function serverFixture(overrides: Partial<MCPServer> = {}): MCPServer {
   return {
@@ -39,11 +41,13 @@ function serverFixture(overrides: Partial<MCPServer> = {}): MCPServer {
 describe("MCPServerCard style contract", () => {
   it("uses shared status chip classes for transport and enabled state", () => {
     const html = renderToStaticMarkup(
-      <MCPServerCard
-        server={serverFixture()}
-        onDelete={() => undefined}
-        onToggle={() => undefined}
-      />,
+      <TooltipProvider>
+        <MCPServerCard
+          server={serverFixture()}
+          onDelete={() => undefined}
+          onToggle={() => undefined}
+        />
+      </TooltipProvider>,
     );
 
     expect(html).toContain("status-pill");

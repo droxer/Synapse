@@ -36,6 +36,7 @@ import {
   normalizeAgentName,
 } from "@/features/agent-computer/lib/tool-constants";
 import { getTimelineToolOrSkillIcon } from "@/features/agent-computer/lib/tool-visual-icons";
+import { ToolStatusGlyph } from "./ToolStatusGlyph";
 import { normalizeSkillName } from "@/features/skills/lib/normalize-skill-name";
 import type { TFn } from "@/shared/types/i18n";
 
@@ -163,7 +164,7 @@ function truncateRuntimeValue(value: string, maxLength = 48): string {
   const compact = value.trim().replace(/\s+/g, " ");
   if (!compact) return "";
   if (compact.length <= maxLength) return compact;
-  return `${compact.slice(0, maxLength - 3)}...`;
+  return `${compact.slice(0, maxLength - 1)}…`;
 }
 
 function extractHostname(url: unknown): string | undefined {
@@ -230,16 +231,18 @@ function buildOptimisticSkillStep(toolCall: ToolCallInfo, t: TFn): TimelineStep 
 
 function buildPreviewAvailableTitle(
   event: Extract<AgentEvent, { type: "preview_available" }>,
+  t: TFn,
 ): string {
   const url = typeof event.data.url === "string" ? event.data.url : undefined;
   const port = typeof event.data.port === "number" ? event.data.port : undefined;
-  if (url) return `Preview available at ${url}`;
-  if (port != null) return `Preview available on port ${port}`;
-  return "Preview available";
+  if (url) return t("progress.previewAvailableAt", { url });
+  if (port != null) return t("progress.previewAvailableOnPort", { port });
+  return t("progress.previewAvailable");
 }
 
 function buildSkillDependencyFailedTitle(
   event: Extract<AgentEvent, { type: "skill_dependency_failed" }>,
+  t: TFn,
 ): string {
   const skillName =
     typeof event.data.name === "string" && event.data.name.trim()
@@ -255,18 +258,18 @@ function buildSkillDependencyFailedTitle(
       : undefined;
 
   if (skillName && manager && packages) {
-    return `Failed installing ${manager} dependencies for ${skillName}: ${packages}`;
+    return t("progress.dependencyFailedFull", { manager, skill: skillName, packages });
   }
   if (skillName && manager) {
-    return `Failed installing ${manager} dependencies for ${skillName}`;
+    return t("progress.dependencyFailedManagerSkill", { manager, skill: skillName });
   }
   if (skillName) {
-    return `Failed installing dependencies for ${skillName}`;
+    return t("progress.dependencyFailedSkill", { skill: skillName });
   }
   if (manager && packages) {
-    return `Failed installing ${manager} dependencies: ${packages}`;
+    return t("progress.dependencyFailedManagerPackages", { manager, packages });
   }
-  return "Skill dependency installation failed";
+  return t("progress.dependencyFailed");
 }
 
 function buildPlanTimelineSteps(
@@ -284,7 +287,7 @@ function buildPlanTimelineSteps(
     return {
       id: agentId ? `agent-${agentId}-plan-${index}` : `plan-step-${index}`,
       kind: "plan",
-      title: (step.nameI18nKey ? t(step.nameI18nKey) : step.name).trim() || `Step ${index + 1}`,
+      title: (step.nameI18nKey ? t(step.nameI18nKey) : step.name).trim() || t("progress.stepFallback", { index: index + 1 }),
       status: step.status,
       agentToolActivity,
     };
@@ -498,7 +501,7 @@ export function buildSteps(
         steps = [...steps, {
           id: `preview-available-${event.timestamp}`,
           kind: "start",
-          title: buildPreviewAvailableTitle(event),
+          title: buildPreviewAvailableTitle(event, t),
           status: "complete",
         }];
         break;
@@ -507,7 +510,7 @@ export function buildSteps(
         steps = [...steps, {
           id: `preview-stopped-${event.timestamp}`,
           kind: "complete",
-          title: "Preview stopped",
+          title: t("progress.previewStopped"),
           status: "complete",
         }];
         break;
@@ -516,7 +519,7 @@ export function buildSteps(
         steps = [...steps, {
           id: `skill-dependency-failed-${event.timestamp}`,
           kind: "error",
-          title: buildSkillDependencyFailedTitle(event),
+          title: buildSkillDependencyFailedTitle(event, t),
           status: "error",
         }];
         break;
@@ -541,14 +544,14 @@ export function buildSteps(
           typeof event.data.compacted_messages === "number"
             ? event.data.compacted_messages
             : undefined;
-        const detail =
+        const title =
           originalCount != null && compactedCount != null
-            ? ` (${originalCount} -> ${compactedCount})`
-            : "";
+            ? t("progress.contextCompactedDetail", { original: originalCount, compacted: compactedCount })
+            : t("progress.contextCompacted");
         steps = [...steps, {
           id: `context-compacted-${event.timestamp}`,
           kind: "start",
-          title: `Context compacted${detail}`,
+          title,
           status: "complete",
         }];
         break;
@@ -787,11 +790,11 @@ function getStepStatusVisual(status: TimelineStepStatus): StatusVisual {
       };
     case "replan_required":
       return {
-        text: "text-warning",
+        text: "text-warning-text",
         rowBase: "rounded-lg bg-warning/5",
         rowHover: "hover:bg-warning/8",
         iconSurface: "bg-muted",
-        iconColor: "text-warning",
+        iconColor: "text-warning-text",
       };
     case "skipped":
       return {
@@ -829,80 +832,37 @@ function getStepStatusVisual(status: TimelineStepStatus): StatusVisual {
 }
 
 /* Icon + status-colored container for each step */
-function StepIcon({ step }: { readonly step: TimelineStep }) {
+function StepIcon({ step, t }: { readonly step: TimelineStep; readonly t: TFn }) {
   const Icon = stepGlyphIcon(step);
   const visual = getStepStatusVisual(step.status);
   const useDistinctGlyph = step.kind === "tool" || step.kind === "skill";
 
   if (step.status === "running") {
+    return <ToolStatusGlyph glyph={Icon} tone="running" label={t("a11y.toolRunning")} className="mt-0.5" />;
+  }
+  if (useDistinctGlyph && (step.status === "error" || step.status === "complete")) {
     return (
-      <span className={cn("relative", STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-        <Icon className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
-        <span className="absolute inset-0 rounded-md bg-ring/20 animate-pulsing-dot-fade" />
-      </span>
+      <ToolStatusGlyph
+        glyph={Icon}
+        tone={step.status}
+        label={step.status === "error" ? t("a11y.toolFailed") : t("a11y.toolSuccess")}
+        className="mt-0.5"
+      />
     );
   }
 
-  if (step.status === "error") {
-    if (useDistinctGlyph) {
-      return (
-        <span className={cn("relative", STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-          <Icon className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
-          <CircleX
-            className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-destructive"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-        </span>
-      );
-    }
-    return (
-      <span className={cn(STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-        <CircleX className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
-      </span>
-    );
-  }
-
-  if (step.status === "replan_required") {
-    return (
-      <span className={cn(STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-        <AlertTriangle className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
-      </span>
-    );
-  }
-
-  if (step.status === "skipped") {
-    return (
-      <span className={cn(STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-        <Minus className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
-      </span>
-    );
-  }
-
-  if (step.status === "pending") {
-    return (
-      <span className={cn(STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-        <Icon className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
-      </span>
-    );
-  }
-
-  if (useDistinctGlyph) {
-    return (
-      <span className={cn("relative", STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-        <Icon className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
-        <Check
-          className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-background text-success"
-          strokeWidth={3}
-          aria-hidden
-        />
-      </span>
-    );
-  }
-
+  const StatusGlyph = step.status === "error"
+    ? CircleX
+    : step.status === "replan_required"
+      ? AlertTriangle
+      : step.status === "skipped"
+        ? Minus
+        : step.status === "pending"
+          ? Icon
+          : Check;
   return (
-    <span className={cn(STEP_ICON_FRAME_CLASS, visual.iconSurface)}>
-      <Check className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.5} />
+    <span className={cn("mt-0.5", STEP_ICON_FRAME_CLASS, visual.iconSurface)} aria-hidden="true">
+      <StatusGlyph className={cn(STEP_ICON_GLYPH_CLASS, visual.iconColor)} strokeWidth={2.25} />
     </span>
   );
 }
@@ -913,7 +873,7 @@ function TaskStateBadge({ state, t }: { readonly state: TaskState; readonly t: T
     case "planning":
       return (
         <span className="status-pill status-warn">
-          <Lightbulb className="h-3 w-3" />
+          <Lightbulb className="h-3 w-3" aria-hidden="true" />
           {t("progress.statePlanning")}
         </span>
       );
@@ -926,15 +886,15 @@ function TaskStateBadge({ state, t }: { readonly state: TaskState; readonly t: T
       );
     case "complete":
       return (
-        <span className="status-pill status-primary">
-          <CircleCheck className="h-3 w-3" />
+        <span className="status-pill status-ok">
+          <CircleCheck className="h-3 w-3" aria-hidden="true" />
           {t("progress.stateComplete")}
         </span>
       );
     case "error":
       return (
         <span className="status-pill status-error">
-          <CircleX className="h-3 w-3" />
+          <CircleX className="h-3 w-3" aria-hidden="true" />
           {t("progress.stateError")}
         </span>
       );
@@ -1000,27 +960,29 @@ export function AgentProgressCard({
   const taskStateAnnouncement = getTaskStateAnnouncement(taskState, t);
   return (
     <motion.div
-      lang="en"
-      className="surface-panel overflow-hidden border-border"
+      className="surface-panel overflow-hidden"
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.12, ease: "easeOut" }}
     >
       <div role="status" aria-live="polite" className="sr-only">
-        {headerProgressLine ? `${taskStateAnnouncement}: ${headerProgressLine}.` : `${taskStateAnnouncement}.`} {expanded ? "Expanded." : "Collapsed."} {panelOpen ? "Panel open." : "Panel closed."}
+        {headerProgressLine ? `${taskStateAnnouncement}: ${headerProgressLine}` : taskStateAnnouncement}
       </div>
 
       {/* Header */}
-      <div className="bg-card px-3 py-2.5">
+      <div className="px-3 py-2.5">
         <div className="flex items-center gap-2.5">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-xs"
             aria-label={panelOpen ? t("progress.closePanel") : t("progress.openPanel")}
+            aria-pressed={panelOpen}
             onClick={(e) => { e.stopPropagation(); onClick?.(); }}
-            className="touch-target flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="touch-target text-muted-foreground hover:text-foreground"
           >
-            <Monitor className="h-3.5 w-3.5" />
-          </button>
+            <Monitor className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
           <span className="label-mono flex-1 truncate text-muted-foreground">{t("progress.title")}</span>
           <TaskStateBadge state={taskState} t={t} />
           <span
@@ -1043,14 +1005,14 @@ export function AgentProgressCard({
             aria-expanded={expanded}
             aria-controls={stepListId}
             onClick={() => setExpanded((prev) => !prev)}
-            className="border border-transparent text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
           >
             <motion.span
               animate={{ rotate: expanded ? 180 : 0 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
               className="flex items-center"
             >
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
             </motion.span>
           </Button>
         </div>
@@ -1074,16 +1036,15 @@ export function AgentProgressCard({
         <AnimatePresence>
           {expanded && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              initial={{ opacity: 0, y: -2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
-              className="overflow-hidden"
             >
               <div
                 id={stepListId}
                 ref={stepsScrollRef}
-                className="mt-2 max-h-56 space-y-1 overflow-y-auto text-sm"
+                className="mt-2 max-h-56 space-y-1 overflow-y-auto overscroll-contain text-sm"
               >
                 {displaySteps.map((step) => {
                     const isClickable = isTimelineStepActionable(step.id);
@@ -1099,12 +1060,13 @@ export function AgentProgressCard({
                     );
                     const rowContent = (
                       <>
-                        <StepIcon step={step} />
+                        <StepIcon step={step} t={t} />
                         <span
                           className={cn(
                             "min-w-0 flex-1 truncate leading-6",
                             stepVisual.text,
                           )}
+                          title={step.title}
                         >
                           {step.kind === "agent" || (step.kind === "plan" && step.agentToolActivity != null) ? (
                             <AgentStepTitleLine

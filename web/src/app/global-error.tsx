@@ -1,6 +1,7 @@
 "use client";
 
-import { inter, geistMono, notoSansSC, notoSansTC } from "./fonts";
+import { useEffect } from "react";
+import { montserrat, geistMono, notoSansSC, notoSansTC } from "./fonts";
 import { Button } from "@/shared/components/ui/button";
 
 interface GlobalErrorProps {
@@ -8,23 +9,34 @@ interface GlobalErrorProps {
   reset: () => void;
 }
 
+/** Root providers are unmounted here, so re-apply the persisted theme (default dark, matching ThemeProvider). */
+const THEME_BOOTSTRAP = `(function(){try{var t=localStorage.getItem('theme');var d=!t||t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
+  useEffect(() => {
+    console.error("[global-error]", error.digest ?? "", error);
+  }, [error]);
+
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${geistMono.variable} ${notoSansSC.variable} ${notoSansTC.variable}`}
+      suppressHydrationWarning
+      className={`${montserrat.variable} ${geistMono.variable} ${notoSansSC.variable} ${notoSansTC.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+      </head>
       <body className="font-sans antialiased bg-background text-foreground">
         <div className="flex h-screen w-screen items-center justify-center">
           <div className="flex w-full max-w-[28rem] flex-col items-center gap-4 px-6 text-center">
-            <h1 className="w-full text-heading-sm text-foreground">
+            <h1 className="w-full text-balance text-heading-sm text-foreground">
               Something went wrong
             </h1>
             <p className="w-full text-body-sm text-muted-foreground">
-              {error.message || "A critical error occurred."}
+              A critical error occurred. Try again, or reload the page.
             </p>
             <Button onClick={reset}>
-              Try again
+              Try Again
             </Button>
           </div>
         </div>

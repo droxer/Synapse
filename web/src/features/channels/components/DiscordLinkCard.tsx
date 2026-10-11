@@ -202,14 +202,14 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
       )}
 
       {!hideCard && loading && (
-        <div className="rounded-lg border border-border bg-card p-3">
-          <div className="flex items-center gap-2.5">
+        <div className="rounded-xl bg-surface-soft p-3" aria-busy="true">
+          <div className="flex items-center gap-2.5" aria-hidden="true">
             <div className="h-8 w-8 shrink-0 rounded-lg skeleton-shimmer" />
             <div className="flex-1 space-y-1.5">
               <div className="h-3 w-20 skeleton-shimmer rounded" />
               <div className="h-2.5 w-14 skeleton-shimmer rounded" />
             </div>
-            <div className="h-6 w-6 rounded-md skeleton-shimmer" />
+            <div className="h-6 w-6 rounded-circle skeleton-shimmer" />
           </div>
         </div>
       )}
@@ -242,7 +242,10 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
                 </label>
                 <Input
                   id="discord-bot-token"
+                  name="discord-bot-token"
                   type="password"
+                  autoComplete="off"
+                  spellCheck={false}
                   value={botTokenInput}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setBotTokenInput(e.target.value)}
                   onKeyDown={(e: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -297,19 +300,23 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
               />
 
               {status.last_error && (
-                <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/5 px-3 py-2 text-body-sm text-destructive">
-                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span>{status.last_error}</span>
+                <div role="alert" className="flex items-start gap-2 rounded-lg bg-danger-subtle px-3 py-2 text-body-sm text-destructive">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 break-words">{status.last_error}</span>
                 </div>
               )}
 
               {isEditingToken && (
-                <div className="rounded-md border border-border bg-muted p-3 space-y-2">
-                  <p className="text-body-sm-bold text-foreground">
+                <div className="rounded-xl bg-surface-soft p-3 space-y-2">
+                  <label className="block text-body-sm-bold text-foreground" htmlFor="discord-new-bot-token">
                     {t("channels.discord.updateToken")}
-                  </p>
+                  </label>
                   <Input
+                    id="discord-new-bot-token"
+                    name="discord-new-bot-token"
                     type="password"
+                    autoComplete="off"
+                    spellCheck={false}
                     value={botTokenInput}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setBotTokenInput(e.target.value)}
                     onKeyDown={(e: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -360,7 +367,7 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
                   onClick={handleCreateLinkToken}
                   className="w-full gap-1.5"
                 >
-                  <LinkIcon className="h-4 w-4" />
+                  <LinkIcon className="h-4 w-4" aria-hidden="true" />
                   {actionLoading ? t("channels.discord.workingButton") : t("channels.discord.generateLinkToken")}
                 </Button>
                 {!isEditingToken && (
@@ -377,8 +384,8 @@ export function DiscordLinkCard({ open, onOpenChange, hideCard }: DiscordLinkCar
               </div>
 
               {!canGenerateLinkToken && (
-                <p className="flex items-start gap-1.5 text-caption text-warning">
-                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <p className="flex items-start gap-1.5 text-caption text-warning-text">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span>{t("channels.discord.fixSetupHint")}</span>
                 </p>
               )}

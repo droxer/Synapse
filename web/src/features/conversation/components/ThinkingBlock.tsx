@@ -137,30 +137,30 @@ export function ThinkingBlock({
           transition={{ duration: 0.12 * dur }}
           className="shrink-0"
         >
-          <ChevronRight className="h-3 w-3" />
+          <ChevronRight className="h-3 w-3" aria-hidden="true" />
         </motion.span>
 
         {isThinking && (
           <span
             className={cn(
-              "h-1.5 w-1.5 shrink-0 rounded-full bg-ring",
+              "h-1.5 w-1.5 shrink-0 rounded-full bg-primary",
               !shouldReduceMotion && "animate-pulse",
             )}
             aria-hidden="true"
           />
         )}
 
-        <span className="font-medium">{label}</span>
+        <span className="text-caption-bold">{label}</span>
 
         {!expanded && isMultiStep && !isThinking && (
           <span className="text-text-subtle">
-            &middot; {steps.length} steps
+            &middot; {t(steps.length === 1 ? "thinking.stepCountOne" : "thinking.stepCountOther", { count: steps.length })}
           </span>
         )}
 
         {previewSnippet && !expanded && (
           <span className="hidden min-w-0 flex-1 truncate text-text-subtle sm:block">
-            &mdash; {previewSnippet}{previewSnippet.length >= 60 ? "..." : ""}
+            &mdash; {previewSnippet}{previewSnippet.length >= 60 ? "…" : ""}
           </span>
         )}
       </button>
@@ -180,8 +180,11 @@ export function ThinkingBlock({
             <div
               ref={scrollRef}
               data-thinking-panel=""
+              tabIndex={0}
+              role="region"
+              aria-label={label}
               className={cn(
-                "mt-1.5 max-h-80 overflow-y-auto rounded-lg bg-muted/50 px-3.5 py-3",
+                "mt-1.5 max-h-80 overflow-y-auto break-words rounded-lg bg-muted/50 px-3.5 py-3 outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                 showBottomFade && "thinking-scroll-mask",
               )}
             >
@@ -197,14 +200,14 @@ export function ThinkingBlock({
                     >
                       <div className="flex items-start gap-2.5">
                         <span
-                          className="chip-muted inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md font-mono text-micro font-semibold"
+                          className="chip-muted inline-flex h-5 min-w-5 shrink-0 items-center justify-center font-mono text-micro tabular-nums"
                           aria-hidden="true"
                         >
                           {idx + 1}
                         </span>
                         <div className="min-w-0 flex-1">
                           {step.title ? (
-                            <h3 className="text-sm font-medium text-foreground">
+                            <h3 className="text-body-sm-bold text-foreground">
                               {step.title}
                             </h3>
                           ) : null}

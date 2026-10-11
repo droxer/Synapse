@@ -6,8 +6,9 @@ import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { TabHeader } from "./TabHeader";
 import { useTranslation } from "@/i18n";
 import { useMemoryEntries } from "../hooks/use-memory-entries";
-import { ErrorBanner } from "@/shared/components/ErrorBanner";
+import { RetryableError } from "./RetryableError";
 import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,21 +32,12 @@ const listItem = {
 };
 
 function truncateValue(value: string, maxLen = 80): string {
-  return value.length > maxLen ? `${value.slice(0, maxLen)}...` : value;
+  return value.length > maxLen ? `${value.slice(0, maxLen)}…` : value;
 }
 
 function ScopeChip({ scope, label }: { readonly scope: "global" | "conversation"; readonly label: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-micro font-medium",
-        scope === "global"
-          ? "border-primary/25 bg-primary/10 text-primary"
-          : "border-border bg-muted text-muted-foreground",
-      )}
-    >
-      {label}
-    </span>
+    <Badge variant={scope === "global" ? "info" : "neutral"}>{label}</Badge>
   );
 }
 
@@ -61,18 +53,17 @@ function DeleteMemoryButton({
   readonly size?: "desktop" | "mobile";
 }) {
   const { t } = useTranslation();
-  const dim = size === "mobile" ? "h-7 w-7" : "h-6 w-6";
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
+          size={size === "mobile" ? "icon" : "icon-sm"}
           aria-label={`${t("explorer.delete")} ${entryKey}`}
-          className={cn(dim, "shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive")}
+          className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           disabled={disabled}
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -82,15 +73,12 @@ function DeleteMemoryButton({
             {t("preferences.memory.confirmDeleteDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="rounded-md border border-border bg-muted px-3 py-2">
+        <div className="rounded-lg bg-muted px-3 py-2">
           <p className="font-mono text-caption text-foreground break-all">{entryKey}</p>
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>{t("explorer.cancel")}</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-destructive text-white hover:bg-destructive/90"
-          >
+          <AlertDialogAction variant="destructive" onClick={onConfirm}>
             {t("explorer.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -107,8 +95,11 @@ export function MemoryTab() {
 
   const handleDelete = async (entryId: string) => {
     setDeletingId(entryId);
-    await deleteEntry(entryId);
-    setDeletingId(null);
+    try {
+      await deleteEntry(entryId);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -120,30 +111,32 @@ export function MemoryTab() {
       />
 
       {error && (
-        <div className="mb-4">
-          <ErrorBanner
-            message={error}
-            variant="compact"
-            onDismiss={() => loadPage(page)}
-          />
-        </div>
+        <RetryableError
+          className="mb-4"
+          message={error}
+          onRetry={() => loadPage(page)}
+        />
       )}
 
-      <div className="overflow-hidden rounded-lg border border-border">
-        <div className="hidden grid-cols-[180px_minmax(0,1fr)_100px_100px_40px] gap-3 bg-muted px-4 py-3 label-mono text-muted-foreground md:grid">
-          <span>{t("preferences.memory.key")}</span>
-          <span>{t("preferences.memory.value")}</span>
-          <span>{t("preferences.memory.scope")}</span>
-          <span className="text-right">{t("preferences.memory.lastUpdated")}</span>
-          <span />
+      <div role="table" aria-label={t("preferences.memory.title")} className="overflow-hidden rounded-xl bg-muted/60">
+        <div
+          role="row"
+          className="hidden grid-cols-[180px_minmax(0,1fr)_100px_100px_40px] gap-3 px-4 py-3 label-mono text-muted-foreground md:grid"
+        >
+          <span role="columnheader">{t("preferences.memory.key")}</span>
+          <span role="columnheader">{t("preferences.memory.value")}</span>
+          <span role="columnheader">{t("preferences.memory.scope")}</span>
+          <span role="columnheader" className="text-right">{t("preferences.memory.lastUpdated")}</span>
+          <span role="columnheader"><span className="sr-only">{t("explorer.delete")}</span></span>
         </div>
 
         {loading && items.length === 0 ? (
-          <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-            <span className="inline-block h-4 w-24 skeleton-shimmer rounded" />
+          <div className="px-3 py-6 text-center" aria-busy="true">
+            <span className="sr-only" role="status">{t("preferences.loading")}</span>
+            <span aria-hidden="true" className="inline-block h-4 w-24 skeleton-shimmer rounded" />
           </div>
         ) : items.length === 0 ? (
-          <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+          <div className="px-3 py-6 text-center text-body-sm text-muted-foreground">
             {t("preferences.memory.noData")}
           </div>
         ) : (
@@ -163,13 +156,11 @@ export function MemoryTab() {
               return (
                 <motion.div
                   key={entry.id}
+                  role="row"
                   variants={listItem}
-                  className={cn(
-                    "border-t border-border/60 first:border-t-0 transition-colors duration-100 hover:bg-muted",
-                    "px-4 py-3 text-sm",
-                  )}
+                  className="px-4 py-3 text-body-sm transition-colors duration-100 hover:bg-muted"
                 >
-                  <div className="md:hidden">
+                  <div role="cell" className="md:hidden">
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <span
                         className="min-w-0 truncate font-mono text-caption font-medium text-foreground"
@@ -200,26 +191,32 @@ export function MemoryTab() {
 
                   <div className={cn("hidden", MEMORY_GRID)}>
                     <span
+                      role="cell"
                       className="min-w-0 truncate font-mono text-caption font-medium text-foreground"
                       title={entry.key}
                     >
                       {entry.key}
                     </span>
                     <p
+                      role="cell"
                       className="min-w-0 truncate text-caption leading-relaxed text-muted-foreground"
                       title={entry.value}
                     >
                       {truncateValue(entry.value)}
                     </p>
-                    <ScopeChip scope={entry.scope} label={scopeLabel} />
-                    <span className="text-right text-caption text-muted-foreground">
+                    <span role="cell">
+                      <ScopeChip scope={entry.scope} label={scopeLabel} />
+                    </span>
+                    <span role="cell" className="text-right text-caption text-muted-foreground">
                       {updatedLabel}
                     </span>
-                    <DeleteMemoryButton
-                      entryKey={entry.key}
-                      disabled={deletingId === entry.id}
-                      onConfirm={() => handleDelete(entry.id)}
-                    />
+                    <span role="cell">
+                      <DeleteMemoryButton
+                        entryKey={entry.key}
+                        disabled={deletingId === entry.id}
+                        onConfirm={() => handleDelete(entry.id)}
+                      />
+                    </span>
                   </div>
                 </motion.div>
               );
