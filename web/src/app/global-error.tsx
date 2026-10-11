@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { montserrat, geistMono, notoSansSC } from "./fonts";
+import { geistMono } from "./fonts";
 import { Button } from "@/shared/components/ui/button";
 
 interface GlobalErrorProps {
@@ -21,7 +21,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${montserrat.variable} ${geistMono.variable} ${notoSansSC.variable}`}
+      className={geistMono.variable}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />

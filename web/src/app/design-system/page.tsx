@@ -185,16 +185,16 @@ function ColorSection() {
 }
 
 const TYPE_ROLES = [
-  { className: "text-hero-display", label: "hero-display · 64 / 500" },
-  { className: "text-display-lg", label: "display-lg · 48 / 500" },
-  { className: "text-heading-lg", label: "heading-lg · 36 / 500" },
-  { className: "text-heading-md", label: "heading-md · 28 / 300 (editorial light)" },
-  { className: "text-heading-sm", label: "heading-sm · 24 / 500" },
-  { className: "text-subtitle-lg", label: "subtitle-lg · 18 / 700" },
-  { className: "text-subtitle-md", label: "subtitle-md · 18 / 400" },
-  { className: "text-body-md", label: "body-md · 16 / 400 · -0.16px" },
-  { className: "text-body-sm", label: "body-sm · 14 / 400 · -0.14px" },
-  { className: "text-caption-bold", label: "caption-bold · 12 / 700" },
+  { className: "text-hero-display", label: "hero-display · 38–68 / 500 · -0.075em" },
+  { className: "text-display-lg", label: "display-lg · 32–56 / 500 · -0.055em" },
+  { className: "text-heading-lg", label: "heading-lg · 32–40 / 450 · -0.05em" },
+  { className: "text-heading-md", label: "heading-md · 20–32 / 460 · -0.035em" },
+  { className: "text-heading-sm", label: "heading-sm · 25 / 520 · -0.04em" },
+  { className: "text-subtitle-lg", label: "subtitle-lg · 17 / 620" },
+  { className: "text-subtitle-md", label: "subtitle-md · 17 / 400 · lh 1.65" },
+  { className: "text-body-md", label: "body-md · 16 / 400 · lh 1.75" },
+  { className: "text-body-sm", label: "body-sm · 14 / 400" },
+  { className: "text-caption-bold", label: "caption-bold · 12 / 620" },
   { className: "text-micro", label: "micro · 12 (floor — nothing smaller)" },
 ] as const;
 

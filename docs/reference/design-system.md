@@ -1,6 +1,6 @@
 # Design system
 
-Synapse's UI follows the Meta-inspired commerce/hardware-showcase system defined in [`/DESIGN.md`](../../DESIGN.md). Stark white canvas, cobalt commerce CTAs, pill buttons, 32-pt photographic cards, and a Montserrat type stack (substituting for the proprietary Optimistic VF).
+Synapse's UI follows the Meta-inspired commerce/hardware-showcase system defined in [`/DESIGN.md`](../../DESIGN.md). Stark white canvas, cobalt commerce CTAs, pill buttons, 32-pt photographic cards, and a native system type stack matching eveland.ai.
 
 Live token source: [`web/src/app/globals.css`](../../web/src/app/globals.css).
 Authoritative spec: [`DESIGN.md`](../../DESIGN.md).
@@ -20,7 +20,7 @@ The file is structured as:
 - **Photography geometry is 32px.** `--radius-xxxl` is the minimum for photographic feature cards.
 - **Flat by default.** Elevation is a commerce-flow signal, not a marketing flourish; only `card-checkout-summary` and `surface-overlay` (popovers/dialogs) carry a shadow.
 - **Light, few lines.** Surfaces separate by tonal fill (`canvas` vs `surface-soft`/`muted`) and whitespace — not hairlines. Borders are reserved for form inputs (`Input`, `Textarea`, composer) and the explicit opt-in `Card variant="outlined"` / `Badge variant="outline"`. Don't add `border-b` section dividers or borders on top of a tinted fill.
-- **Stylistic sets `ss01, ss02` always pair.** Headings activate both Optimistic VF stylistic sets. Montserrat lacks them — the declaration is harmless and future-proofs an Optimistic swap.
+- **Stylistic sets `ss01, ss02` always pair.** Headings activate both Optimistic VF stylistic sets. System fonts ignore them — the declaration is harmless and future-proofs an Optimistic swap.
 
 Legacy semantic aliases (`--color-background`, `--color-foreground`, `--color-primary`, …) are **kept** so the existing component layer continues to compile, but each one resolves to a DESIGN.md canonical token. New code should consume the canonical names directly.
 
@@ -76,7 +76,7 @@ Legacy semantic aliases (`--color-background`, `--color-foreground`, `--color-pr
 
 ## Typography
 
-**Font stack.** `--font-sans` chains `var(--font-montserrat) → Noto Sans CJK → system fallbacks`. DESIGN.md targets Optimistic VF; Montserrat is the first declared fallback and the closest humanist-geometric match. Code blocks keep Geist Mono via `--font-mono`.
+**Font stack.** Matches eveland.ai: no web font download. `--font-sans` is `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial` → `--font-cjk-sans` → `sans-serif` → emoji. `--font-cjk-sans` is PingFang SC → Hiragino Sans GB → Microsoft YaHei → Noto Sans CJK SC (`html:lang(zh-TW)` swaps to PingFang TC → Microsoft JhengHei → Noto Sans CJK TC). Code blocks keep Geist Mono via `--font-mono`.
 
 ### Roles
 
@@ -84,24 +84,24 @@ Each role is exposed as a `text-*` utility (e.g. `<h1 className="text-hero-displ
 
 | Utility | Size | Weight | LH | Letter-spacing |
 |---|---|---|---|---|
-| `text-hero-display` | 64px | 500 | 1.16 | 0 |
-| `text-display-lg` | 48px | 500 | 1.17 | 0 |
-| `text-heading-lg` | 36px | 500 | 1.28 | 0 |
-| `text-heading-md` | 28px | **300** | 1.21 | 0 |
-| `text-heading-sm` | 24px | 500 | 1.25 | 0 |
-| `text-subtitle-lg` | 18px | 700 | 1.44 | 0 |
-| `text-subtitle-md` | 18px | 400 | 1.44 | 0 |
-| `text-body-md` | 16px | 400 | 1.50 | -0.16px |
-| `text-body-md-bold` | 16px | 700 | 1.50 | -0.16px |
-| `text-body-sm` | 14px | 400 | 1.43 | -0.14px |
-| `text-body-sm-bold` | 14px | 700 | 1.43 | -0.14px |
-| `text-caption-bold` | 12px | 700 | 1.33 | 0 |
-| `text-button-md` | 14px | 700 | 1.43 | -0.14px |
-| `text-link-md` | 16px | 700 | 1.50 | -0.16px |
+| `text-hero-display` | clamp(38px, 4.6vw, 68px) · zh 34–58px | 500 | 1.04 · zh 1.12 | -0.075em |
+| `text-display-lg` | clamp(32px, 4.2vw, 56px) · zh 28–48px | 500 | 1.18 · zh 1.28 | -0.055em · zh -0.03em |
+| `text-heading-lg` | 32px → 40px at ≥768px | 450 | 2.5rem → 3rem | -0.04em → -0.05em |
+| `text-heading-md` | clamp(20px, 2.3vw, 32px) · zh 18–28px | 460 | 1.35 | -0.035em · zh -0.02em |
+| `text-heading-sm` | 25px | 520 | 1.25 | -0.04em |
+| `text-subtitle-lg` | 17px | 620 | 1.45 | -0.01em |
+| `text-subtitle-md` | 17px | 400 | 1.65 | 0 |
+| `text-body-md` | 16px | 400 | 1.75 | 0 |
+| `text-body-md-bold` | 16px | 620 | 1.75 | 0 |
+| `text-body-sm` | 14px | 400 | 1.43 | 0 |
+| `text-body-sm-bold` | 14px | 500 | 1.43 | 0 |
+| `text-caption-bold` | 12px | 620 | 1.33 | 0 |
+| `text-button-md` | 13px | 620 | 1.43 | 0 |
+| `text-link-md` | 13px | 620 | 1.43 | 0 |
 
-The 300-weight `text-heading-md` is the system's signature editorial subhead — it creates visual rest between 500-weight displays and 400-weight body.
+Sizes, weights, and tracking follow eveland.ai: fluid display sizes with tight negative tracking, airy 1.65–1.75 body line-height with no tracking, and 13px/620 UI labels. `zh` values come from eveland.ai's `:lang(zh-CN)` overrides.
 
-**Weights.** Only 300 / 400 / 500 / 700 are on-scale. Don't use `font-semibold` (600) or arbitrary weights; reach for the role utility instead.
+**Weights.** On-scale weights are the ones the role utilities set, following eveland.ai: 400 / 450 / 460 / 500 / 520 / 620. Don't use `font-semibold` (600) or arbitrary weights; reach for the role utility instead.
 
 **12px floor.** Nothing renders below 12px. The legacy `text-micro` and `text-caption` utilities both resolve to 12px; `status-pill` / `chip-*` metadata inherit the same floor.
 
@@ -185,7 +185,7 @@ All variants are pill-shaped (`rounded-full`) — don't override with `rounded-m
 
 ### Badges (`Badge`)
 
-All pill, caption-bold (12px/700), tonal fill (no border). Variants: `neutral` (default), `success`, `warning`, `danger`, `info`, `accent`, and opt-in bordered `outline`. Success/warning text uses the AA `success-text` / `warning-text` tokens; use those (not `text-success` / `text-warning`) whenever those hues are used as text or icon colour.
+All pill, caption-bold (12px/620), tonal fill (no border). Variants: `neutral` (default), `success`, `warning`, `danger`, `info`, `accent`, and opt-in bordered `outline`. Success/warning text uses the AA `success-text` / `warning-text` tokens; use those (not `text-success` / `text-warning`) whenever those hues are used as text or icon colour.
 
 ### Tabs (`Tabs`, `TabsList variant="…"`)
 
@@ -207,7 +207,7 @@ The DESIGN.md marketing set (`PromoBanner`, `HeroBand`, `FeatureIconRow`, `Foote
 - Separate surfaces with tonal fill and spacing; keep borders for inputs and explicit `outlined` variants.
 - Apply `--radius-xxxl` to photographic product cards and `--radius-xl` to icon-feature tiles.
 - Switch on `ss01, ss02` together — never one without the other.
-- Use the 300-weight `text-heading-md` for editorial subheads.
+- Use `text-heading-md` (460) for editorial subheads.
 
 ### Don't
 
@@ -215,7 +215,7 @@ The DESIGN.md marketing set (`PromoBanner`, `HeroBand`, `FeatureIconRow`, `Foote
 - Don't introduce accent colors beyond cobalt + Oculus purple.
 - Don't soften pill buttons below `rounded-full`.
 - Don't run feature cards without rounding — `rounded-xxxl` is the minimum for photographic surfaces.
-- Don't reduce `text-body-md` line-height below 1.50.
+- Don't reduce `text-body-md` line-height below 1.75.
 - Don't apply heavy shadows to marketing cards — elevation is a commerce-flow signal.
 - Don't add hairline dividers (`border-b`, `border-r`) between sections, or a border on top of a tinted fill.
 - Don't go below 12px type or use 600 weight.
@@ -239,6 +239,6 @@ Touch targets: 44px for primary buttons and inputs; 40×40 for icon-circular but
 ## Known gaps
 
 - DESIGN.md does not define dark-mode token values — current `.dark` set is synthesised to keep cobalt readable.
-- Optimistic VF stylistic sets (`ss01`, `ss02`) are not present in Montserrat; the declaration is kept and harmless.
+- Optimistic VF stylistic sets (`ss01`, `ss02`) are not present in the system fonts; the declaration is kept and harmless.
 - Pastel decorative tints inside accessory cards are not formalized as tokens — treat them as photographic content.
 - Animation/transition timings are not extracted from spec — current defaults: 150ms ease-out for surfaces, 300ms ease-in-out for accordions.
