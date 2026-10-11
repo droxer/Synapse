@@ -88,7 +88,7 @@ EXECUTION_SHAPE_PROMPT_CHAIN = "prompt_chain"
 EXECUTION_SHAPE_PARALLEL = "parallel"
 EXECUTION_SHAPE_ORCHESTRATOR_WORKERS = "orchestrator_workers"
 _LOCALE_COOKIE_NAME = "synapse-locale"
-_SUPPORTED_UI_LOCALES = frozenset({"en", "zh-CN", "zh-TW"})
+_SUPPORTED_UI_LOCALES = frozenset({"en", "zh-CN"})
 _FOLLOW_UP_ROUTER_CUE_RE = re.compile(
     r"\b("
     r"planner|plan(?:\s+first)?|parallel|sub-?agents?|workers?|delegate|"

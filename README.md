@@ -68,7 +68,7 @@ The product mark is a **diagonal synapse** — two neural terminals on a 45° ax
 - **Agent evaluation system** — YAML-defined eval cases with programmatic and LLM-as-judge grading, covering tool use, skill invocation, sub-agent spawning, and agent handoff
 - **Channel integrations** — Connect messaging platforms (Telegram) to chat with Synapse from your favorite apps
 - **User preferences** — Persistent theme (dark/light/system) and locale settings per user
-- **Dark/light theme** with internationalization (English, Simplified Chinese, Traditional Chinese)
+- **Dark/light theme** with internationalization (English, Simplified Chinese)
 - **Keyboard-first UX** — Command palette (Cmd+K), responsive layout
 
 ## Quick Start

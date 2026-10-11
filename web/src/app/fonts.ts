@@ -21,10 +21,3 @@ export const notoSansSC = localFont({
   weight: "100 900",
   display: "swap",
 });
-
-export const notoSansTC = localFont({
-  src: "./font-assets/noto-sans-tc-variable.otf",
-  variable: "--font-noto-sans-tc",
-  weight: "100 900",
-  display: "swap",
-});

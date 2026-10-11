@@ -120,7 +120,7 @@ Do not add diffuse atmosphere shadows to marketing or product cards.
 
 ### 3.8 CJK safety
 
-Chinese (`zh-CN`/`zh-TW`) typography:
+Chinese (`zh-CN`) typography:
 - Letter-spacing on Latin body roles (`-0.14px`/`-0.16px`) is zeroed for CJK selectors at the bottom of `globals.css`.
 - **Layout rule**: centered CJK copy must use **block flow + `text-align: center`** (`cjk-safe-centered` / `cjk-safe-centered-constrained` utilities). Do **not** use `flex items-center` or `grid justify-items: center` on the text container — both shrink cross-axis size to min-content (~1 glyph for CJK), causing vertical text. In horizontal rows, **`flex-1 min-w-0` and `grid-cols-[minmax(0,1fr)_…]` also collapse CJK** — the `minmax(0, …)` / `min-w-0` minimum allows tracks to shrink below glyph width. Use plain `1fr` columns, or flex rows **without** `min-w-0` on the label (push trailing icons with `ml-auto`).
 

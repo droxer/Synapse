@@ -7,7 +7,7 @@ jest.mock("@/shared/hooks/use-user-preferences", () => ({
 }));
 
 jest.mock("@/i18n", () => ({
-  LOCALES: ["en", "zh-CN", "zh-TW"],
+  LOCALES: ["en", "zh-CN"],
   useTranslation: () => ({
     locale: "zh-CN",
     setLocale: jest.fn(),
@@ -28,9 +28,8 @@ describe("LanguageTab", () => {
     const html = renderToStaticMarkup(<LanguageTab />);
 
     expect(html).toContain("简体中文");
-    expect(html).toContain("繁體中文");
     expect(html).toContain('role="radiogroup"');
-    expect(html).toContain("grid w-full grid-cols-1 gap-3 sm:grid-cols-3");
+    expect(html).toContain("grid w-full grid-cols-1 gap-3 sm:grid-cols-2");
     expect(html).toContain("block w-full rounded-xl");
     expect(html).toContain("cjk-safe-centered relative text-heading-md");
     expect(html).not.toContain("flex-1 min-w-0");

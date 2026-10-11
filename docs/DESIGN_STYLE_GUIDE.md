@@ -138,7 +138,7 @@ Used sparingly for status indicators and semantic meaning. Never as dominant sur
 | Role | Font | Variable | Fallback | Usage Scope |
 |------|------|----------|----------|-------------|
 | Body (sans) | Geist Sans | `--font-geist-sans` | Noto Sans SC/TC, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica Neue, Arial, sans-serif | All body text, UI chrome, labels, headings, panel titles, including WelcomeScreen hero. Bundled through `next/font/local` for stable rendering. |
-| CJK (sans) | Noto Sans SC / Noto Sans TC | `--font-noto-sans-sc`, `--font-noto-sans-tc` | PingFang SC/TC, Microsoft YaHei/JhengHei, Noto Sans CJK SC/TC, sans-serif | Simplified and Traditional Chinese text. Bundled as local font assets for consistent cross-platform rendering. |
+| CJK (sans) | Noto Sans SC | `--font-noto-sans-sc` | PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif | Simplified Chinese text. Bundled as local font assets for consistent cross-platform rendering. |
 | Code (mono) | Geist Mono | `--font-geist-mono` | ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace | Code blocks, raw data, terminal logs, keyboard shortcut labels |
 
 ### Type Scale
@@ -505,7 +505,7 @@ Any pattern using `opacity-0 group-hover:opacity-100` to reveal actions on hover
 ### Error Pages
 
 The `global-error.tsx` component renders its own `<html>/<body>` tree. It must:
-1. Import and inject font CSS variables (`inter.variable`, `notoSansSC.variable`, `notoSansTC.variable`)
+1. Import and inject font CSS variables (`inter.variable`, `notoSansSC.variable`)
 2. Use design tokens (`bg-background`, `text-foreground`, etc.) — never hardcoded hex
 
 ---

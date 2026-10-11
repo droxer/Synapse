@@ -1198,7 +1198,7 @@ class TestResolveTurnLocale:
     @pytest.mark.asyncio
     async def test_falls_back_to_locale_cookie_for_anonymous_turns(self) -> None:
         request = _DummyRequest(
-            {"message": "hello"}, cookies={"synapse-locale": "zh-TW"}
+            {"message": "hello"}, cookies={"synapse-locale": "zh-CN"}
         )
         state = SimpleNamespace()
 
@@ -1208,7 +1208,7 @@ class TestResolveTurnLocale:
             auth_user=None,
         )
 
-        assert locale == "zh-TW"
+        assert locale == "zh-CN"
 
 
 class _ConcurrentOrchestrator:

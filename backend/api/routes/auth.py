@@ -15,7 +15,7 @@ from config.settings import get_settings
 router = APIRouter(prefix="/auth", tags=["auth"], dependencies=common_dependencies)
 
 _VALID_THEMES = {"light", "dark", "system"}
-_VALID_LOCALES = {"en", "zh-CN", "zh-TW"}
+_VALID_LOCALES = {"en", "zh-CN"}
 _NONCE_PATTERN = re.compile(r"^[A-Fa-f0-9]{32}$")
 _DESKTOP_TOKEN_TTL_SECONDS = 120
 
