@@ -18,6 +18,43 @@ if TYPE_CHECKING:
     from agent.runtime.orchestrator import AgentState
 
 
+# User nudge appended when a text-only response stopped at ``max_tokens``.
+MAX_TOKENS_CONTINUE_PROMPT = (
+    "Your previous response was cut off because it reached the output token "
+    "limit. Continue exactly where you left off, without repeating anything."
+)
+# Error tool_result for tool calls from a response truncated at ``max_tokens``.
+MAX_TOKENS_TOOL_RESULT = (
+    "Tool call was not executed: your response hit the output token limit, so "
+    "this tool call's input may be truncated. Retry with smaller output, e.g. "
+    "split large content across several smaller tool calls."
+)
+
+
+# Provider rejections caused by the request content itself (prompt too long,
+# malformed chain, invalid parameters). Re-sending the same history fails again.
+_NON_RETRYABLE_REQUEST_MARKERS = (
+    "error code: 400",
+    "error code: 413",
+    "error code: 422",
+    "invalid_request_error",
+    "prompt is too long",
+    "context_length_exceeded",
+    "context length",
+    "maximum context",
+    "too many tokens",
+    "request_too_large",
+)
+
+
+def is_non_retryable_request_error(error: str) -> bool:
+    """Return True when the provider rejected the request content itself."""
+    if is_content_policy_error(error):
+        return True
+    lowered = error.lower()
+    return any(marker in lowered for marker in _NON_RETRYABLE_REQUEST_MARKERS)
+
+
 def classify_turn_error(error: str) -> tuple[str, bool]:
     """Map a terminal error message to an event ``(code, retryable)`` pair."""
     retryable = "LLM call failed" in error
@@ -26,6 +63,8 @@ def classify_turn_error(error: str) -> tuple[str, bool]:
         return "content_policy", False
     if "maximum iterations" in error.lower():
         return "max_iterations", False
+    if retryable and is_non_retryable_request_error(error):
+        return code, False
     return code, retryable
 
 
@@ -42,7 +81,10 @@ async def finalize_conversation_turn(
 
     Shared by the conversation-style runtimes (web orchestrator and planner),
     which handle cancellation, error, and completion identically. The returned
-    state replaces the caller's state (only the cancel path rewinds it).
+    state replaces the caller's state. The cancel path rewinds to
+    *base_messages*; so does the error path when the provider rejected the
+    request content (context length, content policy, invalid request), since
+    keeping that content would make every later turn fail the same way.
     """
     if cancel_event.is_set():
         cancel_event.clear()
@@ -61,6 +103,13 @@ async def finalize_conversation_turn(
             EventType.TASK_ERROR,
             {"error": state.error, "code": code, "retryable": retryable},
         )
+        if is_non_retryable_request_error(state.error):
+            logger.warning(
+                "turn_rolled_back_after_rejected_request code={} dropped_messages={}",
+                code,
+                len(state.messages) - len(base_messages),
+            )
+            return f"Error: {state.error}", replace(state, messages=base_messages)
         return f"Error: {state.error}", state
 
     final_text = extract_final_text(state)
@@ -81,9 +130,11 @@ class ToolCallProcessingResult:
 
 
 def apply_response_to_state(state: AgentState, response: LLMResponse) -> AgentState:
-    """Add the assistant message (text + tool_use blocks) to state.
+    """Add the assistant message (thinking + text + tool_use blocks) to state.
 
-    Returns an unchanged state when the response carries no content.
+    Signed thinking / redacted_thinking blocks go first and unmodified, as the
+    provider requires when extended thinking is combined with tool use.
+    Returns an unchanged state when the response carries no text or tool calls.
     """
     content_blocks: list[dict[str, Any]] = []
 
@@ -98,7 +149,21 @@ def apply_response_to_state(state: AgentState, response: LLMResponse) -> AgentSt
     if not content_blocks:
         return state
 
-    return state.add_message({"role": "assistant", "content": content_blocks})
+    thinking_blocks = [dict(block) for block in response.thinking_blocks]
+    return state.add_message(
+        {"role": "assistant", "content": [*thinking_blocks, *content_blocks]}
+    )
+
+
+def build_error_tool_results_message(
+    tool_calls: tuple[ToolCall, ...],
+    reason: str,
+) -> dict[str, Any]:
+    """Return a user message answering every tool call with an error result."""
+    return {
+        "role": "user",
+        "content": [build_tool_result_block(tc.id, reason, False) for tc in tool_calls],
+    }
 
 
 def build_tool_result_block(
@@ -137,31 +202,51 @@ def build_tool_result_block(
 
 def extract_final_text(state: AgentState) -> str:
     """Extract the final assistant text from the completed state."""
-    for msg in reversed(state.messages):
-        if msg.get("role") != "assistant":
-            continue
-        content = msg.get("content", "")
-        if isinstance(content, str):
-            return content
-        if isinstance(content, list):
-            texts = [b["text"] for b in content if b.get("type") == "text"]
-            if texts:
-                return "".join(texts)
-    return ""
+    return extract_final_text_from_messages(state.messages)
+
+
+def _assistant_text(message: dict[str, Any]) -> str | None:
+    """Return an assistant message's text, or None when it carries none."""
+    if message.get("role") != "assistant":
+        return None
+    content = message.get("content", "")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        texts = [
+            b["text"]
+            for b in content
+            if isinstance(b, dict) and b.get("type") == "text"
+        ]
+        if texts:
+            return "".join(texts)
+    return None
+
+
+def _is_continuation_prompt(message: dict[str, Any]) -> bool:
+    return (
+        message.get("role") == "user"
+        and message.get("content") == MAX_TOKENS_CONTINUE_PROMPT
+    )
 
 
 def extract_final_text_from_messages(messages: tuple[dict[str, Any], ...]) -> str:
-    """Extract the final assistant text from a raw message tuple."""
-    for msg in reversed(messages):
-        if msg.get("role") != "assistant":
+    """Extract the final assistant text from a raw message tuple.
+
+    Answers split across ``max_tokens`` continuations are joined back together.
+    """
+    for index in range(len(messages) - 1, -1, -1):
+        text = _assistant_text(messages[index])
+        if text is None:
             continue
-        content = msg.get("content", "")
-        if isinstance(content, str):
-            return content
-        if isinstance(content, list):
-            texts = [b["text"] for b in content if b.get("type") == "text"]
-            if texts:
-                return "".join(texts)
+        parts = [text]
+        while index >= 2 and _is_continuation_prompt(messages[index - 1]):
+            previous = _assistant_text(messages[index - 2])
+            if previous is None:
+                break
+            parts.insert(0, previous)
+            index -= 2
+        return "".join(parts)
     return ""
 
 

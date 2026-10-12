@@ -23,8 +23,15 @@ from agent.llm.client import (
     format_llm_failure,
 )
 from agent.context.compaction_step import CompactionStep
-from agent.runtime.helpers import apply_response_to_state, process_tool_calls
+from agent.runtime.helpers import (
+    MAX_TOKENS_CONTINUE_PROMPT,
+    MAX_TOKENS_TOOL_RESULT,
+    apply_response_to_state,
+    build_error_tool_results_message,
+    process_tool_calls,
+)
 from agent.runtime.message_chain import collect_message_chain_warnings
+from agent.runtime.message_repair import repair_message_chain
 from agent.runtime.prompting import PromptAssembly
 from agent.runtime.skill_activation import SkillActivationController
 from agent.tools.executor import ToolExecutor
@@ -32,6 +39,11 @@ from api.events import EventEmitter, EventType
 
 if TYPE_CHECKING:
     from agent.runtime.orchestrator import AgentState
+
+# Bound on "continue" nudges / truncated-tool-call retries after a response
+# stopped at ``max_tokens`` within a single turn.
+MAX_TOKENS_RECOVERIES_PER_TURN = 2
+_STOP_REASON_MAX_TOKENS = "max_tokens"
 
 
 @dataclass(frozen=True)
@@ -124,6 +136,8 @@ class AgentLoop:
         # as instance state because each runtime owns one AgentLoop and serializes
         # run_turn (run-lock or single-shot task); it is reset at run_turn entry.
         self._pending_mid_turn_update: Any | None = None
+        # Per-turn count of max_tokens recoveries (same lifecycle as above).
+        self._max_tokens_recoveries = 0
 
     async def run_turn(
         self,
@@ -135,6 +149,7 @@ class AgentLoop:
     ) -> AgentState:
         """Run the ReAct loop to completion and return the terminal state."""
         self._pending_mid_turn_update = None
+        self._max_tokens_recoveries = 0
         while not state.completed and state.error is None:
             if self._policy.loop_cancel_requested():
                 break
@@ -152,10 +167,14 @@ class AgentLoop:
             update = self._pending_mid_turn_update
             self._pending_mid_turn_update = None
             if update is None:
-                update = await self._skill_controller.check_mid_turn_from_messages(
-                    list(state.messages),
-                    cache_prompt=cache_prompt,
-                )
+                try:
+                    update = await self._skill_controller.check_mid_turn_from_messages(
+                        list(state.messages),
+                        cache_prompt=cache_prompt,
+                    )
+                except Exception as exc:
+                    logger.exception("mid_turn_skill_check_failed")
+                    return state.mark_error(f"Mid-turn skill activation failed: {exc}")
             if update is not None:
                 prompt_assembly = update.prompt_assembly
                 tools = update.tools
@@ -209,6 +228,11 @@ class AgentLoop:
 
         state = apply_response_to_state(state, response)
 
+        if response.stop_reason == _STOP_REASON_MAX_TOKENS:
+            recovered = self._recover_from_max_tokens(state, response)
+            if recovered is not None:
+                return recovered
+
         if not response.tool_calls:
             return await self._policy.loop_on_no_tool_calls(state, response)
 
@@ -239,6 +263,15 @@ class AgentLoop:
                 post_tool_callback=_post_tool_callback,
             )
         except Exception as exc:
+            logger.exception("tool_processing_failed")
+            # Answer every tool_use so the history stays provider-valid;
+            # results of calls that ran before the failure are lost with it.
+            state = state.add_message(
+                build_error_tool_results_message(
+                    response.tool_calls,
+                    f"Tool execution failed: {exc}",
+                )
+            )
             return state.mark_error(str(exc))
 
         state = tool_result.state
@@ -249,6 +282,47 @@ class AgentLoop:
             return completed
         return state
 
+    def _recover_from_max_tokens(
+        self,
+        state: AgentState,
+        response: LLMResponse,
+    ) -> AgentState | None:
+        """Handle a response cut off at ``max_tokens``.
+
+        Tool calls from a truncated response may carry truncated input, so they
+        are answered with error results instead of being executed. A text-only
+        response gets a bounded number of "continue" nudges. Returns None when
+        the caller should fall through to the normal completion path.
+        """
+        within_budget = self._max_tokens_recoveries < MAX_TOKENS_RECOVERIES_PER_TURN
+        if response.tool_calls:
+            self._max_tokens_recoveries += 1
+            logger.warning(
+                "max_tokens_truncated_tool_calls count={} recoveries={}",
+                len(response.tool_calls),
+                self._max_tokens_recoveries,
+            )
+            state = state.add_message(
+                build_error_tool_results_message(
+                    response.tool_calls, MAX_TOKENS_TOOL_RESULT
+                )
+            )
+            if within_budget:
+                return state
+            return state.mark_error(
+                "Model output was repeatedly truncated at the output token limit"
+            )
+
+        if not within_budget:
+            return None
+        self._max_tokens_recoveries += 1
+        logger.warning(
+            "max_tokens_continuation recoveries={}", self._max_tokens_recoveries
+        )
+        return state.add_message(
+            {"role": "user", "content": MAX_TOKENS_CONTINUE_PROMPT}
+        )
+
     async def _stream_llm(
         self,
         state: AgentState,
@@ -256,6 +330,9 @@ class AgentLoop:
         system_prompt: SystemPrompt,
     ) -> tuple[LLMResponse | None, str | None]:
         config = self._policy.loop_config
+        messages, repair_warnings = repair_message_chain(state.messages)
+        for warning in repair_warnings:
+            logger.warning("message_chain_repaired detail={}", warning)
         llm_model = config.model or getattr(self._client, "default_model", "<unknown>")
         debug_logging = config.debug_logging
         thinking_emitted = False
@@ -281,7 +358,7 @@ class AgentLoop:
 
         stream_kwargs: dict[str, Any] = {
             "system": system_prompt,
-            "messages": list(state.messages),
+            "messages": list(messages),
             "tools": tools if tools else None,
             "on_text_delta": _on_text_delta,
         }
