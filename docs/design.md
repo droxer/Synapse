@@ -1,6 +1,6 @@
 # Synapse Frontend Design Guide
 
-This is the canonical product UI style guide for Synapse. The visual system is **Linear-inspired**: a quiet, light canvas, Inter Variable at a compact 13px UI base, a single indigo brand fill (`#5e6ad2`), 6px controls, 10px cards, and surfaces separated by tonal fill and spacing rather than borders. The system spec lives in [`/DESIGN.md`](../DESIGN.md); token tables live in [`docs/reference/design-system.md`](reference/design-system.md).
+This is the canonical product UI style guide for Synapse. The visual system is **Linear-inspired**: a quiet, light canvas, the native system sans stack at a compact 13px UI base, a single indigo brand fill (`#5e6ad2`), 6px controls, 10px cards, and surfaces separated by tonal fill and spacing rather than borders. The system spec lives in [`/DESIGN.md`](../DESIGN.md); token tables live in [`docs/reference/design-system.md`](reference/design-system.md).
 
 ## 1) Scope and Precedence
 
@@ -76,10 +76,10 @@ Use `ring-1` only inside dense product chrome where a thinner ring is intentiona
 
 ### 3.5 Typography contract
 
-- **Sans stack** (`--font-sans`): **Inter Variable**, bundled via `next/font/local` as `--font-inter` (`web/src/app/fonts.ts`), then the native system stack and `--font-cjk-sans` for CJK. Inter features `"cv01", "ss03"` are always on (body and headings).
-- **Weights**: 400 (regular), 510 (medium: UI labels, buttons), 590 (semibold: headings), 680 (bold, rare).
+- **Sans stack** (`--font-sans`): the native system stack, matching eveland.ai for both English and Chinese: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif` plus emoji faces. No web fonts are bundled. CJK glyphs fall through to the OS face (PingFang SC / Microsoft YaHei / Noto Sans CJK SC).
+- **Weights**: 400 (regular), 500 (medium: UI labels, buttons), 600 (semibold: headings), 700 (bold, rare).
 - **Sizes**: UI base is **13px** (`text-body-sm`, buttons, inputs); reading copy is **15px** (`text-body-md`, chat/markdown). 12px (`text-caption-bold`, `text-micro`) is the floor.
-- **Mono stack** (`--font-mono`): Geist Mono, then system mono. Reserved for code blocks and tabular numerics.
+- **Mono stack** (`--font-mono`): system mono (`ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, …`). Reserved for code blocks and tabular numerics.
 
 #### Type roles
 
@@ -87,26 +87,26 @@ Every role is exposed as a single `@utility` class. Use these instead of raw siz
 
 | Utility | Size | Weight | LH | Tracking |
 |---|---|---|---|---|
-| `text-hero-display` | clamp(40px, 5vw, 64px) | 510 | 1.06 | -0.032em |
-| `text-display-lg` | clamp(32px, 4vw, 48px) | 510 | 1.1 | -0.028em |
-| `text-heading-lg` | 28px | 590 | 1.2 | -0.022em |
-| `text-heading-md` | 24px | 590 | 1.3 | -0.018em |
-| `text-heading-sm` | 20px | 590 | 1.33 | -0.012em |
-| `text-subtitle-lg` | 17px | 590 | 1.45 | -0.008em |
+| `text-hero-display` | clamp(40px, 5vw, 64px) | 500 | 1.06 | -0.032em |
+| `text-display-lg` | clamp(32px, 4vw, 48px) | 500 | 1.1 | -0.028em |
+| `text-heading-lg` | 28px | 600 | 1.2 | -0.022em |
+| `text-heading-md` | 24px | 600 | 1.3 | -0.018em |
+| `text-heading-sm` | 20px | 600 | 1.33 | -0.012em |
+| `text-subtitle-lg` | 17px | 600 | 1.45 | -0.008em |
 | `text-subtitle-md` | 17px | 400 | 1.6 | -0.006em |
 | `text-body-md` | 15px | 400 | 1.6 | -0.004em |
-| `text-body-md-bold` | 15px | 590 | 1.6 | -0.004em |
+| `text-body-md-bold` | 15px | 600 | 1.6 | -0.004em |
 | `text-body-sm` | 13px | 400 | 1.5 | 0 |
-| `text-body-sm-bold` | 13px | 510 | 1.5 | 0 |
-| `text-caption-bold` | 12px | 510 | 1.33 | 0 |
-| `text-button-md` | 13px | 510 | 1.43 | 0 |
-| `text-link-md` | 13px | 510 | 1.43 | 0 |
+| `text-body-sm-bold` | 13px | 500 | 1.5 | 0 |
+| `text-caption-bold` | 12px | 500 | 1.33 | 0 |
+| `text-button-md` | 13px | 500 | 1.43 | 0 |
+| `text-link-md` | 13px | 500 | 1.43 | 0 |
 
 Values above mirror `globals.css`; if they drift, `globals.css` wins. `:lang(zh)` relaxes tracking and opens line-height for CJK.
 
-Section eyebrows use the `label-section` utility (sentence case, 12px / 510 Inter, no tracking). The old uppercase mono `label-mono` label is gone.
+Section eyebrows use the `label-section` utility (sentence case, 12px/500, no tracking). The old uppercase mono `label-mono` label is gone.
 
-Bare `<h1>`–`<h6>` tags inherit `cv01, ss03`, weight 590 (510 for h4–h6), and tight tracking, but **deliberately have no tag-level `font-size`**. Pick a role utility per element.
+Bare `<h1>`–`<h6>` tags inherit weight 600 (500 for h4–h6), and tight tracking, but **deliberately have no tag-level `font-size`**. Pick a role utility per element.
 
 ### 3.6 Spacing contract
 
@@ -130,7 +130,7 @@ Dark mode uses Linear's near-black ramp: canvas `#0f1011`, sidebar `#090a0b`, su
 ### 3.9 CJK safety
 
 Chinese (`zh-CN`) typography:
-- Inter covers Latin only; CJK glyphs fall through to the native CJK stack. Latin display tracking is relaxed for CJK via `:lang(zh)`.
+- CJK glyphs come from the OS face picked by the system stack. Latin display tracking is relaxed for CJK via `:lang(zh)`.
 - **Layout rule**: centered CJK copy must use **block flow + `text-align: center`** (`cjk-safe-centered` / `cjk-safe-centered-constrained` utilities). Do **not** use `flex items-center` or `grid justify-items: center` on the text container; both shrink cross-axis size to min-content (~1 glyph for CJK), causing vertical text. In horizontal rows, **`flex-1 min-w-0` and `grid-cols-[minmax(0,1fr)_…]` also collapse CJK**, because the `minmax(0, …)` / `min-w-0` minimum allows tracks to shrink below glyph width. Use plain `1fr` columns, or flex rows **without** `min-w-0` on the label (push trailing icons with `ml-auto`).
 
 ## 4) Usage Rules (Do / Don't)
@@ -256,7 +256,6 @@ When changing design tokens or visual standards:
 - [`/DESIGN.md`](../DESIGN.md): canonical Linear-inspired spec
 - [`docs/reference/design-system.md`](reference/design-system.md): token tables
 - `web/src/app/globals.css`: live tokens, role utilities, `surface-overlay`, `surface-panel`, `search-pill`, `label-section`
-- `web/src/app/fonts.ts`: Inter Variable and Geist Mono loaders
 
 ### Shared shell / components
 - `web/src/shared/components/Sidebar.tsx`

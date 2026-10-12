@@ -139,7 +139,7 @@ const OFFICE_IFRAME_STYLES = `
 <style>
   :root {
     color-scheme: light dark;
-    --preview-font-sans: "Inter Variable", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
+    --preview-font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
     --preview-background: #ffffff; /* canvas */
     --preview-foreground: #18191b; /* ink-deep */
     --preview-secondary: #f5f6f8;  /* surface-soft */

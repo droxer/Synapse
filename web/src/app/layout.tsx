@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { geistMono, inter } from "./fonts";
 import { Providers } from "./providers";
 import { THEME_FAVICON_BOOTSTRAP } from "@/shared/lib/theme-favicon-bootstrap";
 import "./globals.css";
@@ -30,7 +29,6 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${geistMono.variable}`}
     >
       <head>
         <Script id="sync-theme-favicon" strategy="beforeInteractive">

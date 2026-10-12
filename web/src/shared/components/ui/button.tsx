@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * Design-system button primitives — Linear-style: compact, sharp 4px radius, 13px / 510 labels.
+ * Design-system button primitives — Linear-style: compact, sharp 4px radius, 13px / 500 labels.
  *
  * Variants:
  * - `default`: indigo primary fill (`bg-primary`). The one brand fill — use for the primary action.

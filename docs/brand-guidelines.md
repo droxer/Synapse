@@ -60,9 +60,9 @@ Do NOT use `ai-glow` for:
 
 | Family | Font | Usage |
 |--------|------|-------|
-| `--font-sans` | Geist Sans + Noto Sans SC/TC | Body text, UI labels, buttons, headings |
-| `--font-brand-family` | Geist Sans | Product wordmark treatment |
-| `--font-mono` | Geist Mono | Code, terminal output, technical values |
+| `--font-sans` | System sans (SF Pro / Segoe UI / Roboto; OS CJK face) | Body text, UI labels, buttons, headings |
+| `--font-brand-family` | Same as `--font-sans` | Product wordmark treatment |
+| `--font-mono` | System mono (SF Mono / Menlo / Consolas) | Code, terminal output, technical values |
 
 ### Type Scale
 

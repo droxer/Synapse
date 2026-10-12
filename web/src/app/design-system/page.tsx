@@ -111,7 +111,7 @@ function Header() {
       </span>
       <h1 className="text-balance text-display-lg">A System, on Canvas</h1>
       <p className="text-subtitle-md max-w-[640px] text-muted-foreground">
-        Tokens and primitives as they actually ship — Inter at a 13px UI base, indigo as the
+        Tokens and primitives as they actually ship — the system sans stack at a 13px UI base, indigo as the
         only brand fill, sharp 4px CTAs on 6px fields, borderless tonal surfaces, and a 4px spacing rhythm.
       </p>
     </header>
@@ -186,16 +186,16 @@ function ColorSection() {
 }
 
 const TYPE_ROLES = [
-  { className: "text-hero-display", label: "hero-display · 40–64 / 510 · -0.032em" },
-  { className: "text-display-lg", label: "display-lg · 32–48 / 510 · -0.028em" },
-  { className: "text-heading-lg", label: "heading-lg · 28 / 590 · -0.022em" },
-  { className: "text-heading-md", label: "heading-md · 24 / 590 · -0.018em" },
-  { className: "text-heading-sm", label: "heading-sm · 20 / 590 · -0.012em" },
-  { className: "text-subtitle-lg", label: "subtitle-lg · 17 / 590" },
+  { className: "text-hero-display", label: "hero-display · 40–64 / 500 · -0.032em" },
+  { className: "text-display-lg", label: "display-lg · 32–48 / 500 · -0.028em" },
+  { className: "text-heading-lg", label: "heading-lg · 28 / 600 · -0.022em" },
+  { className: "text-heading-md", label: "heading-md · 24 / 600 · -0.018em" },
+  { className: "text-heading-sm", label: "heading-sm · 20 / 600 · -0.012em" },
+  { className: "text-subtitle-lg", label: "subtitle-lg · 17 / 600" },
   { className: "text-subtitle-md", label: "subtitle-md · 17 / 400 · lh 1.6" },
   { className: "text-body-md", label: "body-md · 15 / 400 · lh 1.6 (reading)" },
   { className: "text-body-sm", label: "body-sm · 13 / 400 (UI base)" },
-  { className: "text-caption-bold", label: "caption-bold · 12 / 510" },
+  { className: "text-caption-bold", label: "caption-bold · 12 / 500" },
   { className: "text-micro", label: "micro · 12 (floor — nothing smaller)" },
 ] as const;
 
