@@ -20,7 +20,7 @@ interface LogoProps {
    * - neutral: dark-neutral container + white glyph
    */
   tone?: LogoTone;
-  /** Logo mark geometry. Defaults to the diagonal synapse lockup. */
+  /** Logo mark geometry. Defaults to the split-S lockup. */
   variant?: LogoVariant;
   /** Pulse the synaptic cleft dot (Option C). */
   animated?: boolean;
@@ -33,7 +33,7 @@ export function Logo({
   size = 28,
   className,
   tone = "auto",
-  variant = "diagonal",
+  variant = "split-s",
   animated = false,
 }: LogoProps) {
   const palette = logoPaletteForTone(tone, variant);
