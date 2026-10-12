@@ -110,6 +110,8 @@ class ConversationEntry:
         "background_tasks",
         "orchestrator_mode",
         "lock",
+        "stream_queues",
+        "stream_task",
     )
 
     def __init__(
@@ -136,6 +138,9 @@ class ConversationEntry:
         self.background_tasks: set[asyncio.Task[None]] = set()
         self.orchestrator_mode = orchestrator_mode
         self.lock = asyncio.Lock()
+        # One queue per connected SSE client, fed by a single conversation reader.
+        self.stream_queues: set[asyncio.Queue[AgentEvent | None]] = set()
+        self.stream_task: asyncio.Task[None] | None = None
 
 
 @dataclass

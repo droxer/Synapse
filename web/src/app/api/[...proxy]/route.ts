@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { resolveBackendUrl } from "@/lib/backend-url";
 import { NextRequest, NextResponse } from "next/server";
+import { proxyEventStream } from "./proxy-event-stream";
 
 const BACKEND_URL = resolveBackendUrl();
 const PROXY_SECRET = process.env.PROXY_SECRET ?? "";
@@ -43,24 +44,7 @@ async function handler(req: NextRequest) {
   try {
     // Stream SSE responses
     if (req.headers.get("accept")?.includes("text/event-stream")) {
-      const backendResponse = await fetch(url, {
-        method: req.method,
-        headers,
-        duplex: "half",
-      } as RequestInit & { duplex: "half" });
-
-      // Forward upstream headers, override streaming-specific ones
-      const sseHeaders = new Headers(backendResponse.headers);
-      sseHeaders.delete("transfer-encoding");
-      sseHeaders.set("Content-Type", "text/event-stream");
-      sseHeaders.set("Cache-Control", "no-cache");
-      sseHeaders.set("Connection", "keep-alive");
-      sseHeaders.set("X-Accel-Buffering", "no");
-
-      return new NextResponse(backendResponse.body, {
-        status: backendResponse.status,
-        headers: sseHeaders,
-      });
+      return await proxyEventStream(url, req.method, headers, req.signal);
     }
 
     // Regular requests: forward body as-is

@@ -105,6 +105,27 @@ describe("mergeUniqueEvents", () => {
     ]);
   });
 
+  it("keeps repeated sub-agent text_delta tokens that only share agent attribution", () => {
+    const live: AgentEvent[] = [
+      { type: "text_delta", data: { delta: " the", agent_id: "worker-1" }, timestamp: 100.1, iteration: 1 },
+      { type: "text_delta", data: { delta: " cat", agent_id: "worker-1" }, timestamp: 100.2, iteration: 1 },
+      { type: "text_delta", data: { delta: " the", agent_id: "worker-1" }, timestamp: 100.3, iteration: 1 },
+    ];
+
+    const merged = mergeUniqueEvents([], live);
+
+    expect(merged.map((event) => event.data.delta).join("")).toBe(" the cat the");
+  });
+
+  it("keeps repeated text_delta tokens that only share a stream id", () => {
+    const live: AgentEvent[] = [
+      { type: "text_delta", data: { delta: "\n\n", stream_id: "s1" }, timestamp: 100.1, iteration: 1 },
+      { type: "text_delta", data: { delta: "\n\n", stream_id: "s1" }, timestamp: 100.2, iteration: 1 },
+    ];
+
+    expect(mergeUniqueEvents([], live)).toHaveLength(2);
+  });
+
   it("dedupes history and live turn events when only their timestamps drift slightly", () => {
     const history: AgentEvent[] = [
       {
