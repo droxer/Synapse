@@ -14,6 +14,16 @@ _SENSITIVE_PATTERNS = (
     re.compile(r"secret", re.IGNORECASE),
     re.compile(r"token", re.IGNORECASE),
 )
+# Auto-extracted facts are injected into the system prompt; reject values
+# that look like commands, links, or code rather than a personal fact.
+_UNSAFE_FACT_VALUE_PATTERNS = (
+    re.compile(r"\|\s*(?:sudo\s+)?(?:ba|z|da)?sh\b", re.IGNORECASE),
+    re.compile(r"\b(?:curl|wget|powershell|iex|eval|exec)\b", re.IGNORECASE),
+    re.compile(r"\b(?:https?|ftp|file)://", re.IGNORECASE),
+    re.compile(r"\bwww\.", re.IGNORECASE),
+    re.compile(r"`|\$\(|&&|;\s*rm\b"),
+    re.compile(r"\b(?:rm\s+-rf|chmod\s+\+x)\b", re.IGNORECASE),
+)
 _EPHEMERAL_PATTERNS = (
     re.compile(r"\btoday\b", re.IGNORECASE),
     re.compile(r"\bright now\b", re.IGNORECASE),
@@ -68,6 +78,8 @@ def validate_fact_candidate(
         return ValidationResult(accepted=False, reason="sensitive")
     if any(pattern.search(value) for pattern in _SENSITIVE_PATTERNS):
         return ValidationResult(accepted=False, reason="sensitive")
+    if any(pattern.search(value) for pattern in _UNSAFE_FACT_VALUE_PATTERNS):
+        return ValidationResult(accepted=False, reason="unsafe_value")
     if any(pattern.search(value) for pattern in _EPHEMERAL_PATTERNS):
         return ValidationResult(accepted=False, reason="ephemeral")
 

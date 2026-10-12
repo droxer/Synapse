@@ -310,8 +310,14 @@ class ConversationRepository:
         conversation_id: uuid.UUID,
         new_fragment: str,
         max_chars: int,
+        *,
+        commit: bool = True,
     ) -> None:
-        """Append *new_fragment* to rolling context_summary, capped at *max_chars* tail."""
+        """Append *new_fragment* to rolling context_summary, capped at *max_chars* tail.
+
+        With ``commit=False`` the change is only flushed so callers can commit
+        it atomically together with other writes (e.g. the event row).
+        """
         fragment = new_fragment.strip()
         if not fragment:
             return
@@ -329,7 +335,10 @@ class ConversationRepository:
             merged = fragment
         model.context_summary = _trim_context_summary(merged, max_chars)
         model.updated_at = datetime.now(timezone.utc)
-        await session.commit()
+        if commit:
+            await session.commit()
+        else:
+            await session.flush()
 
     async def save_message(
         self,
@@ -338,9 +347,24 @@ class ConversationRepository:
         role: str,
         content: dict,
         iteration: int | None = None,
+        *,
+        message_id: uuid.UUID | None = None,
+        commit: bool = True,
     ) -> MessageRecord:
+        """Insert a message row.
+
+        ``message_id`` makes the insert idempotent: when a row with that id
+        already exists it is returned unchanged instead of inserting a
+        duplicate (safe for retried writes). With ``commit=False`` the row is
+        only flushed so the caller can commit it in one transaction with
+        related writes.
+        """
+        if message_id is not None:
+            existing = await session.get(MessageModel, message_id)
+            if existing is not None:
+                return _to_message(existing)
         model = MessageModel(
-            id=uuid.uuid4(),
+            id=message_id or uuid.uuid4(),
             conversation_id=conversation_id,
             role=role,
             content=content,
@@ -350,7 +374,8 @@ class ConversationRepository:
         await self._touch_conversation(session, conversation_id)
         await session.flush()
         await session.refresh(model)  # need generated timestamps before returning
-        await session.commit()
+        if commit:
+            await session.commit()
         return _to_message(model)
 
     async def get_messages(

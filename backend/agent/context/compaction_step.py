@@ -75,7 +75,9 @@ class CompactionStep:
             await self.hooks.before_context_compaction(context)
 
         compacted = await self.observer.compact(messages, effective_prompt)
-        summary_text = compaction_summary_for_persistence(compacted)
+        # Only persist a summary produced by *this* compaction; an older
+        # summary passed through unchanged must not be re-merged.
+        summary_text = compaction_summary_for_persistence(compacted, messages)
 
         payload: dict[str, Any] = {
             "original_messages": len(messages),

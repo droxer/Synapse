@@ -11,7 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from agent.memory.facts import validate_fact_candidate
 from agent.memory.compaction_flush import flush_heuristic_facts_from_messages
-from agent.memory.heuristic_extract import extract_fact_candidates
+from agent.memory.heuristic_extract import (
+    extract_fact_candidates,
+    heuristic_fact_source,
+)
 from agent.memory.prompt_sections import format_verified_facts_prompt_section
 from agent.memory.store import PersistentMemoryStore
 from agent.runtime.hooks import (
@@ -190,7 +193,7 @@ class MemoryConversationHooks:
                     key=candidate.key,
                     value=candidate.value,
                     confidence=candidate.confidence,
-                    source=context.source,
+                    source=heuristic_fact_source(context.source),
                     source_chat_id=str(context.metadata.get("source_chat_id", "")),
                     evidence_snippet=candidate.evidence_snippet,
                 )

@@ -17,12 +17,28 @@ from typing import TYPE_CHECKING, Any, Callable
 from loguru import logger
 
 from agent.context.profiles import CompactionProfile
+from agent.context.tool_pairing import (
+    current_request_in as _current_request_in,
+    repair_tool_pairing as _repair_tool_pairing,
+    safe_hot_split as _safe_hot_split,
+)
 from config.settings import TokenCounterStrategy
 
 if TYPE_CHECKING:
     from agent.llm.client import AnthropicClient
 
+# Models whose summarisation failure was already reported at warning level.
+_WARNED_SUMMARY_MODELS: set[str] = set()
+
 _SCREENSHOT_PLACEHOLDER = "[screenshot captured]"
+_IMAGE_PLACEHOLDER = "[image omitted]"
+# Approximate per-block cost of an image/document. Anthropic bills images by
+# pixel area (~1.6K tokens for a typical 1092x1092 screenshot), not by the size
+# of the base64 payload, so the payload must never be estimated as text.
+_MEDIA_BLOCK_TOKENS = 1600
+_MEDIA_BLOCK_TYPES = frozenset({"image", "document"})
+_SUMMARY_HEADINGS = ("## Earlier conversation", "## Previous work")
+_RESUMMARISE_HEADINGS = (*_SUMMARY_HEADINGS, "## Earlier sessions")
 _ANCHOR_TRUNCATED_MARKER = "[original task truncated]"
 _DEFAULT_PREVIEW_LENGTH = 500
 _DEFAULT_RESULT_LENGTH = 1000
@@ -155,39 +171,89 @@ def _truncate_middle_chars(text: str, max_chars: int, marker: str) -> str:
     return f"{text[:head]}{marker}{text[-tail:]}"
 
 
+def _strip_media(value: Any) -> tuple[Any, int]:
+    """Return *value* with image/document blocks reduced to stubs, plus their count."""
+    if isinstance(value, dict):
+        if value.get("type") in _MEDIA_BLOCK_TYPES:
+            return {"type": value.get("type")}, 1
+        stripped: dict[str, Any] = {}
+        count = 0
+        for key, item in value.items():
+            stripped[key], item_count = _strip_media(item)
+            count += item_count
+        return stripped, count
+    if isinstance(value, list):
+        items: list[Any] = []
+        count = 0
+        for item in value:
+            stripped_item, item_count = _strip_media(item)
+            items.append(stripped_item)
+            count += item_count
+        return items, count
+    return value, 0
+
+
 def _estimate_tokens(
     messages: tuple[dict[str, Any], ...],
     system_prompt: str = "",
     token_counter: TokenCounterStrategy | None = None,
+    *,
+    extra_tokens: int = 0,
 ) -> int:
     """Fast heuristic for compaction-only token estimation.
 
     Accurate enough for deciding *when* to compact — not for billing.
+    Image/document blocks are charged a fixed cost instead of estimating their
+    base64 payload as text. *extra_tokens* accounts for request overhead the
+    messages do not carry (e.g. tool schemas).
     """
     if token_counter is None:
         from config.settings import get_settings
 
         token_counter = get_settings().COMPACT_TOKEN_COUNTER
     estimate_text_tokens = _get_text_token_estimator(token_counter)
-    total = estimate_text_tokens(system_prompt) if system_prompt else 0
+    total = max(0, extra_tokens)
+    if system_prompt:
+        total += estimate_text_tokens(system_prompt)
     for msg in messages:
-        total += estimate_text_tokens(json.dumps(msg, default=str, ensure_ascii=False))
+        stripped, media_blocks = _strip_media(msg)
+        total += estimate_text_tokens(
+            json.dumps(stripped, default=str, ensure_ascii=False)
+        )
+        total += media_blocks * _MEDIA_BLOCK_TOKENS
     return total
+
+
+def _summary_content(message: dict[str, Any]) -> str | None:
+    """Return the text of a synthetic compaction summary message, if any."""
+    if message.get("role") != "assistant":
+        return None
+    content = message.get("content")
+    if not isinstance(content, str):
+        return None
+    if content.startswith(_SUMMARY_HEADINGS):
+        return content
+    return None
 
 
 def compaction_summary_for_persistence(
     messages: tuple[dict[str, Any], ...],
+    previous_messages: tuple[dict[str, Any], ...] = (),
 ) -> str | None:
-    """Extract synthetic summary text produced by :meth:`Observer.compact`."""
+    """Extract summary text produced by the current :meth:`Observer.compact`.
+
+    Summaries already present in *previous_messages* (the pre-compaction
+    history) are ignored so a pass-through of an older summary — e.g. when
+    summarisation failed — is never re-merged into the rolling summary.
+    """
+    existing = {
+        content
+        for msg in previous_messages
+        if (content := _summary_content(msg)) is not None
+    }
     for msg in messages:
-        if msg.get("role") != "assistant":
-            continue
-        content = msg.get("content")
-        if not isinstance(content, str):
-            continue
-        if content.startswith("## Earlier conversation") or content.startswith(
-            "## Previous work"
-        ):
+        content = _summary_content(msg)
+        if content is not None and content not in existing:
             return content
     return None
 
@@ -252,27 +318,31 @@ class Observer:
         self,
         messages: tuple[dict[str, Any], ...],
         system_prompt: str = "",
+        *,
+        overhead_tokens: int = 0,
     ) -> bool:
-        """Return True when estimated tokens exceed the budget."""
-        return (
-            _estimate_tokens(
-                messages,
-                system_prompt,
-                token_counter=self._profile.token_counter,
-            )
-            > self._token_budget
+        """Return True when estimated tokens exceed the budget.
+
+        *overhead_tokens* covers request content not present in *messages*
+        (for example tool schemas) and is subtracted from the budget.
+        """
+        return self._over_budget(
+            messages, system_prompt, self._budget_for(overhead_tokens)
         )
 
     async def compact(
         self,
         messages: tuple[dict[str, Any], ...],
         system_prompt: str = "",
+        *,
+        overhead_tokens: int = 0,
     ) -> tuple[dict[str, Any], ...]:
         """Return a compacted copy of *messages*.
 
         Strategy
         --------
-        1. The first user message (original task) is kept verbatim.
+        1. The first message (original task) is kept, and the latest real
+           user request (the current turn) is kept verbatim as a second anchor.
         2. The last ``max_full_interactions`` tool interaction pairs
            are kept in full (**hot tier**).
         3. Older interactions are summarised into a single assistant
@@ -281,20 +351,44 @@ class Observer:
 
         **Dialogue mode** (no ``tool_result`` blocks, typical DB replay):
         summarises older user/assistant text into ``## Earlier conversation``.
+
+        Every output is post-processed so each ``tool_result`` is paired with
+        a ``tool_use`` in the immediately preceding assistant message.
         """
         if len(messages) <= 1:
             return messages
 
-        if (
+        budget = self._budget_for(overhead_tokens)
+        if not self._over_budget(messages, system_prompt, budget):
+            return messages
+
+        compacted = await self._compact_over_budget(messages, system_prompt, budget)
+        return _repair_tool_pairing(compacted)
+
+    def _budget_for(self, overhead_tokens: int) -> int:
+        return max(1, self._token_budget - max(0, overhead_tokens))
+
+    def _over_budget(
+        self,
+        messages: tuple[dict[str, Any], ...] | list[dict[str, Any]],
+        system_prompt: str,
+        budget: int,
+    ) -> bool:
+        return (
             _estimate_tokens(
-                messages,
+                tuple(messages),
                 system_prompt,
                 token_counter=self._profile.token_counter,
             )
-            <= self._token_budget
-        ):
-            return messages
+            > budget
+        )
 
+    async def _compact_over_budget(
+        self,
+        messages: tuple[dict[str, Any], ...],
+        system_prompt: str,
+        budget: int,
+    ) -> tuple[dict[str, Any], ...]:
         first_message = messages[0]
         remaining = list(messages[1:])
 
@@ -304,16 +398,7 @@ class Observer:
             self._max_full_interactions,
         )
 
-        if (
-            keep_full_from == 0
-            and interaction_indices
-            and _estimate_tokens(
-                messages,
-                system_prompt,
-                token_counter=self._profile.token_counter,
-            )
-            > self._token_budget
-        ):
+        if keep_full_from == 0 and interaction_indices:
             for reduced in range(self._max_full_interactions - 1, 0, -1):
                 keep_full_from = _compute_full_boundary(interaction_indices, reduced)
                 if keep_full_from > 0:
@@ -321,32 +406,78 @@ class Observer:
 
         if keep_full_from == 0:
             if not interaction_indices:
-                return await self._compact_pure_dialogue(messages, system_prompt)
+                return await self._compact_pure_dialogue(
+                    messages, system_prompt, budget
+                )
             return await self._compact_tool_hot_overflow(
                 first_message,
                 remaining,
                 system_prompt,
+                budget,
             )
 
-        warm_messages = remaining[:keep_full_from]
-        hot_messages = remaining[keep_full_from:]
+        split = _safe_hot_split(remaining, keep_full_from)
+        return await self._compact_tool_split(
+            first_message,
+            remaining,
+            split,
+            system_prompt,
+            budget,
+            failure_event="llm_summarisation_failed",
+        )
 
-        summary = await self._summarise(warm_messages)
+    async def _compact_tool_split(
+        self,
+        first_message: dict[str, Any],
+        remaining: list[dict[str, Any]],
+        split: int,
+        system_prompt: str,
+        budget: int,
+        *,
+        failure_event: str,
+    ) -> tuple[dict[str, Any], ...]:
+        """Summarise ``remaining[:split]`` and keep ``remaining[split:]`` verbatim.
 
+        The latest real user request inside the warm tier is pulled out and
+        kept verbatim so the current turn's instructions are never truncated.
+        """
+        warm_messages = remaining[:split]
+        hot_messages = remaining[split:]
+        latest_request = _current_request_in(remaining)
+        current_request = (
+            latest_request if any(m is latest_request for m in warm_messages) else None
+        )
+
+        warm_for_summary = [m for m in warm_messages if m is not current_request]
+        anchors = (current_request,) if current_request is not None else ()
+
+        if not warm_for_summary:
+            return self._shrink_tool_candidate(
+                (first_message, *anchors, *hot_messages),
+                system_prompt,
+                budget,
+                pinned=current_request,
+            )
+
+        summary = await self._summarise(warm_for_summary)
         if summary is not None:
             summary_message: dict[str, Any] = {
                 "role": "assistant",
                 "content": f"## Previous work\n{summary}",
             }
             return self._shrink_tool_candidate(
-                (first_message, summary_message, *hot_messages),
+                (first_message, summary_message, *anchors, *hot_messages),
                 system_prompt,
+                budget,
+                pinned=current_request,
             )
 
-        logger.warning("llm_summarisation_failed, falling back to truncation")
+        logger.warning("{}, falling back to truncation", failure_event)
         tool_use_map = _build_tool_use_map(warm_messages)
         compacted_warm = tuple(
-            _compact_message(
+            msg
+            if msg is current_request
+            else _compact_message(
                 msg,
                 idx=0,
                 keep_full_from=1,
@@ -359,12 +490,15 @@ class Observer:
         return self._shrink_tool_candidate(
             (first_message, *compacted_warm, *hot_messages),
             system_prompt,
+            budget,
+            pinned=current_request,
         )
 
     async def _compact_pure_dialogue(
         self,
         messages: tuple[dict[str, Any], ...],
         system_prompt: str,
+        budget: int,
     ) -> tuple[dict[str, Any], ...]:
         """Summarise middle text turns; keep first message and a recent tail."""
         first_message = messages[0]
@@ -398,45 +532,32 @@ class Observer:
                 }
                 candidate = (first_message, summary_msg)
 
-            if (
-                _estimate_tokens(
-                    candidate,
-                    system_prompt,
-                    token_counter=self._profile.token_counter,
-                )
-                <= self._token_budget
-            ):
+            if not self._over_budget(candidate, system_prompt, budget):
                 return candidate
 
             if tail_n >= len(rest) and not middle:
-                return self._shrink_dialogue_candidate(candidate, system_prompt)
+                return self._shrink_dialogue_candidate(candidate, system_prompt, budget)
 
             next_tail_n = max(2, tail_n // 2)
             if next_tail_n > len(rest):
                 next_tail_n = len(rest)
             if next_tail_n == tail_n:
-                return self._shrink_dialogue_candidate(candidate, system_prompt)
+                return self._shrink_dialogue_candidate(candidate, system_prompt, budget)
             tail_n = next_tail_n
 
-        return self._shrink_dialogue_candidate(candidate, system_prompt)
+        return self._shrink_dialogue_candidate(candidate, system_prompt, budget)
 
     def _shrink_dialogue_candidate(
         self,
         candidate: tuple[dict[str, Any], ...],
         system_prompt: str,
+        budget: int,
     ) -> tuple[dict[str, Any], ...]:
         """Halve synthetic summary body until within budget or floor reached."""
         msgs = list(candidate)
         fb_chars = self._profile.dialogue_fallback_chars
         for _ in range(24):
-            if (
-                _estimate_tokens(
-                    tuple(msgs),
-                    system_prompt,
-                    token_counter=self._profile.token_counter,
-                )
-                <= self._token_budget
-            ):
+            if not self._over_budget(msgs, system_prompt, budget):
                 return tuple(msgs)
             shrunk = False
             for i, msg in enumerate(msgs):
@@ -465,14 +586,7 @@ class Observer:
                     msgs[0] = anchor
                     continue
                 break
-        if (
-            _estimate_tokens(
-                tuple(msgs),
-                system_prompt,
-                token_counter=self._profile.token_counter,
-            )
-            > self._token_budget
-        ):
+        if self._over_budget(msgs, system_prompt, budget):
             # Last resort: keep first + tiny summary
             msgs = [
                 msgs[0],
@@ -486,14 +600,7 @@ class Observer:
                 },
             ]
             for _ in range(24):
-                if (
-                    _estimate_tokens(
-                        tuple(msgs),
-                        system_prompt,
-                        token_counter=self._profile.token_counter,
-                    )
-                    <= self._token_budget
-                ):
+                if not self._over_budget(msgs, system_prompt, budget):
                     return tuple(msgs)
                 if self._shrink_previous_conversation_summary(msgs):
                     continue
@@ -509,17 +616,20 @@ class Observer:
         first_message: dict[str, Any],
         remaining: list[dict[str, Any]],
         system_prompt: str,
+        budget: int,
     ) -> tuple[dict[str, Any], ...]:
         """All tool interactions fit in hot tier but total tokens still exceed budget."""
         keep_suffix = min(len(remaining), max(4, self._max_full_interactions * 2))
-        warm_messages = remaining[:-keep_suffix] if keep_suffix else remaining
-        hot_messages = remaining[-keep_suffix:] if keep_suffix else []
+        split = _safe_hot_split(remaining, len(remaining) - keep_suffix)
 
-        if not warm_messages:
+        if split <= 0:
+            current_request = _current_request_in(remaining)
             tool_use_map = _build_tool_use_map(remaining)
             n = len(remaining)
             compacted = tuple(
-                _compact_message(
+                msg
+                if msg is current_request
+                else _compact_message(
                     msg,
                     idx=i,
                     keep_full_from=n,
@@ -532,56 +642,35 @@ class Observer:
             return self._shrink_tool_candidate(
                 (first_message, *compacted),
                 system_prompt,
+                budget,
+                pinned=current_request,
             )
 
-        summary = await self._summarise(warm_messages)
-        if summary is not None:
-            summary_message: dict[str, Any] = {
-                "role": "assistant",
-                "content": f"## Previous work\n{summary}",
-            }
-            return self._shrink_tool_candidate(
-                (first_message, summary_message, *hot_messages),
-                system_prompt,
-            )
-
-        logger.warning(
-            "tool_hot_overflow_summarisation_failed, falling back to truncation"
-        )
-        tool_use_map = _build_tool_use_map(warm_messages)
-        wn = len(warm_messages)
-        compacted_warm = tuple(
-            _compact_message(
-                msg,
-                idx=i,
-                keep_full_from=wn,
-                tool_use_map=tool_use_map,
-                preview_chars=self._profile.fallback_preview_chars,
-                result_chars=self._profile.fallback_result_chars,
-            )
-            for i, msg in enumerate(warm_messages)
-        )
-        return self._shrink_tool_candidate(
-            (first_message, *compacted_warm, *hot_messages),
+        return await self._compact_tool_split(
+            first_message,
+            remaining,
+            split,
             system_prompt,
+            budget,
+            failure_event="tool_hot_overflow_summarisation_failed",
         )
 
     def _shrink_tool_candidate(
         self,
         candidate: tuple[dict[str, Any], ...],
         system_prompt: str,
+        budget: int,
+        *,
+        pinned: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], ...]:
-        """Iteratively shrink tool-thread candidates until they fit the budget."""
+        """Iteratively shrink tool-thread candidates until they fit the budget.
+
+        *pinned* (the current turn's user request) survives the last-resort
+        collapse of history and is only shortened after everything else.
+        """
         msgs = list(candidate)
         for _ in range(32):
-            if (
-                _estimate_tokens(
-                    tuple(msgs),
-                    system_prompt,
-                    token_counter=self._profile.token_counter,
-                )
-                <= self._token_budget
-            ):
+            if not self._over_budget(msgs, system_prompt, budget):
                 return tuple(msgs)
             if self._shrink_previous_work_summary(msgs):
                 continue
@@ -591,19 +680,28 @@ class Observer:
             if anchor is not None:
                 msgs[0] = anchor
                 continue
-            if len(msgs) > 2:
+            unpinned = [m for m in msgs[1:] if m is not pinned]
+            if len(unpinned) > 1:
+                kept_pinned = [m for m in msgs[1:] if m is pinned]
                 msgs = [
                     msgs[0],
                     {
                         "role": "assistant",
                         "content": "## Previous work\n"
                         + _truncate_transcript_chars(
-                            _tool_history_transcript(msgs[1:]),
+                            _tool_history_transcript(unpinned),
                             min(800, self._profile.dialogue_fallback_chars),
                         ),
                     },
+                    *kept_pinned,
                 ]
                 continue
+            if pinned is not None and any(m is pinned for m in msgs):
+                shrunk_pinned = _compact_anchor_message(pinned)
+                if shrunk_pinned is not None:
+                    msgs = [shrunk_pinned if m is pinned else m for m in msgs]
+                    pinned = shrunk_pinned
+                    continue
             break
         return tuple(msgs)
 
@@ -676,7 +774,7 @@ class Observer:
             )
             return response.text.strip() if response.text else None
         except Exception:
-            logger.opt(exception=True).warning("dialogue_summarisation_error")
+            _log_summary_failure("dialogue_summarisation_error", self._summary_model)
             return None
 
     async def _summarise(
@@ -696,7 +794,12 @@ class Observer:
             role = msg.get("role", "unknown")
             content = msg.get("content", "")
             if isinstance(content, str):
-                lines.append(f"[{role}] {content[:500]}")
+                # Prior summaries are already condensed; truncating them
+                # before re-summarising erodes history on every compaction.
+                if content.startswith(_RESUMMARISE_HEADINGS):
+                    lines.append(f"[{role}] {content}")
+                else:
+                    lines.append(f"[{role}] {content[:500]}")
             elif isinstance(content, list):
                 for block in content:
                     if not isinstance(block, dict):
@@ -728,13 +831,31 @@ class Observer:
             )
             return response.text.strip() if response.text else None
         except Exception:
-            logger.opt(exception=True).warning("context_summarisation_error")
+            _log_summary_failure("context_summarisation_error", self._summary_model)
             return None
 
 
 # ------------------------------------------------------------------
 # Pure helper functions
 # ------------------------------------------------------------------
+
+
+def _log_summary_failure(event: str, model: str) -> None:
+    """Warn once per model that summarisation fails; later failures go to debug.
+
+    A misconfigured summary model (e.g. a Claude id on a non-Anthropic base
+    URL) otherwise degrades every compaction to truncation silently.
+    """
+    if model in _WARNED_SUMMARY_MODELS:
+        logger.opt(exception=True).debug("{} model={}", event, model)
+        return
+    _WARNED_SUMMARY_MODELS.add(model)
+    logger.opt(exception=True).warning(
+        "{} model={} — compaction falls back to truncation; check "
+        "LITE_MODEL / COMPACT_SUMMARY_MODEL for the configured endpoint",
+        event,
+        model,
+    )
 
 
 def _flatten_content(content: Any) -> str:
@@ -758,7 +879,9 @@ def _replace_nested_image_blocks(content: list[Any]) -> tuple[list[Any], bool]:
     changed = False
     for block in content:
         if isinstance(block, dict) and block.get("type") == "image":
-            updated.append({**block, "source": _SCREENSHOT_PLACEHOLDER})
+            # Replace the whole block: an image block with a non-dict
+            # ``source`` is rejected by the API with a 400.
+            updated.append({"type": "text", "text": _SCREENSHOT_PLACEHOLDER})
             changed = True
         else:
             updated.append(block)
@@ -901,12 +1024,14 @@ def _compact_message(
     if not isinstance(content, list):
         return message
 
+    from_tool_message = _has_tool_results(message)
     compacted_content = [
         _compact_content_block(
             block,
             tool_use_map=tool_use_map,
             preview_chars=preview_chars,
             result_chars=result_chars,
+            from_tool_message=from_tool_message,
         )
         for block in content
     ]
@@ -918,8 +1043,15 @@ def _compact_content_block(
     tool_use_map: dict[str, dict[str, Any]] | None = None,
     preview_chars: int | None = None,
     result_chars: int | None = None,
+    *,
+    from_tool_message: bool = False,
 ) -> Any:
-    """Return a compacted copy of a single content block."""
+    """Return a compacted copy of a single content block.
+
+    *from_tool_message* marks blocks that sit next to ``tool_result`` blocks;
+    only those have screenshot-related text collapsed, so user requests that
+    merely mention a screenshot are never rewritten.
+    """
     if not isinstance(block, dict):
         return block
 
@@ -933,11 +1065,21 @@ def _compact_content_block(
             result_chars=result_chars,
         )
 
-    if block_type == "image":
-        return {**block, "source": _SCREENSHOT_PLACEHOLDER}
+    if block_type in _MEDIA_BLOCK_TYPES:
+        placeholder = (
+            _SCREENSHOT_PLACEHOLDER if from_tool_message else _IMAGE_PLACEHOLDER
+        )
+        if block_type == "document":
+            placeholder = "[document omitted]"
+        return {"type": "text", "text": placeholder}
 
     text = block.get("text", "")
-    if isinstance(text, str) and "screenshot" in text.lower():
+    if (
+        from_tool_message
+        and block_type == "text"
+        and isinstance(text, str)
+        and "screenshot" in text.lower()
+    ):
         return {**block, "text": _SCREENSHOT_PLACEHOLDER}
 
     return block
