@@ -133,7 +133,7 @@ function LoginForm() {
         <div className="surface-overlay overflow-hidden">
           <div className="px-8 py-6 sm:px-9">
             <div className="flex items-center gap-3">
-              <Logo size={56} tone="auto" animated className="rounded-lg" />
+              <Logo size={56} tone="auto" className="rounded-lg" />
               <div>
                 <p className="brand-wordmark">Synapse</p>
                 <p className="mt-1 text-caption text-muted-foreground">

@@ -13,8 +13,8 @@ const VARIANTS: Array<{
   animated?: boolean;
   badge?: string;
 }> = [
-  { id: "split-s-animated", variant: "split-s", animated: true, badge: "Current" },
-  { id: "split-s", variant: "split-s", badge: "Static assets" },
+  { id: "split-s", variant: "split-s", badge: "Current" },
+  { id: "split-s-animated", variant: "split-s", animated: true, badge: "Loading" },
   { id: "diagonal", variant: "diagonal", badge: "Previous" },
   { id: "synaptic-s", variant: "synaptic-s" },
   { id: "synaptic-s-animated", variant: "synaptic-s", animated: true, badge: "Option C" },
@@ -28,11 +28,11 @@ const VARIANT_COPY: Record<
 > = {
   "split-s": {
     title: "Split S",
-    note: "Static form for favicons and app icons. An S broken at its spine — the gap is the synaptic cleft, the dot the signal crossing it.",
+    note: "Primary mark, in-app and for favicons and app icons. An S broken at its spine — the gap is the synaptic cleft, the dot the signal crossing it.",
   },
   "split-s-animated": {
     title: "Split S + pulse",
-    note: "Primary in-app mark. The signal dot pulses across the cleft; static under reduced motion.",
+    note: "Loading screen only. The signal dot pulses across the cleft; static under reduced motion.",
   },
   diagonal: {
     title: "Diagonal synapse",
@@ -106,7 +106,7 @@ function VariantCard({
               variant={variant}
               tone="auto"
               animated={animated}
-              className={size === 28 ? "rounded-full" : size === 56 ? "rounded-lg" : undefined}
+              className={size === 56 ? "rounded-lg" : undefined}
             />
             <span className="text-caption-bold text-muted-foreground tabular-nums">{size}px</span>
           </div>
@@ -133,7 +133,6 @@ function VariantCard({
             variant={variant}
             tone="auto"
             animated={animated}
-            className="rounded-full"
           />
           <span className="brand-wordmark">Synapse</span>
         </div>
