@@ -99,7 +99,8 @@ def resolve_compaction_profile(
             prefix,
             "SUMMARY_MODEL",
             _base_value(settings, "SUMMARY_MODEL"),
-        ),
+        )
+        or _endpoint_default_summary_model(settings),
         max_full_dialogue_turns=_get_override(
             settings,
             prefix,
@@ -143,6 +144,24 @@ def resolve_compaction_profile_by_name(
 
     runtime = profile_name if profile_name in _KNOWN_RUNTIME_KINDS else default
     return resolve_compaction_profile(settings, cast(CompactionRuntimeKind, runtime))
+
+
+def _endpoint_default_summary_model(settings: Settings) -> str:
+    """Pick a summary model when the default LITE_MODEL cannot work.
+
+    ``LITE_MODEL`` defaults to a Claude Haiku id. Against a non-Anthropic
+    ``ANTHROPIC_BASE_URL`` that id usually does not exist, so every warm-tier
+    summarisation would fail silently. When LITE_MODEL was not explicitly
+    configured there, fall back to the main task model. Returns ``""`` to keep
+    the caller's default (LITE_MODEL) otherwise.
+    """
+    base_url = str(getattr(settings, "ANTHROPIC_BASE_URL", "") or "").lower()
+    if not base_url or "anthropic.com" in base_url:
+        return ""
+    fields_set = getattr(settings, "model_fields_set", None)
+    if not isinstance(fields_set, (set, frozenset)) or "LITE_MODEL" in fields_set:
+        return ""
+    return str(getattr(settings, "TASK_MODEL", "") or "")
 
 
 def _get_override(

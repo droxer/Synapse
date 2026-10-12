@@ -25,6 +25,10 @@ _PROMPT_INJECTION_PATTERNS = (
         re.IGNORECASE,
     ),
     re.compile(
+        r"\b(ignore|disregard|forget)\s+(all\s+)?(previous|prior|above|earlier)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
         r"\bdo\s+not\s+(follow|obey)\s+"
         r"(the\s+)?(system|developer|previous)\s+"
         r"(instructions?|messages?)\b",
