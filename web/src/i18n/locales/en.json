@@ -1,7 +1,8 @@
 {
-  "welcome.heading": "Turn ideas into working software",
-  "welcome.subtitle": "Describe what you want to build. Synapse plans, codes, runs it in a secure sandbox, and streams every step back to you.",
-  "welcome.suggestionsLabel": "Suggested starting points",
+  "welcome.heading": "Bring your next idea to life",
+  "welcome.subtitle": "Describe the outcome you want. Synapse plans it, writes the code, and runs it in a sandbox — every step visible as it happens.",
+  "welcome.suggestionsLabel": "Start from",
+  "welcome.suggestionsRecentLabel": "From your recent work",
   "welcome.suggestion.prototype": "Prototype a feature",
   "welcome.suggestion.prototypePrompt": "Prototype a focused feature with polished UI, accessible interactions, edge cases, and tests.",
   "welcome.suggestion.improve": "Improve this screen",

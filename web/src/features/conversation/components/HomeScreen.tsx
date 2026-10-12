@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Zap, Sparkles, CircleDot } from "lucide-react";
+import { History, LayoutTemplate, ListChecks, WandSparkles } from "lucide-react";
 import { ChatInput } from "./ChatInput";
-import { SuggestionPill } from "./SuggestionPill";
+import { SuggestionRow } from "./SuggestionRow";
 import { ErrorBanner } from "@/shared/components/ErrorBanner";
 import { useTranslation } from "@/i18n";
+import { cn } from "@/shared/lib/utils";
 import type { LandingSuggestion } from "../hooks/use-landing-suggestions";
 
 interface HomeScreenProps {
@@ -16,11 +17,15 @@ interface HomeScreenProps {
   suggestions?: readonly LandingSuggestion[] | null;
 }
 
-const SUGGESTION_ICONS = [
-  <Zap key="zap" className="h-4 w-4" aria-hidden="true" />,
-  <Sparkles key="sparkles" className="h-4 w-4" aria-hidden="true" />,
-  <CircleDot key="circle" className="h-4 w-4" aria-hidden="true" />,
+const ICON_CLASS = "h-3.5 w-3.5";
+
+const DEFAULT_SUGGESTION_ICONS = [
+  <LayoutTemplate key="prototype" className={ICON_CLASS} aria-hidden="true" />,
+  <WandSparkles key="improve" className={ICON_CLASS} aria-hidden="true" />,
+  <ListChecks key="plan" className={ICON_CLASS} aria-hidden="true" />,
 ];
+
+const RECENT_SUGGESTION_ICON = <History className={ICON_CLASS} aria-hidden="true" />;
 
 export function HomeScreen({
   onSubmitTask,
@@ -49,9 +54,11 @@ export function HomeScreen({
       prompt: t("welcome.suggestion.planBuildPrompt"),
     },
   ];
-  const suggestions = generatedSuggestions?.length === 3
-    ? generatedSuggestions
-    : defaultSuggestions;
+  const hasGeneratedSuggestions = generatedSuggestions?.length === 3;
+  const suggestions = hasGeneratedSuggestions ? generatedSuggestions : defaultSuggestions;
+  const suggestionsLabel = hasGeneratedSuggestions
+    ? t("welcome.suggestionsRecentLabel")
+    : t("welcome.suggestionsLabel");
 
   useEffect(() => {
     if (error) setDismissed(false);
@@ -79,33 +86,26 @@ export function HomeScreen({
   return (
     <div className="relative flex h-full w-full flex-col justify-center overflow-hidden px-4 sm:px-6">
       <motion.div
-        className="relative z-10 mx-auto w-full max-w-[680px]"
+        className="relative z-10 mx-auto w-full max-w-[640px] pb-[8vh]"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <motion.p
-          variants={itemVariants}
-          className="text-body-sm-bold text-steel"
-        >
-          {t("sidebar.brand")}
-        </motion.p>
-
         <motion.h1
           variants={itemVariants}
-          className="mt-2 text-balance text-left text-heading-md text-ink-deep sm:text-heading-lg"
+          className="text-balance text-left text-heading-md text-ink-deep sm:text-heading-lg"
         >
           {t("welcome.heading")}
         </motion.h1>
 
         <motion.p
           variants={itemVariants}
-          className="mt-4 max-w-[440px] text-left text-body-md text-steel"
+          className="mt-2 max-w-[520px] text-left text-body-md text-steel"
         >
           {t("welcome.subtitle")}
         </motion.p>
 
-        <motion.div variants={itemVariants} className="mt-10">
+        <motion.div variants={itemVariants} className="mt-6">
           <ChatInput
             onSendMessage={onSubmitTask}
             variant="welcome"
@@ -116,41 +116,41 @@ export function HomeScreen({
           />
         </motion.div>
 
-        <AnimatePresence initial={false}>
-          {showSuggestions && (
-            <motion.section
-              variants={itemVariants}
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -4 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: "easeOut" }}
-              className="mt-7 flex flex-wrap gap-3"
-              role="group"
-              aria-labelledby="welcome-suggestions-heading"
-            >
-              <h2 id="welcome-suggestions-heading" className="sr-only">
-                {t("welcome.suggestionsLabel")}
-              </h2>
+        {/* Kept mounted while hidden so the centered composer doesn't jump when typing starts. */}
+        <motion.div variants={itemVariants}>
+          <section
+            className={cn(
+              "mt-8 transition-[opacity,visibility] duration-150 ease-out",
+              !showSuggestions && "invisible opacity-0",
+            )}
+            aria-labelledby="welcome-suggestions-heading"
+          >
+            <h2 id="welcome-suggestions-heading" className="label-section px-2 text-stone">
+              {suggestionsLabel}
+            </h2>
+            <ul className="mt-2 flex flex-col gap-0.5">
               {suggestions.map((suggestion, index) => (
-                <SuggestionPill
-                  key={suggestion.label}
-                  label={suggestion.label}
-                  icon={SUGGESTION_ICONS[index]}
-                  disabled={isLoading}
-                  aria-label={`${suggestion.label}: ${t("welcome.suggestion.actionHint")}`}
-                  onClick={() => {
-                    setDraftPrompt((current) => ({
-                      id: (current?.id ?? 0) + 1,
-                      text: suggestion.prompt,
-                    }));
-                    setComposerHasContent(true);
-                    setSuggestionStatus(t("welcome.suggestion.addedStatus", { label: suggestion.label }));
-                  }}
-                />
+                <li key={suggestion.label}>
+                  <SuggestionRow
+                    label={suggestion.label}
+                    prompt={suggestion.prompt}
+                    icon={hasGeneratedSuggestions ? RECENT_SUGGESTION_ICON : DEFAULT_SUGGESTION_ICONS[index]}
+                    disabled={isLoading}
+                    aria-label={`${suggestion.label}: ${t("welcome.suggestion.actionHint")}`}
+                    onClick={() => {
+                      setDraftPrompt((current) => ({
+                        id: (current?.id ?? 0) + 1,
+                        text: suggestion.prompt,
+                      }));
+                      setComposerHasContent(true);
+                      setSuggestionStatus(t("welcome.suggestion.addedStatus", { label: suggestion.label }));
+                    }}
+                  />
+                </li>
               ))}
-            </motion.section>
-          )}
-        </AnimatePresence>
+            </ul>
+          </section>
+        </motion.div>
 
         <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
           {suggestionStatus}

@@ -1,7 +1,8 @@
 {
-  "welcome.heading": "把想法变成可运行的软件",
-  "welcome.subtitle": "描述你想构建的内容。Synapse 会规划、编写代码、在安全的沙盒中运行，并实时回传每一步进展。",
-  "welcome.suggestionsLabel": "推荐起点",
+  "welcome.heading": "让下一个想法成真",
+  "welcome.subtitle": "描述你想要的结果。Synapse 会规划、编写代码，并在沙盒中运行，每一步都实时可见。",
+  "welcome.suggestionsLabel": "从这里开始",
+  "welcome.suggestionsRecentLabel": "来自你最近的工作",
   "welcome.suggestion.prototype": "原型一个功能",
   "welcome.suggestion.prototypePrompt": "原型一个聚焦的功能，包含精致 UI、无障碍交互、边界情况和测试。",
   "welcome.suggestion.improve": "改进此屏幕",
