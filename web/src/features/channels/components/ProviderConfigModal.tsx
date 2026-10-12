@@ -81,7 +81,7 @@ export function ProviderConfigShell({
             <div className="space-y-3" aria-busy="true">
               <div className="h-10 rounded-lg skeleton-shimmer" />
               <div className="h-24 rounded-xl skeleton-shimmer" />
-              <div className="h-10 rounded-full skeleton-shimmer" />
+              <div className="h-8 rounded-md skeleton-shimmer" />
             </div>
           ) : (
             children
@@ -177,7 +177,7 @@ export function ProviderHelpAccordion({
               href={externalLink.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-caption-bold text-primary hover:text-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
+              className="mt-1 inline-flex items-center gap-1 text-caption-bold text-info hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
             >
               {externalLink.label}
               <ExternalLink className="h-3 w-3" aria-hidden="true" />
@@ -247,7 +247,7 @@ export function ProviderTokenSnippet({
             href={deepLink.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-caption-bold text-primary hover:text-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
+            className="inline-flex items-center gap-1 text-caption-bold text-info hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 rounded-sm"
           >
             {deepLink.label}
             <ExternalLink className="h-3 w-3" aria-hidden="true" />

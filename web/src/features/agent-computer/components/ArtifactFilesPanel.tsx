@@ -294,7 +294,7 @@ export function ArtifactFilesPanel({ artifacts, conversationId }: ArtifactFilesP
     <>
       <div className="flex h-full flex-col overflow-y-auto overscroll-contain bg-background px-3 py-3 sm:px-4">
         <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-2">
-          <span className="label-mono text-muted-foreground">{t("artifacts.recentOutputs")}</span>
+          <span className="label-section text-muted-foreground">{t("artifacts.recentOutputs")}</span>
           <span className="text-sm font-medium text-foreground">
             {normalizedArtifacts.length === 1
               ? t("artifacts.fileCount", { count: normalizedArtifacts.length })

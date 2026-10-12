@@ -38,10 +38,10 @@ const QUICK_ACTION_KEYS = [
 ] as const;
 
 const ITEM_CLASS =
-  "flex cursor-pointer items-center gap-3 rounded-full px-3 py-2.5 text-body-sm text-foreground transition-colors data-[selected=true]:bg-muted data-[selected=true]:text-foreground";
+  "flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-body-sm text-foreground transition-colors data-[selected=true]:bg-muted data-[selected=true]:text-foreground";
 
 const GROUP_HEADING_CLASS =
-  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:label-mono [&_[cmdk-group-heading]]:text-muted-foreground";
+  "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:label-section [&_[cmdk-group-heading]]:text-muted-foreground";
 
 function ShortcutHint({ keys }: { readonly keys: string }) {
   return <Kbd className="ml-auto">{keys}</Kbd>;

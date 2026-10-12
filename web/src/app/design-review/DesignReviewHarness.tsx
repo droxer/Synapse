@@ -263,7 +263,7 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
               <Progress value={72} indicatorClassName="bg-primary" aria-label="Fixture progress 72%" />
               <div className="grid grid-cols-2 gap-2">
                 {swatches.map(([label, className]) => (
-                  <div key={label} className={cn("rounded-full px-2 py-2 text-caption-bold", className)}>
+                  <div key={label} className={cn("rounded-sm px-2 py-2 text-caption-bold", className)}>
                     {label}
                   </div>
                 ))}

@@ -17,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 // import { PromoBanner } from "@/shared/components/marketing/promo-banner";
 
 /**
- * Live gallery for the Meta-aligned design system documented in /DESIGN.md.
+ * Live gallery for the Linear-inspired design system documented in /DESIGN.md.
  * Dev-only — surfaces tokens, primitives, and signature components for visual review.
  */
 export default function DesignSystemPage() {
@@ -106,13 +106,13 @@ function LogoSection() {
 function Header() {
   return (
     <header className="flex flex-col gap-4">
-      <span className="label-mono text-muted-foreground">
+      <span className="label-section text-muted-foreground">
         DESIGN.md gallery
       </span>
       <h1 className="text-balance text-display-lg">A System, on Canvas</h1>
       <p className="text-subtitle-md max-w-[640px] text-muted-foreground">
-        Tokens and primitives as they actually ship — cobalt for action, black pills for
-        marketing, borderless tonal surfaces, and a 4px spacing rhythm.
+        Tokens and primitives as they actually ship — Inter at a 13px UI base, indigo as the
+        only brand fill, sharp 4px CTAs on 6px fields, borderless tonal surfaces, and a 4px spacing rhythm.
       </p>
     </header>
   );
@@ -131,7 +131,7 @@ function Section({
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         {eyebrow ? (
-          <span className="label-mono text-muted-foreground">
+          <span className="label-section text-muted-foreground">
             {eyebrow}
           </span>
         ) : null}
@@ -144,9 +144,10 @@ function Section({
 
 /** Color swatch grid keyed off the canonical `--color-*` tokens. */
 const COLOR_TOKENS: Array<{ name: string; var: string; onDark?: boolean }> = [
-  { name: "cobalt", var: "--color-cobalt", onDark: true },
-  { name: "cobalt-deep", var: "--color-cobalt-deep", onDark: true },
-  { name: "cobalt-soft", var: "--color-cobalt-soft", onDark: true },
+  { name: "indigo", var: "--color-indigo", onDark: true },
+  { name: "indigo-deep", var: "--color-indigo-deep", onDark: true },
+  { name: "indigo-soft", var: "--color-indigo-soft", onDark: true },
+  { name: "indigo-selected", var: "--color-indigo-selected", onDark: true },
   { name: "ink-button", var: "--color-ink-button", onDark: true },
   { name: "ink-deep", var: "--color-ink-deep", onDark: true },
   { name: "ink", var: "--color-ink", onDark: true },
@@ -156,12 +157,12 @@ const COLOR_TOKENS: Array<{ name: string; var: string; onDark?: boolean }> = [
   { name: "hairline", var: "--color-hairline" },
   { name: "hairline-soft", var: "--color-hairline-soft" },
   { name: "surface-soft", var: "--color-surface-soft" },
+  { name: "surface-hover", var: "--color-surface-hover" },
   { name: "success", var: "--color-success", onDark: true },
   { name: "attention", var: "--color-attention" },
   { name: "warning", var: "--color-warning" },
   { name: "critical", var: "--color-critical", onDark: true },
-  { name: "fb-blue", var: "--color-fb-blue", onDark: true },
-  { name: "oculus-purple", var: "--color-oculus-purple", onDark: true },
+  { name: "violet", var: "--color-violet", onDark: true },
 ];
 
 function ColorSection() {
@@ -185,16 +186,16 @@ function ColorSection() {
 }
 
 const TYPE_ROLES = [
-  { className: "text-hero-display", label: "hero-display · 38–68 / 500 · -0.075em" },
-  { className: "text-display-lg", label: "display-lg · 32–56 / 500 · -0.055em" },
-  { className: "text-heading-lg", label: "heading-lg · 32–40 / 450 · -0.05em" },
-  { className: "text-heading-md", label: "heading-md · 20–32 / 460 · -0.035em" },
-  { className: "text-heading-sm", label: "heading-sm · 25 / 520 · -0.04em" },
-  { className: "text-subtitle-lg", label: "subtitle-lg · 17 / 620" },
-  { className: "text-subtitle-md", label: "subtitle-md · 17 / 400 · lh 1.65" },
-  { className: "text-body-md", label: "body-md · 16 / 400 · lh 1.75" },
-  { className: "text-body-sm", label: "body-sm · 14 / 400" },
-  { className: "text-caption-bold", label: "caption-bold · 12 / 620" },
+  { className: "text-hero-display", label: "hero-display · 40–64 / 510 · -0.032em" },
+  { className: "text-display-lg", label: "display-lg · 32–48 / 510 · -0.028em" },
+  { className: "text-heading-lg", label: "heading-lg · 28 / 590 · -0.022em" },
+  { className: "text-heading-md", label: "heading-md · 24 / 590 · -0.018em" },
+  { className: "text-heading-sm", label: "heading-sm · 20 / 590 · -0.012em" },
+  { className: "text-subtitle-lg", label: "subtitle-lg · 17 / 590" },
+  { className: "text-subtitle-md", label: "subtitle-md · 17 / 400 · lh 1.6" },
+  { className: "text-body-md", label: "body-md · 15 / 400 · lh 1.6 (reading)" },
+  { className: "text-body-sm", label: "body-sm · 13 / 400 (UI base)" },
+  { className: "text-caption-bold", label: "caption-bold · 12 / 510" },
   { className: "text-micro", label: "micro · 12 (floor — nothing smaller)" },
 ] as const;
 
@@ -220,11 +221,11 @@ const RADII = [
   { name: "sm · 4", varName: "--radius-sm" },
   { name: "md · 6", varName: "--radius-md" },
   { name: "lg · 8", varName: "--radius-lg" },
-  { name: "xl · 16", varName: "--radius-xl" },
-  { name: "xxl · 24", varName: "--radius-xxl" },
-  { name: "xxxl · 32", varName: "--radius-xxxl" },
-  { name: "feature · 40", varName: "--radius-feature" },
-  { name: "full · 100", varName: "--radius-full" },
+  { name: "xl · 10", varName: "--radius-xl" },
+  { name: "xxl · 12", varName: "--radius-xxl" },
+  { name: "xxxl · 16", varName: "--radius-xxxl" },
+  { name: "feature · 20", varName: "--radius-feature" },
+  { name: "full", varName: "--radius-full" },
 ] as const;
 
 function RadiusSection() {
@@ -273,7 +274,7 @@ function ButtonSection() {
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="tab">
-          Glasses
+          Inbox
         </Button>
         <Button variant="secondary" size="tab">
           Agents
@@ -366,9 +367,9 @@ function InputSection() {
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-body-sm-bold">Swatches</span>
         <ColorSwatch color="var(--color-ink-deep)" label="Ink" />
-        <ColorSwatch color="var(--color-cobalt)" label="Cobalt" selected />
+        <ColorSwatch color="var(--color-indigo)" label="Indigo" selected />
         <ColorSwatch color="var(--color-attention)" label="Attention" />
-        <ColorSwatch color="var(--color-oculus-purple)" label="Oculus" />
+        <ColorSwatch color="var(--color-violet)" label="Violet" />
       </div>
       */}
     </Section>
@@ -379,7 +380,7 @@ function FocusSection() {
   return (
     <Section eyebrow="08 · Primitives" title="Focus Contract">
       <p className="text-body-sm text-muted-foreground max-w-[640px]">
-        Default interactive focus: 2px ring on fb-blue with 2px canvas offset. Text inputs swap to a 2px solid fb-blue border.
+        Default interactive focus: 2px ring on the indigo focus token (--color-focus) with a 1px canvas offset. Text inputs keep their 1px hairline; on focus the border steps up and a soft 3px indigo halo appears, with no layout shift.
       </p>
       <div className="flex flex-wrap items-center gap-4">
         <Button>Tab to Focus</Button>
@@ -392,9 +393,9 @@ function FocusSection() {
 function SidebarNavSection() {
   const items = ["New chat", "Library", "Channels", "Skills"];
   return (
-    <Section eyebrow="09 · Shell" title="Sidebar Pill Nav">
+    <Section eyebrow="09 · Shell" title="Sidebar Nav">
       <p className="text-body-sm text-muted-foreground max-w-[640px]">
-        Dense sidebar rows use the same pill geometry as buttons — rounded-full with sidebar-active/hover tokens.
+        Dense sidebar rows use the 6px row geometry shared with menus and inputs — rounded-md with sidebar-active/hover tonal fills, no borders.
       </p>
       <nav className="flex w-full max-w-xs flex-col gap-1 rounded-xxl bg-sidebar-bg p-2">
         {items.map((item, index) => (
@@ -403,8 +404,8 @@ function SidebarNavSection() {
             type="button"
             className={
               index === 0
-                ? "flex w-full items-center gap-2.5 rounded-full bg-sidebar-active px-3 py-2 text-body-sm-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                : "flex w-full items-center gap-2.5 rounded-full px-3 py-2 text-body-sm-bold text-sidebar-foreground-muted outline-none hover:bg-sidebar-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                ? "flex w-full items-center gap-2.5 rounded-md bg-sidebar-active px-3 py-2 text-body-sm-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                : "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-body-sm-bold text-sidebar-foreground-muted outline-none hover:bg-sidebar-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             }
           >
             {item}
@@ -419,20 +420,20 @@ function DarkThemeSection() {
   return (
     <Section eyebrow="10 · Themes" title="Dark Mode Spot-Check">
       <p className="text-body-sm text-muted-foreground max-w-[640px]">
-        Dark tokens are synthesised (not in DESIGN.md). Validate cobalt and critical contrast before shipping new dark surfaces.
+        Dark mode follows Linear's near-black ramp — canvas #0f1011, sidebar #090a0b, surface #17181a. Validate indigo and critical contrast before shipping new dark surfaces.
       </p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded-xxl bg-muted p-6">
           <span className="text-body-sm-bold text-foreground">Light canvas</span>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="sm">Cobalt action</Button>
+            <Button size="sm">Indigo action</Button>
             <Badge variant="danger">Error</Badge>
           </div>
         </div>
         <div className="dark rounded-xxl bg-background p-6">
           <span className="text-body-sm-bold text-foreground">Dark canvas (.dark)</span>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="sm">Cobalt action</Button>
+            <Button size="sm">Indigo action</Button>
             <Badge variant="danger">Error</Badge>
           </div>
         </div>

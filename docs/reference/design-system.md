@@ -1,109 +1,109 @@
 # Design system
 
-Synapse's UI follows the Meta-inspired commerce/hardware-showcase system defined in [`/DESIGN.md`](../../DESIGN.md). Stark white canvas, cobalt commerce CTAs, pill buttons, 32-pt photographic cards, and a native system type stack matching eveland.ai.
+Synapse's UI follows the Linear-inspired system defined in [`/DESIGN.md`](../../DESIGN.md): Inter Variable, a neutral cool-gray palette with one indigo accent, sharp 4px CTAs, tonal surfaces, and a near-black dark theme.
 
 Live token source: [`web/src/app/globals.css`](../../web/src/app/globals.css).
 Authoritative spec: [`DESIGN.md`](../../DESIGN.md).
-Live gallery: `/design-system` (dev-only route).
+Live gallery: `/design-system` (dev-only route). Visual fixture: `/design-review` (dev-only, no auth).
 
 The file is structured as:
 - `@theme` block — registers Tailwind v4 design tokens.
 - `:root` — light-mode values.
-- `.dark` — dark-mode overrides (synthesised; DESIGN.md does not publish dark tokens).
+- `.dark` — dark-mode overrides (Linear near-black; sidebar darker than canvas).
 
 ---
 
 ## Core principles
 
-- **Cobalt is reserved for action.** `--color-cobalt` (`#0064e0`) belongs on Send / Run / Submit / Continue. Black `--color-ink-button` belongs on marketing/landing primaries.
-- **Every interactive element is pill-shaped.** Buttons and badges use `--radius-full` (100px); icon-only buttons use `--radius-circle`. Squared corners signal "third-party widget" and should be filtered out.
-- **Photography geometry is 32px.** `--radius-xxxl` is the minimum for photographic feature cards.
-- **Flat by default.** Elevation is a commerce-flow signal, not a marketing flourish; only `card-checkout-summary` and `surface-overlay` (popovers/dialogs) carry a shadow.
-- **Light, few lines.** Surfaces separate by tonal fill (`canvas` vs `surface-soft`/`muted`) and whitespace — not hairlines. Borders are reserved for form inputs (`Input`, `Textarea`, composer) and the explicit opt-in `Card variant="outlined"` / `Badge variant="outline"`. Don't add `border-b` section dividers or borders on top of a tinted fill.
-- **Stylistic sets `ss01, ss02` always pair.** Headings activate both Optimistic VF stylistic sets. System fonts ignore them — the declaration is harmless and future-proofs an Optimistic swap.
+- **Indigo is the only brand fill.** `--color-indigo` (`#5e6ad2`) belongs on the primary action of a view, focus rings, selection, and progress. Use `text-info` — not `text-primary` — when indigo renders as text (it lightens to `#828fff` in dark mode for AA).
+- **CTAs are sharp.** Buttons, icon buttons, toggles, segmented-tab triggers, and suggestion chips use `rounded-sm` (4px); `xs` buttons use `rounded-xs` (2px). Fields and list rows use `rounded-md` (6px). Never pill-shape a button.
+- **Dense by default.** UI copy is 13px (`text-sm` / `text-body-sm`), reading copy 15px (`text-body-md`). Controls are 32px tall (`h-8`); rows are ~28–32px.
+- **Light, few lines.** Surfaces separate by tonal fill (`canvas` → `surface-soft` → `surface-hover`) and whitespace — not hairlines. Borders are reserved for `Input`, `Textarea`, `Select`, the composer, and the explicit opt-in `Card variant="outlined"` / `Badge variant="outline"`. Overlays get their edge from the 1px ring inside `shadow-elevated`.
+- **Inter features always on.** `cv01` + `ss03` are set on `body` and all heading roles.
 
-Legacy semantic aliases (`--color-background`, `--color-foreground`, `--color-primary`, …) are **kept** so the existing component layer continues to compile, but each one resolves to a DESIGN.md canonical token. New code should consume the canonical names directly.
+Legacy semantic aliases (`--color-background`, `--color-foreground`, `--color-primary`, …) are kept so the component layer compiles unchanged; each resolves to a canonical token. New code should consume the canonical names.
 
 ---
 
 ## Colors
 
-### Brand & accent
+### Accent
 
-| Token | Light | Use |
-|---|---|---|
-| `--color-cobalt` | `#0064e0` | Commerce/action primary fill. Send / Run / Submit / Continue. |
-| `--color-cobalt-deep` | `#0457cb` | Pressed-state and dark-surface variant. |
-| `--color-cobalt-soft` | `#0091ff` | Translucent info callouts (`/15` alpha). |
-| `--color-cobalt-selected` | `#0143b5` | Selected radio/checkbox border. |
-| `--color-ink-button` | `#000000` | Marketing-surface primary pill fill. |
-| `--color-fb-blue` | `#1876f2` | Focus rings, selected form controls. |
-| `--color-meta-link` | `#385898` | Legacy navigation / footer link. |
-| `--color-oculus-purple` | `#a121ce` | VR / category emphasis. |
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--color-indigo` | `#5e6ad2` | `#5e6ad2` | Primary fill (`bg-primary`). White text 4.7:1. |
+| `--color-indigo-deep` | `#5360c7` | `#6b76da` | Primary hover; dark focus ring. |
+| `--color-indigo-selected` | `#4652bb` | `#7c86e0` | Primary pressed. |
+| `--color-indigo-soft` | `#7170ff` | `#828fff` | Streaming cursor / AI glow (dark). |
+| `--color-indigo-text` (`--color-info`) | `#5e6ad2` | `#828fff` | Links, info badges, indigo icons. |
+| `--color-violet` | `#8e5bd8` | `#b18cf0` | Syntax highlighting keywords only. |
+| `--color-ink-button` | `#18191b` | `#f7f8f8` | `marketing` button fill (inverts in dark). |
 
 ### Surface
 
-| Token | Light | Use |
-|---|---|---|
-| `--color-canvas` | `#ffffff` | Page background and primary card surface. |
-| `--color-surface-soft` | `#f1f4f7` | Thumbnail / warranty background. Search-pill rest state. |
-| `--color-hairline` | `#ced0d4` | 1px input border. |
-| `--color-hairline-soft` | `#dee3e9` | Card / section dividers. |
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--color-canvas` | `#ffffff` | `#0f1011` | Page / content background. |
+| `--color-surface-soft` | `#f5f6f8` | `#17181a` | Sidebar (light), muted, secondary buttons, cards (dark). |
+| `--color-surface-hover` | `#eceef1` | `#202124` | Hover, selected rows, `accent`, Kbd. |
+| `--color-sidebar-bg` | = surface-soft | `#090a0b` | Sidebar — darker than canvas in dark. |
+| `--color-popover` | `#ffffff` | `#1b1c1f` | Menus, dialogs, popovers. |
+| `--color-hairline` | `#dfe1e5` | `#2a2c31` | Input border. |
+| `--color-hairline-soft` | `#ebecef` | `#1f2023` | Composer / outlined card border. |
 
 ### Text
 
-| Token | Light | Use |
-|---|---|---|
-| `--color-ink-deep` | `#0a1317` | Primary headline + body text. |
-| `--color-ink` | `#1c1e21` | Standard body text. |
-| `--color-charcoal` | `#444950` | Tertiary body, form-button labels. |
-| `--color-slate` | `#4b4c4f` | Section-header copy. |
-| `--color-steel` | `#5d6c7b` | Caption text, footer link hierarchy. |
-| `--color-stone` | `#8595a4` | Disabled / de-emphasised labels. |
-| `--color-disabled-text` | `#bcc0c4` | Disabled-button text fill. |
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--color-ink-deep` | `#18191b` | `#f7f8f8` | Primary text (`foreground`). |
+| `--color-ink` | `#2c2d31` | `#e3e4e6` | Body text on tinted fills. |
+| `--color-steel` | `#5f636a` | `#8a8f98` | Secondary text (`muted-foreground`). |
+| `--color-stone` | `#71757d` | `#7a7f88` | Tertiary / placeholder (≥4.5:1). |
+| `--color-disabled-text` | `#b8bbc1` | `#484b51` | Disabled labels. |
 
 ### Semantic
 
-| Token | Light | Use |
-|---|---|---|
-| `--color-success` | `#31a24c` | "In stock", "Verified". |
-| `--color-attention` | `#f2a918` | Mid-priority alerts. |
-| `--color-warning` | `#f7b928` | Promo banners, limited-time tags. |
-| `--color-critical` | `#e41e3f` | Validation errors. |
-| `--color-critical-strong` | `#f0284a` | Form-input error border. |
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--color-success` / `success-text` | `#4cb782` / `#1d7a4f` | `#4cb782` | Done, connected. |
+| `--color-attention` | `#f2994a` | `#f2994a` | In-progress / mid-priority. |
+| `--color-warning` / `warning-text` | `#f2c94c` / `#8a5a00` | `#f2c94c` | Warnings. |
+| `--color-critical` | `#d4373e` | `#eb5757` | Errors, destructive fill, `destructive` text. |
+
+Run `npm run audit:wcag` after any color change — it resolves `var()` aliases and checks foreground, muted, dim, primary-button, destructive, info, success/warning text, and sidebar/card pairs in both themes.
 
 ---
 
 ## Typography
 
-**Font stack.** Matches eveland.ai: no web font download. `--font-sans` is `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial` → `--font-cjk-sans` → `sans-serif` → emoji. `--font-cjk-sans` is PingFang SC → Hiragino Sans GB → Microsoft YaHei → Noto Sans CJK SC (`html:lang(zh-TW)` swaps to PingFang TC → Microsoft JhengHei → Noto Sans CJK TC). Code blocks keep Geist Mono via `--font-mono`.
+**Font stack.** `--font-sans` is Inter Variable (Latin subset bundled from `@fontsource-variable/inter` via `next/font/local`, exposed as `--font-inter`) → system sans → `--font-cjk-sans` (PingFang SC → Hiragino Sans GB → Microsoft YaHei → Noto Sans CJK SC). Code uses Geist Mono via `--font-mono`.
+
+`--text-sm` is 13px and `--text-base` is 15px, so plain Tailwind `text-sm` / `text-base` follow Linear's scale.
 
 ### Roles
 
-Each role is exposed as a `text-*` utility (e.g. `<h1 className="text-hero-display">`):
-
-| Utility | Size | Weight | LH | Letter-spacing |
+| Utility | Size | Weight | LH | Tracking |
 |---|---|---|---|---|
-| `text-hero-display` | clamp(38px, 4.6vw, 68px) · zh 34–58px | 500 | 1.04 · zh 1.12 | -0.075em |
-| `text-display-lg` | clamp(32px, 4.2vw, 56px) · zh 28–48px | 500 | 1.18 · zh 1.28 | -0.055em · zh -0.03em |
-| `text-heading-lg` | 32px → 40px at ≥768px | 450 | 2.5rem → 3rem | -0.04em → -0.05em |
-| `text-heading-md` | clamp(20px, 2.3vw, 32px) · zh 18–28px | 460 | 1.35 | -0.035em · zh -0.02em |
-| `text-heading-sm` | 25px | 520 | 1.25 | -0.04em |
-| `text-subtitle-lg` | 17px | 620 | 1.45 | -0.01em |
-| `text-subtitle-md` | 17px | 400 | 1.65 | 0 |
-| `text-body-md` | 16px | 400 | 1.75 | 0 |
-| `text-body-md-bold` | 16px | 620 | 1.75 | 0 |
-| `text-body-sm` | 14px | 400 | 1.43 | 0 |
-| `text-body-sm-bold` | 14px | 500 | 1.43 | 0 |
-| `text-caption-bold` | 12px | 620 | 1.33 | 0 |
-| `text-button-md` | 13px | 620 | 1.43 | 0 |
-| `text-link-md` | 13px | 620 | 1.43 | 0 |
+| `text-hero-display` | clamp(40px, 5vw, 64px) | 510 | 1.06 | -0.032em |
+| `text-display-lg` | clamp(32px, 4vw, 48px) | 510 | 1.1 | -0.028em |
+| `text-heading-lg` | 28px → 36px at ≥768px | 590 | 1.2 → 1.15 | -0.022 → -0.025em |
+| `text-heading-md` | 24px | 590 | 1.3 | -0.018em |
+| `text-heading-sm` | 20px | 590 | 1.33 | -0.012em |
+| `text-subtitle-lg` | 17px | 590 | 1.45 | -0.008em |
+| `text-subtitle-md` | 17px | 400 | 1.6 | -0.006em |
+| `text-body-md` | 15px | 400 | 1.6 | -0.004em |
+| `text-body-md-bold` | 15px | 590 | 1.6 | -0.004em |
+| `text-body-sm` | 13px | 400 | 1.5 | 0 |
+| `text-body-sm-bold` | 13px | 510 | 1.5 | 0 |
+| `text-caption-bold` | 12px | 510 | 1.33 | 0 |
+| `label-section` | 12px | 510 | 1.33 | 0 (sentence case, tabular nums) |
+| `text-button-md` / `text-link-md` | 13px | 510 | 1.43 | 0 |
 
-Sizes, weights, and tracking follow eveland.ai: fluid display sizes with tight negative tracking, airy 1.65–1.75 body line-height with no tracking, and 13px/620 UI labels. `zh` values come from eveland.ai's `:lang(zh-CN)` overrides.
+`:lang(zh)` steps display sizes down and relaxes tracking.
 
-**Weights.** On-scale weights are the ones the role utilities set, following eveland.ai: 400 / 450 / 460 / 500 / 520 / 620. Don't use `font-semibold` (600) or arbitrary weights; reach for the role utility instead.
+**Weights.** 400 / 510 / 590 / 680 — `font-medium`, `font-semibold`, `font-bold` are remapped to the last three. Prefer the role utilities.
 
-**12px floor.** Nothing renders below 12px. The legacy `text-micro` and `text-caption` utilities both resolve to 12px; `status-pill` / `chip-*` metadata inherit the same floor.
+**12px floor.** Nothing renders below 12px.
 
 ---
 
@@ -111,89 +111,70 @@ Sizes, weights, and tracking follow eveland.ai: fluid display sizes with tight n
 
 | Token | Value | Use |
 |---|---|---|
-| `--radius-xs` | 2px | Inline checkbox marks. |
-| `--radius-sm` | 4px | Tags, micro-controls. |
-| `--radius-md` | 6px | Square thumbnails. |
-| `--radius-lg` | 8px | Form inputs, radio cards. |
-| `--radius-xl` | 16px | Icon-feature cards, FAQ items. |
-| `--radius-xxl` | 24px | Warranty / accessory tiles. |
-| `--radius-xxxl` | 32px | Photographic feature cards, promo strips. |
-| `--radius-feature` | 40px | Accessory hero panels. |
-| `--radius-full` | 100px | **All** pill buttons, tab chips, badges. |
-| `--radius-circle` | 9999px | Color swatches, icon buttons. |
+| `--radius-xs` | 2px | xs buttons, icon-xs, inline chip controls. |
+| `--radius-sm` | 4px | **All CTAs**: buttons, icon buttons, toggles, tab triggers, suggestion chips, Kbd. |
+| `--radius-md` | 6px | Inputs, selects, textareas, menu / list / sidebar rows, segmented track. |
+| `--radius-lg` | 8px | Code blocks, thumbnails. |
+| `--radius-xl` | 10px | Cards, composer, message bubbles. |
+| `--radius-xxl` (`2xl`) | 12px | Overlays (`surface-overlay`). |
+| `--radius-xxxl` / `feature` | 16 / 20px | Rare large showcase tiles. |
+| `--radius-full` / `circle` | 9999px | Badges, avatars, dots, progress tracks, switches. |
+
+---
+
+## Elevation
+
+| Token | Use |
+|---|---|
+| `shadow-xs` | Primary / secondary buttons, active segmented tab, resting composer. |
+| `shadow-elevated` | Overlays, drawers, welcome composer — includes a 1px ring (6% ink light / 7% white dark). |
+| `shadow-sticky-rail` | `card-checkout-summary` only. |
 
 ---
 
 ## Spacing scale
 
-`@theme` registers the DESIGN.md spacing rhythm as `--spacing-*` tokens. The base unit is 4px; the dominant primary step is 8px (`--spacing-xs`).
-
-| Token | Value | Use |
-|---|---|---|
-| `xxs` | 4 | Hairline rhythm. |
-| `xs` | 8 | Primary step. |
-| `sm`/`md`/`base` | 10 / 12 / 16 | Inline padding. |
-| `lg`/`xl` | 20 / 24 | Card internals. |
-| `xxl`/`xxxl` | 32 / 40 | Card padding default. |
-| `section-sm`/`section` | 48 / 64 | Section rhythm. |
-| `section-lg`/`hero` | 80 / 120 | Marketing rhythm. |
+4px base unit. Named steps (`--spacing-xxs` 4 … `--spacing-hero` 120) remain registered. In product UI, rows use `px-2 py-1.5`, cards `p-5`, dialogs `p-5`.
 
 ---
 
 ## Components
 
-Pull from `@/shared/components/ui`. The dev-only `/design-system` route (`web/src/app/design-system/page.tsx`) renders every variant below exactly as it ships — keep it in sync when a variant is added or removed.
+Pull from `@/shared/components/ui`. Keep the `/design-system` gallery in sync when a variant changes.
 
 ### Buttons (`Button`)
 
 | Variant | Use |
 |---|---|
-| `default` | Cobalt commerce primary. Send/Run/Submit/Connect. |
-| `marketing` | Black ink pill (inverts to white in dark mode). Landing/login CTAs. |
-| `secondary` | Borderless `surface-soft` tonal fill; hover deepens the fill. |
-| `ghost` | Transparent; `muted` fill on hover. Tertiary / icon actions. |
-| `destructive` | `critical` fill with `on-destructive` text (AA in both themes). Use the variant — never hand-roll `bg-destructive text-white`. For `AlertDialogAction`, pass `variant="destructive"`. |
-| `link` | Inline cobalt text link. |
-| Sizes | `xs / sm / default / lg / tab` (pill, `text-button-md`) and `icon / icon-xs / icon-sm / icon-lg` (`rounded-circle`). |
+| `default` | Indigo primary + `shadow-xs`. One per view. |
+| `secondary` | `surface-soft` tonal fill + `shadow-xs`; hover → `surface-hover`. |
+| `ghost` | Transparent, muted text; hover → `surface-hover` + foreground. Toolbars. |
+| `destructive` | `critical` fill with `on-destructive` text. |
+| `marketing` | Ink fill (inverts in dark). Login / landing. |
+| `link` | `text-info`, underline on hover. |
+| Sizes | `xs` 24 (2px radius) / `sm` 28 / `default` 32 / `lg` 36 / `tab` 28; `icon-xs` 24 / `icon-sm` 28 / `icon` 32 / `icon-lg` 36 — sharp squares. |
 
-All variants are pill-shaped (`rounded-full`) — don't override with `rounded-md` / `rounded-lg` at call sites.
+All variants are `rounded-sm` — don't override with softer radii at call sites.
 
 ### Cards (`Card`, `variant="…"`)
 
-| Variant | Chrome |
-|---|---|
-| `default` | `card` fill, 16px radius (`rounded-xl`), borderless — separated from the page by tone. |
-| `sunken` | `muted` fill, 16px radius, borderless. Secondary content blocks. |
-| `interactive` | `card` fill, 16px radius; gains `shadow-elevated` on hover. |
-| `outlined` | Opt-in 1px `border` — only when a card sits on a same-tone surface (e.g. inside a white dialog). |
-| `panel` | Legacy alias of `default` (8px radius) for existing call sites. |
+`default` (card fill, 10px, borderless), `sunken` (muted), `interactive` (gains `shadow-elevated` on hover), `outlined` (opt-in 1px border for same-tone surfaces), `panel` (8px legacy alias). Header/content/footer use `px-5`; card gap is 16px; title is `text-body-md-bold`.
 
-**Surface utilities** (all borderless):
+### Inputs (`Input`, `Textarea`, `Select`)
 
-| Utility | Chrome |
-|---|---|
-| `surface-panel` | `surface-soft` fill, 16px radius. |
-| `surface-overlay` | `popover` fill, 24px radius, `shadow-elevated` — no border. |
-| `card-product-feature` / `card-icon-feature` / `card-why-buy-tile` | `surface-soft` tonal fill, 32 / 16 / 16px radius, no border. |
-| `card-checkout-summary` | Canvas fill, 16px radius, `shadow-sticky-rail` (the one elevated card). |
-| `card-feature-photo` / `card-promo-strip` / `card-warranty` | Image-fill / ink-deep / surface-soft photographic tiles. |
-| `chip-muted`, `status-*` | Pill, tonal fill only, 12px sans. Prefer `<Badge>` in new code. |
-
-### Inputs (`Input`)
-
-44px tall, `--radius-lg`, 1px `--color-hairline`. Focus switches to a 2px `--color-fb-blue` border. Error state uses `--color-critical-strong`.
+32px (`h-8`), `rounded-md`, 1px `input` border, `text-body-sm`. Focus → `border-border-active` + `shadow-glow-subtle` (3px indigo halo, no layout shift). 44px min-height on coarse pointers.
 
 ### Badges (`Badge`)
 
-All pill, caption-bold (12px/620), tonal fill (no border). Variants: `neutral` (default), `success`, `warning`, `danger`, `info`, `accent`, and opt-in bordered `outline`. Success/warning text uses the AA `success-text` / `warning-text` tokens; use those (not `text-success` / `text-warning`) whenever those hues are used as text or icon colour.
+20px pill, `text-caption-bold`, tonal fill: `neutral`, `success`, `warning`, `danger`, `info`, `accent`, and bordered `outline`.
 
 ### Tabs (`Tabs`, `TabsList variant="…"`)
 
-`default` — segmented control; the active trigger gets a `card` fill. `line` — transparent, active trigger shows an underline indicator.
+`default` — segmented: 6px muted track, 4px 28px triggers; active is `bg-background` + `shadow-xs` (`surface-hover` in dark). `line` — rounded 2px underline indicator.
 
-### Signature components
+### Menus, Kbd, Tooltip
 
-The DESIGN.md marketing set (`PromoBanner`, `HeroBand`, `FeatureIconRow`, `FooterRegion`, `ColorSwatch`) is **not currently shipped** — the `/design-system` gallery sections for them are commented out pending a rebuild.
+Dropdown / select rows: `rounded-md px-2 py-1.5`, focus `bg-accent` (`surface-hover`); group labels `text-caption` muted. `Kbd`: 20px keycap, `surface-hover`, `rounded-sm`, Inter 12px. Tooltip: inverted `foreground` fill, `rounded-md`.
 
 ---
 
@@ -201,24 +182,18 @@ The DESIGN.md marketing set (`PromoBanner`, `HeroBand`, `FeatureIconRow`, `Foote
 
 ### Do
 
-- Reserve `--color-cobalt` for action CTAs — its weight is meaningful precisely because it's scarce.
-- Use `Button variant="marketing"` (ink) for marketing-surface primaries. Pair with `secondary`.
-- Apply `rounded-full` to every button and badge (it's built into the primitives).
-- Separate surfaces with tonal fill and spacing; keep borders for inputs and explicit `outlined` variants.
-- Apply `--radius-xxxl` to photographic product cards and `--radius-xl` to icon-feature tiles.
-- Switch on `ss01, ss02` together — never one without the other.
-- Use `text-heading-md` (460) for editorial subheads.
+- Keep indigo scarce; use `text-info` for indigo text.
+- Keep every CTA `rounded-sm`.
+- Separate surfaces with tonal fill and spacing.
+- Use `label-section` for section labels (sentence case).
+- Run `npm run audit:wcag` and `npm run audit:design-tokens` before shipping token changes.
 
 ### Don't
 
-- Don't use cobalt for marketing-surface primaries — that's the black pill's job.
-- Don't introduce accent colors beyond cobalt + Oculus purple.
-- Don't soften pill buttons below `rounded-full`.
-- Don't run feature cards without rounding — `rounded-xxxl` is the minimum for photographic surfaces.
-- Don't reduce `text-body-md` line-height below 1.75.
-- Don't apply heavy shadows to marketing cards — elevation is a commerce-flow signal.
-- Don't add hairline dividers (`border-b`, `border-r`) between sections, or a border on top of a tinted fill.
-- Don't go below 12px type or use 600 weight.
+- Don't pill-shape buttons, rows, or segmented controls.
+- Don't add hairline dividers between regions or borders on tinted fills.
+- Don't use uppercase tracked eyebrows, gradients, blur, or decorative shapes.
+- Don't go below 12px or use off-scale weights.
 
 ---
 
@@ -226,19 +201,16 @@ The DESIGN.md marketing set (`PromoBanner`, `HeroBand`, `FeatureIconRow`, `Foote
 
 | Breakpoint | Width | Behavior |
 |---|---|---|
-| Mobile (sm) | `<480px` | Hero drops to `text-display-lg`; pill-tab nav collapses; PDP rail → sticky bottom bar. |
-| Mobile (lg) | `480–767px` | Feature tiles 2-up. |
-| Tablet | `768–1023px` | Pill-tab nav returns; PDP at 60/40. |
-| Desktop | `1024–1359px` | Full 3/4-up grids; PDP 58/42. |
-| Wide | `≥1360px` | Wider gutters, larger product photography. |
+| Mobile | `<768px` | Sidebar → drawer; agent panel → full-screen sheet; `touch-target` restores 44px. |
+| Tablet | `768–1023px` | Sidebar collapsible; agent panel overlays. |
+| Desktop | `≥1024px` | Sidebar + conversation + agent panel (`--agent-panel-width` 44%). |
 
-Touch targets: 44px for primary buttons and inputs; 40×40 for icon-circular buttons (44 on mobile via the existing `[data-slot=button]` override).
+Touch targets: 44px for buttons, inputs, and selects on coarse pointers (global `[data-slot=…]` overrides + `touch-target`).
 
 ---
 
 ## Known gaps
 
-- DESIGN.md does not define dark-mode token values — current `.dark` set is synthesised to keep cobalt readable.
-- Optimistic VF stylistic sets (`ss01`, `ss02`) are not present in the system fonts; the declaration is kept and harmless.
-- Pastel decorative tints inside accessory cards are not formalized as tokens — treat them as photographic content.
-- Animation/transition timings are not extracted from spec — current defaults: 150ms ease-out for surfaces, 300ms ease-in-out for accordions.
+- Inter is bundled for Latin only; Cyrillic/Greek/Vietnamese fall back to the system sans.
+- `card-product-feature` / `card-promo-strip` / `card-warranty` utilities from the previous system are retained (now on the tighter radius scale) but unused in product UI.
+- `FilePreview` iframe tokens mirror canvas/surface hex values by hand — update them alongside `globals.css`.

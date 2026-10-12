@@ -55,10 +55,23 @@ function contrast(foreground, background) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+// Dark overrides only redeclare what changes; resolve against the light set as a base.
+const lightVars = parseVars(extractBlock(":root"));
 const themes = {
-  light: parseVars(extractBlock(":root")),
-  dark: parseVars(extractBlock(".dark")),
+  light: lightVars,
+  dark: { ...lightVars, ...parseVars(extractBlock(".dark")) },
 };
+
+// Follow `var(--token)` aliases until a literal value is reached.
+function resolveToken(tokens, name, seen = new Set()) {
+  const value = tokens[name];
+  if (value == null) return undefined;
+  const alias = /^var\((--[\w-]+)\)$/.exec(value);
+  if (!alias) return value;
+  if (seen.has(name)) throw new Error(`Circular alias at ${name}`);
+  seen.add(name);
+  return resolveToken(tokens, alias[1], seen);
+}
 
 const checks = [
   ["foreground on background", "--color-foreground", "--color-background", 4.5],
@@ -66,8 +79,13 @@ const checks = [
   ["dim text on background", "--color-muted-foreground-dim", "--color-background", 4.5],
   ["primary button text", "--color-primary-foreground", "--color-primary", 4.5],
   ["destructive text on background", "--color-destructive", "--color-background", 4.5],
-  ["success status text on background", "--color-accent-emerald", "--color-background", 4.5],
-  ["warning status text on background", "--color-accent-amber", "--color-background", 4.5],
+  ["destructive button text", "--color-on-destructive", "--color-critical", 4.5],
+  ["info / link text on background", "--color-info", "--color-background", 4.5],
+  ["success status text on background", "--color-success-text", "--color-background", 4.5],
+  ["warning status text on background", "--color-warning-text", "--color-background", 4.5],
+  ["foreground on sidebar", "--color-foreground", "--color-sidebar-bg", 4.5],
+  ["muted text on sidebar", "--color-muted-foreground", "--color-sidebar-bg", 4.5],
+  ["muted text on card", "--color-muted-foreground", "--color-card", 4.5],
 ];
 
 let failed = false;
@@ -76,8 +94,8 @@ console.log();
 
 for (const [themeName, tokens] of Object.entries(themes)) {
   for (const [label, fgToken, bgToken, minimum] of checks) {
-    const fg = tokens[fgToken];
-    const bg = tokens[bgToken];
+    const fg = resolveToken(tokens, fgToken);
+    const bg = resolveToken(tokens, bgToken);
     if (!fg || !bg) {
       console.error(`Missing token for ${themeName} ${label}: ${fgToken} / ${bgToken}`);
       failed = true;

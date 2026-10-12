@@ -472,7 +472,7 @@ export function SkillsPage() {
                   setIsFolderUpload(false);
                   setFolderName("");
                 }}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-circle text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 <X className="h-3 w-3" />
               </button>

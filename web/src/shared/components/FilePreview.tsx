@@ -139,21 +139,21 @@ const OFFICE_IFRAME_STYLES = `
 <style>
   :root {
     color-scheme: light dark;
-    --preview-font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
+    --preview-font-sans: "Inter Variable", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
     --preview-background: #ffffff; /* canvas */
-    --preview-foreground: #0a1317; /* ink-deep */
-    --preview-secondary: #f1f4f7;  /* surface-soft */
-    --preview-muted: #f7f9fb;      /* surface-soft at 50% on canvas */
-    --preview-border: #dee3e9;     /* hairline-soft */
-    --preview-hover: #eaf1fb;      /* cobalt 6% on canvas */
+    --preview-foreground: #18191b; /* ink-deep */
+    --preview-secondary: #f5f6f8;  /* surface-soft */
+    --preview-muted: #fafafb;      /* surface-soft at 50% on canvas */
+    --preview-border: #ebecef;     /* hairline-soft */
+    --preview-hover: #eceef1;      /* surface-hover */
   }
   .dark {
-    --preview-background: #0a1317; /* canvas (dark) */
-    --preview-foreground: #f5f7fa; /* ink-deep (dark) */
-    --preview-secondary: #131c22;  /* surface-soft (dark) */
-    --preview-muted: #0f181d;      /* surface-soft at 50% (dark) */
-    --preview-border: #1e252c;     /* hairline-soft (dark) */
-    --preview-hover: #13202c;      /* cobalt 6% (dark) */
+    --preview-background: #0f1011; /* canvas (dark) */
+    --preview-foreground: #f7f8f8; /* ink-deep (dark) */
+    --preview-secondary: #17181a;  /* surface-soft (dark) */
+    --preview-muted: #131415;      /* surface-soft at 50% (dark) */
+    --preview-border: #1f2023;     /* hairline-soft (dark) */
+    --preview-hover: #202124;      /* surface-hover (dark) */
   }
   html:lang(zh-CN) {
     --preview-font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -467,7 +467,7 @@ export function FilePreview({
               key={slide.index}
               className="overflow-hidden rounded-xl bg-muted"
             >
-              <figcaption className="px-3 pt-2 pb-1.5 label-mono text-muted-foreground tabular-nums">
+              <figcaption className="px-3 pt-2 pb-1.5 label-section text-muted-foreground tabular-nums">
                 {t("shared.filePreview.slide", { index: slide.index })}
               </figcaption>
               <img

@@ -82,7 +82,7 @@ export function ChannelPageHeader({
         >
           <Search className="h-4 w-4" aria-hidden="true" />
           <span className="hidden sm:inline">{t("channels.header.search")}</span>
-          <kbd className="hidden rounded-full bg-background px-2 py-0.5 font-mono text-caption-bold text-muted-foreground sm:inline" aria-hidden="true">
+          <kbd className="hidden rounded-sm bg-background px-1.5 py-0.5 font-mono text-caption-bold text-muted-foreground sm:inline" aria-hidden="true">
             {shortcutLabel}
           </kbd>
         </button>

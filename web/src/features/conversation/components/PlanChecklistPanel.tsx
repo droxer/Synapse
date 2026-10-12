@@ -165,7 +165,7 @@ export function PlanChecklistPanel({ planSteps }: PlanChecklistPanelProps) {
     <div className="overflow-hidden rounded-xl bg-muted/30">
       {/* Header */}
       <div className="flex items-center gap-3 px-3 py-2">
-        <span className="label-mono text-muted-foreground flex-1">
+        <span className="label-section text-muted-foreground flex-1">
           {t("plan.title")}
         </span>
 

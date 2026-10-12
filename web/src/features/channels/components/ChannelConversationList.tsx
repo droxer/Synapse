@@ -250,7 +250,7 @@ export function ChannelConversationList({
                       type="button"
                       onClick={(e) => e.stopPropagation()}
                       aria-label={t("channels.list.moreActions", { name })}
-                      className="touch-target flex h-7 w-7 items-center justify-center rounded-circle text-text-subtle hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      className="touch-target flex h-7 w-7 items-center justify-center rounded-sm text-text-subtle hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" aria-hidden />
                     </button>

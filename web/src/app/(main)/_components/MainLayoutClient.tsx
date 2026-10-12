@@ -72,7 +72,7 @@ export function MainLayoutClient({ children }: MainLayoutClientProps) {
             type="button"
             onClick={openSidebar}
             aria-label={t("a11y.openNavigationMenu")}
-            className="flex size-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="flex size-11 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Menu aria-hidden="true" className="h-5 w-5" />
           </button>

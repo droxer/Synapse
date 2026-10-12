@@ -26,7 +26,7 @@ export function SendButton({ disabled = false, hasContent = false }: SendButtonP
       whileTap={hasContent ? { scale: 0.95 } : undefined}
       transition={{ type: "spring", stiffness: 400, damping: 20 }}
       className={cn(
-        "flex size-11 shrink-0 items-center justify-center rounded-full",
+        "touch-target flex size-8 shrink-0 items-center justify-center rounded-sm",
         "transition-[color,background-color] duration-200 ease-out",
         "outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         hasContent

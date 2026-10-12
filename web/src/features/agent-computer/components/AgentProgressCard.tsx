@@ -983,7 +983,7 @@ export function AgentProgressCard({
           >
             <Monitor className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
-          <span className="label-mono flex-1 truncate text-muted-foreground">{t("progress.title")}</span>
+          <span className="label-section flex-1 truncate text-muted-foreground">{t("progress.title")}</span>
           <TaskStateBadge state={taskState} t={t} />
           <span
             className={cn(

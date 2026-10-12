@@ -110,7 +110,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
         <button
           type="button"
           className={cn(
-            "group flex w-full items-center gap-2.5 rounded-full px-2 py-2 text-left",
+            "group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left",
             "transition-colors duration-200",
             "hover:bg-sidebar-hover",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -177,7 +177,7 @@ function ProfilePopoverContent({
           type="button"
           onClick={onOpenSettings}
           className={cn(
-            "flex w-full items-center gap-2 rounded-full px-2.5 py-2 text-body-sm",
+            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-body-sm",
             "text-foreground transition-colors duration-150",
             "hover:bg-muted",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -190,7 +190,7 @@ function ProfilePopoverContent({
           type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
           className={cn(
-            "flex w-full items-center gap-2 rounded-full px-2.5 py-2 text-body-sm",
+            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-body-sm",
             "text-foreground transition-colors duration-150",
             "hover:bg-muted",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",

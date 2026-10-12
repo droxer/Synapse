@@ -31,15 +31,15 @@ describe("SuggestionPill", () => {
     capturedButtonProps.mockClear();
   });
 
-  it("renders label and icon as a rounded pill button", () => {
+  it("renders label and icon as a compact Linear-style chip button", () => {
     const html = renderToStaticMarkup(
       <SuggestionPill label="Prototype a feature" icon={<Zap data-testid="icon" />} onClick={jest.fn()} />,
     );
 
     expect(html).toContain("Prototype a feature");
     expect(html).toContain("data-testid=\"icon\"");
-    expect(html).toContain("rounded-full");
-    expect(html).toContain("min-h-11");
+    expect(html).toContain("rounded-sm");
+    expect(html).toContain("min-h-9");
   });
 
   it("is disabled when disabled prop is true", () => {

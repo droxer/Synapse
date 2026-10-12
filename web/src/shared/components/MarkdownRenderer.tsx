@@ -39,7 +39,7 @@ const TABLE_HEADER_CELL_CLASS = "bg-muted px-3 py-2 text-left font-medium first:
 const TABLE_CELL_CLASS = "px-3 py-2";
 const TABLE_ROW_CLASS = "even:bg-muted/40";
 const LINK_CLASS =
-  "inline-flex items-center gap-0.5 text-primary underline underline-offset-2 hover:text-accent-hover";
+  "inline-flex items-center gap-0.5 text-info underline underline-offset-2 hover:opacity-80";
 
 function CopyButton({ text }: { text: string }) {
   const { t } = useTranslation();
@@ -63,7 +63,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="flex items-center gap-1 rounded-full p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="flex items-center gap-1 rounded-sm p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       aria-label={label}
       title={label}
     >

@@ -39,7 +39,7 @@ export function SearchInput({ value, onChange, placeholder, clearLabel, classNam
           type="button"
           aria-label={resolvedClearLabel}
           onClick={() => onChange("")}
-          className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <X className="h-3 w-3" />
         </button>

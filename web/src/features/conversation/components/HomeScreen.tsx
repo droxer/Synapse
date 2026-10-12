@@ -78,16 +78,6 @@ export function HomeScreen({
 
   return (
     <div className="relative flex h-full w-full flex-col justify-center overflow-hidden px-4 sm:px-6">
-      {/* Decorative background layer — soft tonal shapes, no lines */}
-      <div
-        className="pointer-events-none absolute -right-10 top-20 h-64 w-64 rotate-12 rounded-feature bg-surface-soft"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute right-16 bottom-24 h-36 w-36 -rotate-6 rounded-xxl bg-surface-soft"
-        aria-hidden="true"
-      />
-
       <motion.div
         className="relative z-10 mx-auto w-full max-w-[680px]"
         variants={containerVariants}
@@ -96,14 +86,14 @@ export function HomeScreen({
       >
         <motion.p
           variants={itemVariants}
-          className="text-caption-bold uppercase tracking-[0.08em] text-steel"
+          className="text-body-sm-bold text-steel"
         >
           {t("sidebar.brand")}
         </motion.p>
 
         <motion.h1
           variants={itemVariants}
-          className="mt-4 text-balance text-left text-heading-sm text-ink-deep sm:text-heading-lg lg:text-display-lg"
+          className="mt-2 text-balance text-left text-heading-md text-ink-deep sm:text-heading-lg"
         >
           {t("welcome.heading")}
         </motion.h1>

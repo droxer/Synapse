@@ -85,7 +85,7 @@ function CallbackContent() {
               </p>
               {deepLinkHref && (
                 <a
-                  className="rounded-sm text-body-sm-bold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="rounded-sm text-body-sm-bold text-info underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   href={deepLinkHref}
                 >
                   {t("desktopCallback.openApp")}

@@ -273,9 +273,9 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                   size="sm"
                   aria-label={t("chat.planner")}
                   className={cn(
-                    "h-7 gap-1.5 px-2.5 text-caption-bold transition-colors duration-150 data-[state=on]:bg-cobalt data-[state=on]:text-on-cobalt",
+                    "h-7 gap-1.5 px-2.5 text-caption-bold transition-colors duration-150 data-[state=on]:bg-accent-subtle data-[state=on]:text-info",
                     usePlanner
-                      ? "hover:bg-cobalt-deep hover:text-on-cobalt"
+                      ? "hover:bg-accent-subtle hover:text-info"
                       : "text-steel hover:bg-surface-soft hover:text-ink-deep",
                   )}
                   title={usePlanner ? t("chat.plannerActive") : t("chat.plannerHint")}
@@ -330,7 +330,7 @@ export function ChatInput({ onSendMessage, disabled = false, onCancel, isAgentRu
                     title={hasContent ? t("chat.sendMessage") : t("chat.typeToSend")}
                     className={cn(
                       "transition-colors duration-200",
-                      hasContent && "bg-cobalt text-on-cobalt hover:bg-cobalt-deep",
+                      hasContent && "bg-indigo text-on-indigo hover:bg-indigo-deep",
                       !hasContent && "bg-transparent text-steel",
                     )}
                   >
