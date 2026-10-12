@@ -1,98 +1,83 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import {
-  BUFFER_FLUSH_FALLBACK_MS,
+  BUFFER_FLUSH_INTERVAL_MS,
   BACKEND_DISCONNECT_ERROR,
   clearScheduledBufferFlush,
   createTerminalDisconnectEvent,
   ensureBufferFlushScheduled,
   parseSSEEvent,
+  resolveStreamErrorAction,
   shouldEmitTerminalDisconnectEvent,
   shouldFlushEventImmediately,
   shouldScheduleReconnect,
 } from "./use-sse";
 
 describe("buffer flush scheduling", () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it("schedules a timeout fallback alongside requestAnimationFrame", () => {
-    const flushBuffer = jest.fn();
-    const requestAnimationFrame = jest.fn<(callback: () => void) => number>(() => 7);
-    const cancelAnimationFrame = jest.fn();
-    const setTimeoutMock = jest.fn<(callback: () => void, delay: number) => ReturnType<typeof setTimeout>>(
-      (callback) => {
-      callback();
-      return 11 as unknown as ReturnType<typeof setTimeout>;
-      },
-    );
-    const clearTimeoutMock = jest.fn();
-
-    const scheduled = ensureBufferFlushScheduled(
-      { rafId: null, timeoutId: null },
-      flushBuffer,
-      {
-        requestAnimationFrame,
-        cancelAnimationFrame,
-        setTimeout: setTimeoutMock,
-        clearTimeout: clearTimeoutMock as (id: ReturnType<typeof setTimeout>) => void,
-      },
-    );
-
-    expect(requestAnimationFrame).toHaveBeenCalledWith(flushBuffer);
-    expect(setTimeoutMock).toHaveBeenCalledWith(flushBuffer, BUFFER_FLUSH_FALLBACK_MS);
-    expect(flushBuffer).toHaveBeenCalledTimes(1);
-    expect(scheduled.rafId).toBe(7);
-    expect(scheduled.timeoutId).toBe(11);
-  });
-
-  it("does not double-schedule when a buffer flush is already pending", () => {
-    const flushBuffer = jest.fn();
-    const requestAnimationFrame = jest.fn<(callback: () => void) => number>(() => 7);
+  function createScheduler() {
     const setTimeoutMock = jest.fn<(callback: () => void, delay: number) => ReturnType<typeof setTimeout>>(
       () => 11 as unknown as ReturnType<typeof setTimeout>,
     );
+    const clearTimeoutMock = jest.fn<(id: ReturnType<typeof setTimeout>) => void>();
+    return { setTimeout: setTimeoutMock, clearTimeout: clearTimeoutMock };
+  }
 
-    const existing = {
-      rafId: 3,
-      timeoutId: 9 as unknown as ReturnType<typeof setTimeout>,
-    };
-    const scheduled = ensureBufferFlushScheduled(existing, flushBuffer, {
-      requestAnimationFrame,
-      cancelAnimationFrame: jest.fn(),
-      setTimeout: setTimeoutMock,
-      clearTimeout: jest.fn() as (id: ReturnType<typeof setTimeout>) => void,
-    });
+  it("coalesces buffered events into a single flush per interval", () => {
+    const flushBuffer = jest.fn();
+    const scheduler = createScheduler();
 
-    expect(scheduled).toBe(existing);
-    expect(requestAnimationFrame).not.toHaveBeenCalled();
-    expect(setTimeoutMock).not.toHaveBeenCalled();
+    const scheduled = ensureBufferFlushScheduled({ timeoutId: null }, flushBuffer, scheduler);
+
+    expect(scheduler.setTimeout).toHaveBeenCalledWith(flushBuffer, BUFFER_FLUSH_INTERVAL_MS);
+    expect(scheduled.timeoutId).toBe(11);
   });
 
-  it("clears both animation-frame and timeout flush handles together", () => {
-    const cancelAnimationFrame = jest.fn();
-    const clearTimeoutMock = jest.fn();
+  it("throttles token streams below animation-frame rate", () => {
+    // Every flush re-derives the whole transcript, so flushing on every
+    // animation frame (~16ms) makes long conversations janky.
+    expect(BUFFER_FLUSH_INTERVAL_MS).toBeGreaterThanOrEqual(32);
+    expect(BUFFER_FLUSH_INTERVAL_MS).toBeLessThanOrEqual(100);
+  });
+
+  it("does not double-schedule when a buffer flush is already pending", () => {
+    const scheduler = createScheduler();
+    const existing = { timeoutId: 9 as unknown as ReturnType<typeof setTimeout> };
+
+    const scheduled = ensureBufferFlushScheduled(existing, jest.fn(), scheduler);
+
+    expect(scheduled).toBe(existing);
+    expect(scheduler.setTimeout).not.toHaveBeenCalled();
+  });
+
+  it("clears a pending flush timer", () => {
+    const scheduler = createScheduler();
 
     const cleared = clearScheduledBufferFlush(
-      {
-        rafId: 4,
-        timeoutId: 12 as unknown as ReturnType<typeof setTimeout>,
-      },
-      {
-        requestAnimationFrame: jest.fn<(callback: () => void) => number>(() => 1),
-        cancelAnimationFrame,
-        setTimeout: jest.fn<(callback: () => void, delay: number) => ReturnType<typeof setTimeout>>(),
-        clearTimeout: clearTimeoutMock as (id: ReturnType<typeof setTimeout>) => void,
-      },
+      { timeoutId: 12 as unknown as ReturnType<typeof setTimeout> },
+      scheduler,
     );
 
-    expect(cancelAnimationFrame).toHaveBeenCalledWith(4);
-    expect(clearTimeoutMock).toHaveBeenCalledWith(12);
-    expect(cleared).toEqual({ rafId: null, timeoutId: null });
+    expect(scheduler.clearTimeout).toHaveBeenCalledWith(12 as unknown as ReturnType<typeof setTimeout>);
+    expect(cleared).toEqual({ timeoutId: null });
+  });
+});
+
+describe("resolveStreamErrorAction", () => {
+  const base = { isStopped: false, retryCount: 0, maxRetries: 3, hasPendingTimer: false };
+
+  it("reconnects manually while retries remain", () => {
+    expect(resolveStreamErrorAction(base)).toBe("reconnect");
+  });
+
+  it("does nothing when a reconnect is already pending", () => {
+    expect(resolveStreamErrorAction({ ...base, hasPendingTimer: true })).toBe("none");
+  });
+
+  it("does nothing once the stream was intentionally stopped", () => {
+    expect(resolveStreamErrorAction({ ...base, isStopped: true, retryCount: 3 })).toBe("none");
+  });
+
+  it("emits a terminal disconnect once retries are exhausted", () => {
+    expect(resolveStreamErrorAction({ ...base, retryCount: 3 })).toBe("terminal");
   });
 });
 

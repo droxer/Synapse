@@ -2,6 +2,7 @@
 
 import { useMemo, useRef } from "react";
 import { useAgentState } from "@/features/agent-computer";
+import { deriveArtifactsFromEvents } from "@/features/agent-computer/hooks/use-agent-state";
 import type { AgentEvent, ChatMessage } from "@/shared/types";
 import {
   claimUniqueEvent,
@@ -132,13 +133,18 @@ export function useConversationTranscript(
 ): ConversationTranscriptState {
   const effectiveEvents = useIncrementalMerge(historyEvents, liveEvents, isLive);
   const agentState = useAgentState(effectiveEvents as AgentEvent[]);
-  const liveArtifactState = useAgentState((isLive ? liveEvents : []) as AgentEvent[]);
+  // Only live events contribute artifacts (history artifacts come from the DB).
+  // Extract them directly rather than running the full reducer a second time.
+  const liveArtifacts = useMemo(
+    () => (isLive ? deriveArtifactsFromEvents(liveEvents) : []),
+    [isLive, liveEvents],
+  );
   const messages = useMemo<ChatMessage[]>(() => {
     return mergeHistoryWithEventDerivedMessages(historyMessages, agentState.messages);
   }, [agentState.messages, historyMessages]);
   const artifacts = useMemo<ArtifactInfo[]>(() => {
-    return mergeHistoryWithEventDerivedArtifacts(historyArtifacts, liveArtifactState.artifacts);
-  }, [historyArtifacts, liveArtifactState.artifacts]);
+    return mergeHistoryWithEventDerivedArtifacts(historyArtifacts, liveArtifacts);
+  }, [historyArtifacts, liveArtifacts]);
 
   return {
     effectiveEvents: effectiveEvents as AgentEvent[],

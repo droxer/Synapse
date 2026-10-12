@@ -77,10 +77,10 @@ export function getStableDataKey(value: unknown): string {
 export function getEventKey(event: AgentEvent): string {
   if (event.type === "text_delta") {
     const data = event.data as Record<string, unknown>;
+    // agent/turn/stream ids group chunks but don't identify one: keying on them
+    // alone would collapse repeated tokens (" the", "\n\n") within a stream.
+    const groupingFields = [data.agent_id, data.turn_id, data.stream_id];
     const identityFields = [
-      data.agent_id,
-      data.turn_id,
-      data.stream_id,
       data.chunk_id,
       data.sequence,
       data.index,
@@ -95,6 +95,7 @@ export function getEventKey(event: AgentEvent): string {
       return [
         "text_delta",
         String(event.iteration ?? ""),
+        ...groupingFields.map((value) => String(value ?? "")),
         ...identityFields.map((value) => String(value ?? "")),
         String(data.delta ?? ""),
       ].join("|");

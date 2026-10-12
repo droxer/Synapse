@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { deriveAgentState, stabilizeDerivedAgentState } from "./use-agent-state";
+import { deriveAgentState, deriveArtifactsFromEvents, stabilizeDerivedAgentState } from "./use-agent-state";
 import type { AgentEvent } from "../../../shared/types";
 
 describe("deriveAgentState", () => {
@@ -1922,5 +1922,52 @@ describe("deriveAgentState", () => {
     expect(stabilized.messages[1]).not.toBe(prev.messages[1]);
     expect(stabilized.messages[1]?.messageId).toBe(prev.messages[1]?.messageId);
     expect(stabilized.messages[1]?.content).toBe("Part 1 and Part 2");
+  });
+});
+
+describe("deterministic fallback ids", () => {
+  const idlessEvents: AgentEvent[] = [
+    { type: "turn_start", data: { message: "hi" }, timestamp: 1, iteration: null },
+    { type: "tool_call", data: { name: "web_search", input: { q: "x" } }, timestamp: 2, iteration: 1 },
+    {
+      type: "artifact_created",
+      data: { name: "chart.png", content_type: "image/png", size: 10 },
+      timestamp: 3,
+      iteration: 1,
+    },
+  ];
+
+  it("re-deriving the same events yields the same tool and artifact ids", () => {
+    const first = deriveAgentState(idlessEvents);
+    const second = deriveAgentState(idlessEvents);
+
+    expect(second.toolCalls.map((call) => call.toolUseId)).toEqual(
+      first.toolCalls.map((call) => call.toolUseId),
+    );
+    expect(second.artifacts.map((artifact) => artifact.id)).toEqual(
+      first.artifacts.map((artifact) => artifact.id),
+    );
+  });
+});
+
+describe("deriveArtifactsFromEvents", () => {
+  it("matches the artifacts produced by the full reducer", () => {
+    const events: AgentEvent[] = [
+      { type: "turn_start", data: { message: "hi" }, timestamp: 1, iteration: null },
+      {
+        type: "artifact_created",
+        data: { artifact_id: "a1", name: "report.md", content_type: "text/markdown", size: 42, file_path: "/w/report.md" },
+        timestamp: 2,
+        iteration: 1,
+      },
+      {
+        type: "artifact_created",
+        data: { name: "chart.png", content_type: "image/png", size: 10 },
+        timestamp: 3,
+        iteration: 1,
+      },
+    ];
+
+    expect(deriveArtifactsFromEvents(events)).toEqual(deriveAgentState(events).artifacts);
   });
 });

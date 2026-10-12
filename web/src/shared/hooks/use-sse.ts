@@ -11,10 +11,14 @@ import { API_BASE, MAX_RETRIES, BASE_DELAY_MS, MAX_DELAY_MS } from "@/shared/con
 
 const SSE_EVENT_NAMES: readonly string[] = [...EVENT_TYPES, "done"] as const;
 const EVENT_TYPE_SET = new Set<string>(EVENT_TYPES);
-export const BUFFER_FLUSH_FALLBACK_MS = 50;
+/**
+ * Token-level events are coalesced and flushed at most once per interval.
+ * Every flush re-derives the transcript, so flushing on each animation frame
+ * makes long conversations janky; ~20 updates/s still reads as live typing.
+ */
+export const BUFFER_FLUSH_INTERVAL_MS = 50;
 
 interface BufferFlushSchedule {
-  readonly rafId: number | null;
   readonly timeoutId: ReturnType<typeof setTimeout> | null;
 }
 
@@ -22,15 +26,11 @@ type BufferFlushCallback = () => void;
 type BufferFlushTimeoutHandle = ReturnType<typeof setTimeout>;
 
 interface BufferFlushScheduler {
-  readonly requestAnimationFrame: (callback: BufferFlushCallback) => number;
-  readonly cancelAnimationFrame: (id: number) => void;
   readonly setTimeout: (callback: BufferFlushCallback, delay: number) => BufferFlushTimeoutHandle;
   readonly clearTimeout: (id: BufferFlushTimeoutHandle) => void;
 }
 
 const DEFAULT_BUFFER_FLUSH_SCHEDULER: BufferFlushScheduler = {
-  requestAnimationFrame: (callback) => requestAnimationFrame(callback),
-  cancelAnimationFrame: (id) => cancelAnimationFrame(id),
   setTimeout: (callback, delay) => setTimeout(callback, delay),
   clearTimeout: (id) => clearTimeout(id),
 };
@@ -101,6 +101,14 @@ export function shouldEmitTerminalDisconnectEvent({
 }: ExhaustedRetryInput): boolean {
   if (isStopped) return false;
   return retryCount >= maxRetries;
+}
+
+export type StreamErrorAction = "reconnect" | "terminal" | "none";
+
+export function resolveStreamErrorAction(input: ReconnectGuardInput): StreamErrorAction {
+  if (shouldScheduleReconnect(input)) return "reconnect";
+  if (shouldEmitTerminalDisconnectEvent(input)) return "terminal";
+  return "none";
 }
 
 export function createTerminalDisconnectEvent(timestamp = Date.now()): AgentEvent {
@@ -287,14 +295,11 @@ export function clearScheduledBufferFlush(
   schedule: BufferFlushSchedule,
   scheduler: BufferFlushScheduler = DEFAULT_BUFFER_FLUSH_SCHEDULER,
 ): BufferFlushSchedule {
-  if (schedule.rafId !== null) {
-    scheduler.cancelAnimationFrame(schedule.rafId);
-  }
   if (schedule.timeoutId !== null) {
     scheduler.clearTimeout(schedule.timeoutId);
   }
 
-  return { rafId: null, timeoutId: null };
+  return { timeoutId: null };
 }
 
 export function ensureBufferFlushScheduled(
@@ -302,14 +307,11 @@ export function ensureBufferFlushScheduled(
   flushBuffer: () => void,
   scheduler: BufferFlushScheduler = DEFAULT_BUFFER_FLUSH_SCHEDULER,
 ): BufferFlushSchedule {
-  if (schedule.rafId !== null || schedule.timeoutId !== null) {
+  if (schedule.timeoutId !== null) {
     return schedule;
   }
 
-  return {
-    rafId: scheduler.requestAnimationFrame(flushBuffer),
-    timeoutId: scheduler.setTimeout(flushBuffer, BUFFER_FLUSH_FALLBACK_MS),
-  };
+  return { timeoutId: scheduler.setTimeout(flushBuffer, BUFFER_FLUSH_INTERVAL_MS) };
 }
 
 export function useSSE(conversationId: string | null, isLive = true) {
@@ -321,18 +323,14 @@ export function useSSE(conversationId: string | null, isLive = true) {
   const listenersRef = useRef<Array<{ name: string; handler: (e: MessageEvent) => void }>>([]);
   const stoppedRef = useRef(false);
 
-  // --- Event batching: buffer events and flush once per animation frame ---
+  // --- Event batching: buffer events and flush at most once per interval ---
   const bufferRef = useRef<AgentEvent[]>([]);
-  const rafIdRef = useRef<number | null>(null);
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearPendingBufferFlush = useCallback(() => {
-    const cleared = clearScheduledBufferFlush({
-      rafId: rafIdRef.current,
+    flushTimerRef.current = clearScheduledBufferFlush({
       timeoutId: flushTimerRef.current,
-    });
-    rafIdRef.current = cleared.rafId;
-    flushTimerRef.current = cleared.timeoutId;
+    }).timeoutId;
   }, []);
 
   const flushBuffer = useCallback(() => {
@@ -349,15 +347,10 @@ export function useSSE(conversationId: string | null, isLive = true) {
       if (shouldFlushEventImmediately(agentEvent.type)) {
         flushBuffer();
       } else {
-        const scheduled = ensureBufferFlushScheduled(
-          {
-            rafId: rafIdRef.current,
-            timeoutId: flushTimerRef.current,
-          },
+        flushTimerRef.current = ensureBufferFlushScheduled(
+          { timeoutId: flushTimerRef.current },
           flushBuffer,
-        );
-        rafIdRef.current = scheduled.rafId;
-        flushTimerRef.current = scheduled.timeoutId;
+        ).timeoutId;
       }
     },
     [flushBuffer],
@@ -399,29 +392,24 @@ export function useSSE(conversationId: string | null, isLive = true) {
       };
 
       es.onerror = () => {
+        // Close immediately so the browser's built-in auto-reconnect doesn't
+        // race our backoff reconnect (which would tear down a healthy stream).
+        es.close();
+        if (eventSourceRef.current !== es) return;
         setIsConnected(false);
 
-        if (
-          !shouldScheduleReconnect({
-            isStopped: stoppedRef.current,
-            retryCount: retryCountRef.current,
-            maxRetries: MAX_RETRIES,
-            hasPendingTimer: retryTimerRef.current !== null,
-          })
-        ) {
-          if (
-            shouldEmitTerminalDisconnectEvent({
-              isStopped: stoppedRef.current,
-              retryCount: retryCountRef.current,
-              maxRetries: MAX_RETRIES,
-            })
-          ) {
-            enqueueEvent(createTerminalDisconnectEvent());
-            stoppedRef.current = true;
-            cleanup();
-          }
-          return;
+        const action = resolveStreamErrorAction({
+          isStopped: stoppedRef.current,
+          retryCount: retryCountRef.current,
+          maxRetries: MAX_RETRIES,
+          hasPendingTimer: retryTimerRef.current !== null,
+        });
+        if (action === "terminal") {
+          enqueueEvent(createTerminalDisconnectEvent());
+          stoppedRef.current = true;
+          cleanup();
         }
+        if (action !== "reconnect") return;
 
         const delay = Math.min(
           BASE_DELAY_MS * Math.pow(2, retryCountRef.current),

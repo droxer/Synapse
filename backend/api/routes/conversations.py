@@ -1242,6 +1242,10 @@ async def _cleanup_conversation(
         except asyncio.QueueEmpty:
             break
 
+    # End every connected subscription and release its broadcaster.
+    if entry.stream_task is not None:
+        entry.event_queue.put_nowait(None)
+
     logger.info("conversation_cleaned_up conversation_id={}", conversation_id)
 
 

@@ -466,9 +466,48 @@ function shareStableArray<T>(
   return changed ? shared : previous;
 }
 
+/**
+ * Ids synthesized for events that arrive without one. They must be
+ * deterministic: the reducer re-runs on every SSE flush, and a fresh random
+ * id each time breaks equality checks and remounts keyed rows.
+ */
+function fallbackEventId(prefix: string, event: AgentEvent, ordinal: number): string {
+  return `${prefix}:${event.timestamp}:${event.iteration ?? ""}:${ordinal}`;
+}
+
+function toArtifactInfo(
+  event: Extract<AgentEvent, { type: "artifact_created" }>,
+  ordinal: number,
+): ArtifactInfo {
+  const filePath =
+    typeof event.data.file_path === "string" && event.data.file_path.trim() !== ""
+      ? event.data.file_path
+      : undefined;
+  return {
+    id: String(event.data.artifact_id ?? fallbackEventId("artifact", event, ordinal)),
+    name: String(event.data.name ?? ""),
+    contentType: String(event.data.content_type ?? "application/octet-stream"),
+    size: Number(event.data.size ?? 0),
+    createdAt: new Date(event.timestamp).toISOString(),
+    ...(filePath !== undefined ? { filePath } : {}),
+  };
+}
+
+/** Artifacts only — a cheap alternative to running the full reducer. */
+export function deriveArtifactsFromEvents(events: readonly AgentEvent[]): ArtifactInfo[] {
+  const artifacts: ArtifactInfo[] = [];
+  for (const event of events) {
+    if (event.type === "artifact_created") {
+      artifacts.push(toArtifactInfo(event, artifacts.length));
+    }
+  }
+  return artifacts;
+}
+
 export function deriveAgentState(events: readonly AgentEvent[]): DerivedAgentState {
   const messages: ChatMessage[] = [];
   const artifacts: ArtifactInfo[] = [];
+  let idlessToolCallCount = 0;
   const reasoningSteps: string[] = [];
   const toolCallMap = new Map<string, ToolCallInfo>();
   const toolCallOrder: string[] = [];
@@ -924,7 +963,8 @@ export function deriveAgentState(events: readonly AgentEvent[]): DerivedAgentSta
       pendingToolIds.add(toolId);
       assistantPhase = { phase: "using_tool", toolName };
 
-      const toolUseId = toolId.length > 0 ? toolId : crypto.randomUUID();
+      const toolUseId =
+        toolId.length > 0 ? toolId : fallbackEventId("tool-call", event, idlessToolCallCount++);
       const input = (event.data.input ?? event.data.tool_input ?? event.data.arguments ?? {}) as Record<string, unknown>;
       if (skillToolNames.has(toolName) && isDeepResearchSkillName(input.name)) {
         isDeepResearchTurn = true;
@@ -1440,22 +1480,10 @@ export function deriveAgentState(events: readonly AgentEvent[]): DerivedAgentSta
       pendingDeepResearchVisibleParts = [];
       isDeepResearchTurn = false;
     } else if (event.type === "artifact_created") {
-      const artifactId = String(event.data.artifact_id ?? crypto.randomUUID());
-      const contentType = String(event.data.content_type ?? "application/octet-stream");
-      const filePath =
-        typeof event.data.file_path === "string" && event.data.file_path.trim() !== ""
-          ? event.data.file_path
-          : undefined;
-      artifacts.push({
-        id: artifactId,
-        name: String(event.data.name ?? ""),
-        contentType,
-        size: Number(event.data.size ?? 0),
-        createdAt: new Date(event.timestamp).toISOString(),
-        ...(filePath !== undefined ? { filePath } : {}),
-      });
-      if (contentType.startsWith("image/")) {
-        imageArtifactIdSet.add(artifactId);
+      const artifact = toArtifactInfo(event, artifacts.length);
+      artifacts.push(artifact);
+      if (artifact.contentType.startsWith("image/")) {
+        imageArtifactIdSet.add(artifact.id);
       }
     } else if (event.type === "agent_spawn") {
       currentTurnHadAgentSpawn = true;
