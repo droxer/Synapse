@@ -8,25 +8,35 @@ import { Badge } from "@/shared/components/ui/badge";
 const PREVIEW_SIZES = [16, 28, 56] as const;
 
 const VARIANTS: Array<{
-  id: LogoVariant | "synaptic-s-animated";
+  id: LogoVariant | "synaptic-s-animated" | "split-s-animated";
   variant: LogoVariant;
   animated?: boolean;
   badge?: string;
 }> = [
-  { id: "diagonal", variant: "diagonal", badge: "Current" },
+  { id: "split-s-animated", variant: "split-s", animated: true, badge: "Current" },
+  { id: "split-s", variant: "split-s", badge: "Static assets" },
+  { id: "diagonal", variant: "diagonal", badge: "Previous" },
   { id: "synaptic-s", variant: "synaptic-s" },
   { id: "synaptic-s-animated", variant: "synaptic-s", animated: true, badge: "Option C" },
   { id: "glyph", variant: "glyph", badge: "Option B" },
-  { id: "legacy", variant: "legacy", badge: "Previous" },
+  { id: "legacy", variant: "legacy", badge: "Legacy" },
 ];
 
 const VARIANT_COPY: Record<
   (typeof VARIANTS)[number]["id"],
   { title: string; note: string }
 > = {
+  "split-s": {
+    title: "Split S",
+    note: "Static form for favicons and app icons. An S broken at its spine — the gap is the synaptic cleft, the dot the signal crossing it.",
+  },
+  "split-s-animated": {
+    title: "Split S + pulse",
+    note: "Primary in-app mark. The signal dot pulses across the cleft; static under reduced motion.",
+  },
   diagonal: {
     title: "Diagonal synapse",
-    note: "Primary mark. Two terminals on a 45° axis with a cleft and signal pulse.",
+    note: "Previous mark. Two terminals on a 45° axis; read as a dumbbell at small sizes.",
   },
   "synaptic-s": {
     title: "Synaptic S",

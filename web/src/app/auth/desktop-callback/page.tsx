@@ -61,7 +61,7 @@ function CallbackContent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="surface-panel w-full max-w-[28rem] px-6 py-8 text-center">
         <div className="flex flex-col items-center gap-4" role="status" aria-live="polite">
-          <Logo size={48} tone="auto" className="rounded-lg" />
+          <Logo size={48} tone="auto" animated className="rounded-lg" />
           {status === "loading" && (
             <>
               <div aria-hidden="true" className="h-5 w-5 rounded-full skeleton-shimmer bg-muted" />

@@ -44,14 +44,13 @@ Optional support lockup:
 
 ## Mark Geometry
 
-The icon is a **diagonal synapse**:
+The icon is a **split S** — the Synapse monogram broken at its spine:
 
-- Two **neural terminals** (circles) sit on a 45° axis — presynaptic and postsynaptic.
-- **Bridge pads** span toward the center along the axis.
-- A **synaptic cleft** (punched gap) sits between the terminals on the diagonal.
-- A **signal pulse** (center dot) marks transmission across the cleft.
+- Two **neural terminals**: the upper and lower bowls of the S, drawn as round-capped arcs (r=19, stroke 13 on a 128 grid). The lower bowl is the upper rotated 180° about the center.
+- A **synaptic cleft**: the S's diagonal spine is omitted, leaving a gap between the terminals.
+- A **signal pulse**: a center dot (r=6) crossing the cleft. It is the only element that animates (`animated` prop).
 
-The diagonal axis adds energy and directionality; the cleft-and-pulse motif keeps the biology literal.
+The S keeps the mark legible as a letterform at 16px; the cleft-and-pulse keeps the synapse metaphor literal. Source of truth: `SplitSGlyph` in `web/src/shared/components/logo-variants.tsx`, mirrored in `web/public/favicon-{light,dark}.svg` and `logo.svg`. After editing the SVGs, run `uv run --with pillow python web/scripts/generate_favicons.py` to regenerate PNG/ICO/ICNS assets.
 
 ## Clear Space and Minimum Size
 

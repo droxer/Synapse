@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-export type LogoVariant = "synaptic-s" | "diagonal" | "glyph" | "legacy";
+export type LogoVariant = "split-s" | "synaptic-s" | "diagonal" | "glyph" | "legacy";
 
 export type LogoPalette = {
   background: string;
@@ -60,7 +60,31 @@ type LogoGlyphProps = {
   animated?: boolean;
 };
 
-/** Current — S monogram with synaptic cleft at the inflection point. */
+const SPLIT_S_HALF_PATH = "M81.22 36.97 A19 19 0 1 0 49.45 57.21";
+
+/** Primary mark — S split at its spine; the gap is the cleft, the dot the signal. */
+export function SplitSGlyph({ palette, animated = false }: LogoGlyphProps) {
+  return (
+    <>
+      <path
+        d={SPLIT_S_HALF_PATH}
+        stroke={palette.glyph}
+        strokeWidth="13"
+        strokeLinecap="round"
+      />
+      <path
+        d={SPLIT_S_HALF_PATH}
+        stroke={palette.glyph}
+        strokeWidth="13"
+        strokeLinecap="round"
+        transform="rotate(180 64 64)"
+      />
+      <SynapticPulse cx={64} cy={64} r={6} palette={palette} animated={animated} />
+    </>
+  );
+}
+
+/** Alternate — S monogram with synaptic cleft at the inflection point. */
 export function SynapticSGlyph({ palette, animated = false }: LogoGlyphProps) {
   return (
     <>
@@ -77,7 +101,7 @@ export function SynapticSGlyph({ palette, animated = false }: LogoGlyphProps) {
   );
 }
 
-/** Primary mark — diagonal terminals with a cleft on the 45° axis. */
+/** Previous mark — diagonal terminals with a cleft on the 45° axis. */
 export function DiagonalSynapseGlyph({ palette, animated = false }: LogoGlyphProps) {
   return (
     <>
@@ -140,11 +164,13 @@ export function LegacyCircuitGlyph({ palette }: LogoGlyphProps) {
 function SynapticPulse({
   cx,
   cy,
+  r = 5,
   palette,
   animated = false,
 }: {
   cx: number;
   cy: number;
+  r?: number;
   palette: LogoPalette;
   animated?: boolean;
 }) {
@@ -154,7 +180,7 @@ function SynapticPulse({
         <circle
           cx={cx}
           cy={cy}
-          r="9"
+          r={r + 4}
           fill={palette.glyph}
           opacity="0.2"
           className="origin-center animate-[logo-pulse-ring_1.8s_ease-in-out_infinite]"
@@ -164,7 +190,7 @@ function SynapticPulse({
       <circle
         cx={cx}
         cy={cy}
-        r="5"
+        r={r}
         fill={palette.glyph}
         className={animated ? "animate-[logo-pulse-dot_1.8s_ease-in-out_infinite]" : undefined}
       />
@@ -174,6 +200,8 @@ function SynapticPulse({
 
 export function renderLogoGlyph(variant: LogoVariant, props: LogoGlyphProps) {
   switch (variant) {
+    case "split-s":
+      return <SplitSGlyph {...props} />;
     case "synaptic-s":
       return <SynapticSGlyph {...props} />;
     case "diagonal":
@@ -189,6 +217,11 @@ export const LOGO_VARIANT_META: Record<
   LogoVariant,
   { label: string; description: string; hasContainer: boolean }
 > = {
+  "split-s": {
+    label: "Split S",
+    description: "S broken at its spine by a synaptic cleft with a signal pulse.",
+    hasContainer: true,
+  },
   "synaptic-s": {
     label: "Synaptic S",
     description: "S monogram with a split middle rail and center signal pulse.",
