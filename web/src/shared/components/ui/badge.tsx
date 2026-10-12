@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * Badge variants — compact 20px pills, caption-bold (12px / 510), Linear label style.
+ * Badge variants — compact 20px pills, caption-bold (12px / 500), Linear label style.
  *
  * - `neutral`: muted chip — default, general-purpose labels.
  * - `success`: green subtle tint — "In stock", "Verified".

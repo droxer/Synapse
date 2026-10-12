@@ -1,6 +1,6 @@
 # Design system
 
-Synapse's UI follows the Linear-inspired system defined in [`/DESIGN.md`](../../DESIGN.md): Inter Variable, a neutral cool-gray palette with one indigo accent, sharp 4px CTAs, tonal surfaces, and a near-black dark theme.
+Synapse's UI follows the Linear-inspired system defined in [`/DESIGN.md`](../../DESIGN.md): the native system sans stack, a neutral cool-gray palette with one indigo accent, sharp 4px CTAs, tonal surfaces, and a near-black dark theme.
 
 Live token source: [`web/src/app/globals.css`](../../web/src/app/globals.css).
 Authoritative spec: [`DESIGN.md`](../../DESIGN.md).
@@ -19,7 +19,6 @@ The file is structured as:
 - **CTAs are sharp.** Buttons, icon buttons, toggles, segmented-tab triggers, and suggestion chips use `rounded-sm` (4px); `xs` buttons use `rounded-xs` (2px). Fields and list rows use `rounded-md` (6px). Never pill-shape a button.
 - **Dense by default.** UI copy is 13px (`text-sm` / `text-body-sm`), reading copy 15px (`text-body-md`). Controls are 32px tall (`h-8`); rows are ~28–32px.
 - **Light, few lines.** Surfaces separate by tonal fill (`canvas` → `surface-soft` → `surface-hover`) and whitespace — not hairlines. Borders are reserved for `Input`, `Textarea`, `Select`, the composer, and the explicit opt-in `Card variant="outlined"` / `Badge variant="outline"`. Overlays get their edge from the 1px ring inside `shadow-elevated`.
-- **Inter features always on.** `cv01` + `ss03` are set on `body` and all heading roles.
 
 Legacy semantic aliases (`--color-background`, `--color-foreground`, `--color-primary`, …) are kept so the component layer compiles unchanged; each resolves to a canonical token. New code should consume the canonical names.
 
@@ -76,7 +75,7 @@ Run `npm run audit:wcag` after any color change — it resolves `var()` aliases 
 
 ## Typography
 
-**Font stack.** `--font-sans` is Inter Variable (Latin subset bundled from `@fontsource-variable/inter` via `next/font/local`, exposed as `--font-inter`) → system sans → `--font-cjk-sans` (PingFang SC → Hiragino Sans GB → Microsoft YaHei → Noto Sans CJK SC). Code uses Geist Mono via `--font-mono`.
+**Font stack.** No web fonts; the stacks match eveland.ai for both `en` and `zh-CN`. `--font-sans` is `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif` + emoji faces, so Latin renders in SF Pro / Segoe UI / Roboto and CJK falls through to the OS face (PingFang SC / Microsoft YaHei / Noto Sans CJK SC). `--font-mono` is the system monospace stack (`ui-monospace, SFMono-Regular, "SF Mono", Menlo, …`).
 
 `--text-sm` is 13px and `--text-base` is 15px, so plain Tailwind `text-sm` / `text-base` follow Linear's scale.
 
@@ -84,24 +83,24 @@ Run `npm run audit:wcag` after any color change — it resolves `var()` aliases 
 
 | Utility | Size | Weight | LH | Tracking |
 |---|---|---|---|---|
-| `text-hero-display` | clamp(40px, 5vw, 64px) | 510 | 1.06 | -0.032em |
-| `text-display-lg` | clamp(32px, 4vw, 48px) | 510 | 1.1 | -0.028em |
-| `text-heading-lg` | 28px → 36px at ≥768px | 590 | 1.2 → 1.15 | -0.022 → -0.025em |
-| `text-heading-md` | 24px | 590 | 1.3 | -0.018em |
-| `text-heading-sm` | 20px | 590 | 1.33 | -0.012em |
-| `text-subtitle-lg` | 17px | 590 | 1.45 | -0.008em |
+| `text-hero-display` | clamp(40px, 5vw, 64px) | 500 | 1.06 | -0.032em |
+| `text-display-lg` | clamp(32px, 4vw, 48px) | 500 | 1.1 | -0.028em |
+| `text-heading-lg` | 28px → 36px at ≥768px | 600 | 1.2 → 1.15 | -0.022 → -0.025em |
+| `text-heading-md` | 24px | 600 | 1.3 | -0.018em |
+| `text-heading-sm` | 20px | 600 | 1.33 | -0.012em |
+| `text-subtitle-lg` | 17px | 600 | 1.45 | -0.008em |
 | `text-subtitle-md` | 17px | 400 | 1.6 | -0.006em |
 | `text-body-md` | 15px | 400 | 1.6 | -0.004em |
-| `text-body-md-bold` | 15px | 590 | 1.6 | -0.004em |
+| `text-body-md-bold` | 15px | 600 | 1.6 | -0.004em |
 | `text-body-sm` | 13px | 400 | 1.5 | 0 |
-| `text-body-sm-bold` | 13px | 510 | 1.5 | 0 |
-| `text-caption-bold` | 12px | 510 | 1.33 | 0 |
-| `label-section` | 12px | 510 | 1.33 | 0 (sentence case, tabular nums) |
-| `text-button-md` / `text-link-md` | 13px | 510 | 1.43 | 0 |
+| `text-body-sm-bold` | 13px | 500 | 1.5 | 0 |
+| `text-caption-bold` | 12px | 500 | 1.33 | 0 |
+| `label-section` | 12px | 500 | 1.33 | 0 (sentence case, tabular nums) |
+| `text-button-md` / `text-link-md` | 13px | 500 | 1.43 | 0 |
 
 `:lang(zh)` steps display sizes down and relaxes tracking.
 
-**Weights.** 400 / 510 / 590 / 680 — `font-medium`, `font-semibold`, `font-bold` are remapped to the last three. Prefer the role utilities.
+**Weights.** 400 / 500 / 600 / 700 — `font-medium`, `font-semibold`, `font-bold` are remapped to the last three. Prefer the role utilities.
 
 **12px floor.** Nothing renders below 12px.
 
@@ -174,7 +173,7 @@ All variants are `rounded-sm` — don't override with softer radii at call sites
 
 ### Menus, Kbd, Tooltip
 
-Dropdown / select rows: `rounded-md px-2 py-1.5`, focus `bg-accent` (`surface-hover`); group labels `text-caption` muted. `Kbd`: 20px keycap, `surface-hover`, `rounded-sm`, Inter 12px. Tooltip: inverted `foreground` fill, `rounded-md`.
+Dropdown / select rows: `rounded-md px-2 py-1.5`, focus `bg-accent` (`surface-hover`); group labels `text-caption` muted. `Kbd`: 20px keycap, `surface-hover`, `rounded-sm`, 12px sans. Tooltip: inverted `foreground` fill, `rounded-md`.
 
 ---
 
@@ -211,6 +210,5 @@ Touch targets: 44px for buttons, inputs, and selects on coarse pointers (global 
 
 ## Known gaps
 
-- Inter is bundled for Latin only; Cyrillic/Greek/Vietnamese fall back to the system sans.
 - `card-product-feature` / `card-promo-strip` / `card-warranty` utilities from the previous system are retained (now on the tighter radius scale) but unused in product UI.
 - `FilePreview` iframe tokens mirror canvas/surface hex values by hand — update them alongside `globals.css`.

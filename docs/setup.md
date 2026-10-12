@@ -242,7 +242,6 @@ Synapse/
 ├── web/               # Next.js frontend
 │   └── src/
 │       ├── app/       # Pages (App Router)
-│       │   └── font-assets/ # Bundled local Geist/Noto font assets
 │       ├── features/  # Feature modules (conversation, agent-computer, skills, mcp, library, channels)
 │       ├── shared/    # Shared components, hooks, stores, types
 │       └── i18n/      # Internationalization (en, zh-CN)

@@ -154,13 +154,12 @@
   --ring-profile: var(--color-profile-ring);
   --ring-profile-hover: var(--color-profile-ring-hover);
 
-  /* Font families — Inter Variable (Linear's UI face, bundled Latin subset via next/font)
-     with the native stack as fallback. CJK falls through to the OS face (PingFang on macOS,
-     Microsoft YaHei on Windows, Noto Sans CJK on Linux). */
-  --font-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC";
-  --font-sans: var(--font-inter), "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, var(--font-cjk-sans), sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* Font families — native system stacks, matching eveland.ai (en + zh-CN). No web fonts:
+     Latin renders in SF Pro / Segoe UI / Roboto, and CJK falls through to the OS face
+     (PingFang SC on macOS, Microsoft YaHei on Windows, Noto Sans CJK on Linux). */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif: Georgia, "Times New Roman", serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-brand-family: var(--font-sans);
 
   /* DESIGN.md typography roles are defined as full @utility classes below
@@ -189,11 +188,11 @@
   --font-size-caption: var(--text-xs);
   --font-size-caption--line-height: var(--lh-normal);
 
-  /* Font weights — Inter Variable's Linear stops */
+  /* Font weights — standard stops for the system faces */
   --font-weight-normal: 400;
-  --font-weight-medium: 510;
-  --font-weight-semibold: 590;
-  --font-weight-bold: 680;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 
   /* Elevation — flat surfaces; overlays get a faint edge ring + soft drop. */
   --shadow-card: none;
@@ -562,10 +561,6 @@
   --gradient-text-accent: none;
 }
 
-html:lang(zh-CN) {
-  --font-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC";
-}
-
 /* ─── Custom Tailwind Utilities ─── */
 
 @utility text-micro {
@@ -596,17 +591,16 @@ html:lang(zh-CN) {
   background-color: var(--color-surface-soft);
 }
 
-/* ─── Typography roles — Linear scale on Inter Variable ───
-   Display/heading roles use weight 510–590 with tight negative tracking; UI copy sits
+/* ─── Typography roles — Linear scale on the system sans stack ───
+   Display/heading roles use weight 500–600 with tight negative tracking; UI copy sits
    at 13px (Linear "small"), reading copy at 15px (Linear "regular"). `:lang(zh)` relaxes
-   tracking and opens line-height for CJK glyphs. Inter features cv01 + ss03 always pair. */
+   tracking and opens line-height for CJK glyphs. */
 @utility text-hero-display {
   font-family: var(--font-sans);
   font-size: clamp(40px, 5vw, 64px);
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.06;
   letter-spacing: -0.032em;
-  font-feature-settings: "cv01", "ss03";
 
   &:lang(zh) {
     font-size: clamp(34px, 4.2vw, 54px);
@@ -617,10 +611,9 @@ html:lang(zh-CN) {
 @utility text-display-lg {
   font-family: var(--font-sans);
   font-size: clamp(32px, 4vw, 48px);
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.028em;
-  font-feature-settings: "cv01", "ss03";
 
   &:lang(zh) {
     font-size: clamp(28px, 3.4vw, 42px);
@@ -631,10 +624,9 @@ html:lang(zh-CN) {
 @utility text-heading-lg {
   font-family: var(--font-sans);
   font-size: 1.75rem;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.022em;
-  font-feature-settings: "cv01", "ss03";
 
   @media (min-width: 48rem) {
     font-size: 2.25rem;
@@ -645,10 +637,9 @@ html:lang(zh-CN) {
 @utility text-heading-md {
   font-family: var(--font-sans);
   font-size: 1.5rem;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.018em;
-  font-feature-settings: "cv01", "ss03";
 
   &:lang(zh) {
     font-size: 1.375rem;
@@ -658,18 +649,16 @@ html:lang(zh-CN) {
 @utility text-heading-sm {
   font-family: var(--font-sans);
   font-size: 1.25rem;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1.33;
   letter-spacing: -0.012em;
-  font-feature-settings: "cv01", "ss03";
 }
 @utility text-subtitle-lg {
   font-family: var(--font-sans);
   font-size: 1.0625rem;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1.45;
   letter-spacing: -0.008em;
-  font-feature-settings: "cv01", "ss03";
 }
 @utility text-subtitle-md {
   font-family: var(--font-sans);
@@ -688,7 +677,7 @@ html:lang(zh-CN) {
 @utility text-body-md-bold {
   font-family: var(--font-sans);
   font-size: 0.9375rem;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1.6;
   letter-spacing: -0.004em;
 }
@@ -701,25 +690,25 @@ html:lang(zh-CN) {
 @utility text-body-sm-bold {
   font-family: var(--font-sans);
   font-size: 0.8125rem;
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.5;
 }
 @utility text-caption-bold {
   font-family: var(--font-sans);
   font-size: 0.75rem;
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.33;
 }
 @utility text-button-md {
   font-family: var(--font-sans);
   font-size: 0.8125rem;
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.43;
 }
 @utility text-link-md {
   font-family: var(--font-sans);
   font-size: 0.8125rem;
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.43;
 }
 
@@ -832,7 +821,7 @@ html:lang(zh-CN) {
   padding: 0.125rem 0.5rem;
   font-family: var(--font-sans);
   font-size: var(--font-size-micro);
-  font-weight: 510;
+  font-weight: 500;
   line-height: var(--font-size-micro--line-height);
 }
 
@@ -906,12 +895,12 @@ html:lang(zh-CN) {
   line-height: var(--lh-normal);
 }
 
-/* Linear-style section label — sentence case, 12px / 510, muted by the call site.
+/* Linear-style section label — sentence case, 12px / 500, muted by the call site.
    Replaces the old uppercase mono eyebrow; tabular figures keep counts aligned. */
 @utility label-section {
   font-family: var(--font-sans);
   font-size: var(--font-size-caption);
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.33;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
@@ -920,10 +909,9 @@ html:lang(zh-CN) {
 @utility heading-display {
   font-family: var(--font-sans);
   font-size: clamp(40px, 5vw, 64px);
-  font-weight: 510;
+  font-weight: 500;
   line-height: 1.06;
   letter-spacing: -0.032em;
-  font-feature-settings: "cv01", "ss03";
   text-wrap: balance;
 
   &:lang(zh) {
@@ -936,7 +924,7 @@ html:lang(zh-CN) {
 @utility brand-wordmark {
   font-family: var(--font-brand-family);
   font-size: 0.875rem;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.01em;
   color: var(--color-foreground);
@@ -984,17 +972,16 @@ p, span, input, textarea, label, li, td {
   font-family: var(--font-sans);
 }
 
-/* Headings use Inter's cv01 + ss03 (Linear's alternates: open digits, rounded quotes).
-   We deliberately do NOT set font-size on the bare tag selector — role utilities
-   (`text-heading-lg`, `text-subtitle-lg`, etc.) or Tailwind sizing classes drive that. */
+/* Heading weight and tracking only. We deliberately do NOT set font-size on the bare tag
+   selector — role utilities (`text-heading-lg`, `text-subtitle-lg`, etc.) or Tailwind
+   sizing classes drive that. */
 h1, h2, h3, h4, h5, h6 {
-  font-feature-settings: "cv01", "ss03";
-  font-weight: 590;
+  font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.012em;
 }
 
-h4, h5, h6 { font-weight: 510; letter-spacing: 0; }
+h4, h5, h6 { font-weight: 500; letter-spacing: 0; }
 
 /* ─── Base ─── */
 
@@ -1013,7 +1000,6 @@ html.dark {
 body {
   font-size: var(--text-sm);
   line-height: 1.5;
-  font-feature-settings: "cv01", "ss03";
   touch-action: manipulation;
 }
 
@@ -1156,7 +1142,7 @@ pre, code {
 }
 
 .hljs-strong {
-  font-weight: 590;
+  font-weight: 600;
 }
 
 /* ─── Dot-grid texture overlay ─── */
@@ -1298,7 +1284,7 @@ pre, code {
 .conversation-markdown :where(h1, h2, h3, h4) {
   margin-top: 1.1rem;
   margin-bottom: 0.55rem;
-  font-weight: 590;
+  font-weight: 600;
   letter-spacing: -0.012em;
 }
 
@@ -1356,7 +1342,7 @@ pre, code {
 .markdown-reasoning h5,
 .markdown-reasoning h6 {
   margin: 0.9em 0 0.35em;
-  font-weight: 590;
+  font-weight: 600;
   color: var(--color-foreground);
   opacity: 0.92;
 }

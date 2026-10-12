@@ -1,7 +1,7 @@
 ---
 version: beta
 name: Synapse-linear
-description: Synapse's product UI follows Linear's design language — a calm, dense, keyboard-first tool aesthetic. Inter Variable at 13px for UI and 15px for reading, a neutral cool-gray palette with a single indigo accent (#5e6ad2), sharp 4px CTAs on 6px fields, tonal surface separation, and a signature near-black dark theme where the sidebar sits darker than the content canvas.
+description: Synapse's product UI follows Linear's design language — a calm, dense, keyboard-first tool aesthetic. The native system sans stack (SF Pro / Segoe UI, with the OS CJK face) at 13px for UI and 15px for reading, a neutral cool-gray palette with a single indigo accent (#5e6ad2), sharp 4px CTAs on 6px fields, tonal surface separation, and a signature near-black dark theme where the sidebar sits darker than the content canvas.
 
 colors:
   # Light
@@ -55,23 +55,23 @@ colors-dark:
   critical: "#eb5757"
 
 typography:
-  fontFamily: Inter Variable (cv01, ss03) → system sans → PingFang SC / Microsoft YaHei / Noto Sans CJK SC
-  monoFamily: Geist Mono
-  hero-display:   { fontSize: "clamp(40px, 5vw, 64px)", fontWeight: 510, lineHeight: 1.06, letterSpacing: -0.032em }
-  display-lg:     { fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 510, lineHeight: 1.1,  letterSpacing: -0.028em }
-  heading-lg:     { fontSize: "28px → 36px",            fontWeight: 590, lineHeight: 1.15, letterSpacing: -0.025em }
-  heading-md:     { fontSize: 24px, fontWeight: 590, lineHeight: 1.3,  letterSpacing: -0.018em }
-  heading-sm:     { fontSize: 20px, fontWeight: 590, lineHeight: 1.33, letterSpacing: -0.012em }
-  subtitle-lg:    { fontSize: 17px, fontWeight: 590, lineHeight: 1.45 }
+  fontFamily: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif (CJK from the OS: PingFang SC / Microsoft YaHei / Noto Sans CJK SC)
+  monoFamily: ui-monospace, SFMono-Regular, Menlo, Consolas (system mono)
+  hero-display:   { fontSize: "clamp(40px, 5vw, 64px)", fontWeight: 500, lineHeight: 1.06, letterSpacing: -0.032em }
+  display-lg:     { fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 500, lineHeight: 1.1,  letterSpacing: -0.028em }
+  heading-lg:     { fontSize: "28px → 36px",            fontWeight: 600, lineHeight: 1.15, letterSpacing: -0.025em }
+  heading-md:     { fontSize: 24px, fontWeight: 600, lineHeight: 1.3,  letterSpacing: -0.018em }
+  heading-sm:     { fontSize: 20px, fontWeight: 600, lineHeight: 1.33, letterSpacing: -0.012em }
+  subtitle-lg:    { fontSize: 17px, fontWeight: 600, lineHeight: 1.45 }
   subtitle-md:    { fontSize: 17px, fontWeight: 400, lineHeight: 1.6 }
   body-md:        { fontSize: 15px, fontWeight: 400, lineHeight: 1.6 }
-  body-md-bold:   { fontSize: 15px, fontWeight: 590, lineHeight: 1.6 }
+  body-md-bold:   { fontSize: 15px, fontWeight: 600, lineHeight: 1.6 }
   body-sm:        { fontSize: 13px, fontWeight: 400, lineHeight: 1.5 }
-  body-sm-bold:   { fontSize: 13px, fontWeight: 510, lineHeight: 1.5 }
-  caption-bold:   { fontSize: 12px, fontWeight: 510, lineHeight: 1.33 }
-  label-section:  { fontSize: 12px, fontWeight: 510, lineHeight: 1.33, note: "sentence case, tabular figures" }
-  button-md:      { fontSize: 13px, fontWeight: 510, lineHeight: 1.43 }
-  link-md:        { fontSize: 13px, fontWeight: 510, lineHeight: 1.43 }
+  body-sm-bold:   { fontSize: 13px, fontWeight: 500, lineHeight: 1.5 }
+  caption-bold:   { fontSize: 12px, fontWeight: 500, lineHeight: 1.33 }
+  label-section:  { fontSize: 12px, fontWeight: 500, lineHeight: 1.33, note: "sentence case, tabular figures" }
+  button-md:      { fontSize: 13px, fontWeight: 500, lineHeight: 1.43 }
+  link-md:        { fontSize: 13px, fontWeight: 500, lineHeight: 1.43 }
 
 rounded:
   xs: 2px
@@ -104,7 +104,7 @@ Synapse is a tool people sit in for hours, so the UI borrows Linear's design lan
 
 **Key characteristics**
 - **One accent.** Indigo ({colors.indigo}) is the only brand fill. It goes on the primary action of a view, on focus rings, and on selection. Everything else is gray.
-- **Dense, legible type.** Inter Variable with `cv01` + `ss03`. UI copy sits at 13px/400–510 and reading copy (chat, docs) at 15px/1.6. Headings use 590 with tight negative tracking.
+- **Dense, legible type.** The native system sans stack, same for English and Chinese. UI copy sits at 13px/400–500 and reading copy (chat, docs) at 15px/1.6. Headings use 600 with tight negative tracking.
 - **Sharp geometry.** Every CTA (buttons, icon buttons, toggles, tab triggers) uses a crisp 4px radius at 32px tall by default. Fields and list rows use 6px, cards 10px, and overlays 12px. Only badges, avatars, status dots, and progress tracks are fully round.
 - **Tone, not lines.** Surfaces separate by small steps in fill (canvas → surface-soft → surface-hover) and by whitespace. Hairlines are reserved for form inputs and the composer. Overlays get a 1px *shadow ring* instead of a border.
 - **Near-black dark mode.** The dark theme is the signature: the sidebar ({colors-dark.sidebar-bg}) sits darker than the canvas ({colors-dark.canvas}), raised surfaces step up by ~4% luminance, and text is cool off-white.
@@ -132,11 +132,10 @@ Linear's status hues: success #4cb782, attention #f2994a, warning #f2c94c, criti
 
 ## Typography
 
-- **Families.** Inter Variable is bundled (Latin subset) through `next/font`, then the native sans stack, then CJK system faces. Code uses Geist Mono.
-- **Features.** `cv01` (open digits) and `ss03` (rounded quotes) are set on `body` and on every heading role.
-- **Weights.** 400 / 510 / 590 / 680 (`font-normal` / `font-medium` / `font-semibold` / `font-bold` resolve to these). Don't hand-roll other weights.
+- **Families.** No web fonts. `--font-sans` is the native system stack (matching eveland.ai): SF Pro / Segoe UI / Roboto for Latin, and the OS CJK face (PingFang SC, Microsoft YaHei, Noto Sans CJK) for Chinese. Code uses the system monospace stack.
+- **Weights.** 400 / 500 / 600 / 700 (`font-normal` / `font-medium` / `font-semibold` / `font-bold` resolve to these). Don't hand-roll other weights.
 - **Floor.** Nothing renders below 12px.
-- **Labels.** Section labels use `label-section` (12px/510, sentence case). No uppercase-tracked eyebrows.
+- **Labels.** Section labels use `label-section` (12px/500, sentence case). No uppercase-tracked eyebrows.
 - **CJK.** `:lang(zh)` steps display sizes down and relaxes tracking to ~0.
 
 ## Layout
@@ -164,7 +163,7 @@ Default surfaces are flat. Two shadows exist:
 
 - **Button** comes in `default` (indigo), `secondary` (tonal), `ghost` (transparent → `surface-hover`), `destructive`, `marketing` (ink fill), and `link` (`text-info`). All variants use `rounded-sm`. Sizes are `xs` 24 / `sm` 28 / `default` 32 / `lg` 36, plus square icon sizes at the same heights.
 - **Input / Textarea / Select** are 32px tall (`h-8`), `rounded-md`, with a 1px `input` border. Focus darkens the border to `border-active` and adds a 3px indigo halo (`shadow-glow-subtle`). The 44px minimum is restored on coarse pointers.
-- **Badge** is a 20px pill with 12px/510 text and a tonal fill. Variants: neutral, success, warning, danger, info, accent, outline.
+- **Badge** is a 20px pill with 12px/500 text and a tonal fill. Variants: neutral, success, warning, danger, info, accent, outline.
 - **Tabs** come in two forms. `default` is a segmented control: a 6px muted track with 4px triggers, where the active trigger is raised (`bg-background` + `shadow-xs`; `surface-hover` in dark). `line` is a 2px rounded indicator.
 - **Menus** use 6px rows with `py-1.5`, `accent` (`surface-hover`) on focus, and muted 12px group labels.
 - **Kbd** is a 20px keycap on `surface-hover` with `rounded-sm`.
