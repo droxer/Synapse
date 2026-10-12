@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import random
 from collections.abc import Callable, Coroutine, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -10,8 +11,15 @@ import anthropic
 from loguru import logger
 from config.settings import get_settings
 
-# Maximum number of retry attempts for transient API errors
+# Maximum number of attempts for transient API errors. This is the only retry
+# layer: the SDK client is built with ``max_retries=0``.
 _MAX_RETRIES = 3
+_BACKOFF_BASE_SECONDS = 1.0
+_BACKOFF_MAX_SECONDS = 30.0
+_RETRY_AFTER_MAX_SECONDS = 60.0
+# 408/409/429 and 5xx (incl. 529 overloaded) are transient; every other 4xx
+# (400/401/403/404/413/422 ...) fails the same way on retry.
+_RETRYABLE_STATUS_CODES = frozenset({408, 409, 429})
 _CONTENT_POLICY_ERROR_PREFIX = "LLM content policy rejection: "
 _CONTENT_POLICY_ERROR_SUMMARY = (
     "Model provider rejected the request because the prompt or recent tool "
@@ -213,6 +221,10 @@ class LLMResponse:
     stop_reason: str
     usage: TokenUsage
     thinking: str = ""
+    # Raw signed ``thinking`` / ``redacted_thinking`` blocks. Anthropic requires
+    # them to be sent back unmodified ahead of ``tool_use`` in the assistant
+    # turn when extended thinking is enabled. In-memory only (not persisted).
+    thinking_blocks: tuple[dict[str, Any], ...] = ()
 
 
 def _extract_text_blocks(content: list) -> str:
@@ -267,6 +279,33 @@ def _extract_thinking(content: list) -> str:
     return "".join(parts)
 
 
+def _extract_thinking_blocks(content: list) -> tuple[dict[str, Any], ...]:
+    """Return provider-ready copies of signed thinking / redacted blocks.
+
+    Thinking blocks without a signature cannot be verified by the provider and
+    are skipped (some Anthropic-compatible backends omit signatures).
+    """
+    blocks: list[dict[str, Any]] = []
+    for block in content:
+        block_type = getattr(block, "type", None)
+        if block_type == "thinking":
+            signature = getattr(block, "signature", None)
+            if not isinstance(signature, str) or not signature:
+                continue
+            blocks.append(
+                {
+                    "type": "thinking",
+                    "thinking": getattr(block, "thinking", "") or "",
+                    "signature": signature,
+                }
+            )
+        elif block_type == "redacted_thinking":
+            data = getattr(block, "data", None)
+            if isinstance(data, str) and data:
+                blocks.append({"type": "redacted_thinking", "data": data})
+    return tuple(blocks)
+
+
 def _build_usage(usage: Any) -> TokenUsage:
     """Build a frozen TokenUsage from an API response usage object."""
     return TokenUsage(
@@ -292,7 +331,59 @@ def _parse_response(response: Any) -> LLMResponse:
         stop_reason=response.stop_reason,
         usage=_build_usage(response.usage),
         thinking=thinking,
+        thinking_blocks=_extract_thinking_blocks(response.content),
     )
+
+
+def _error_status_code(exc: Exception) -> int | None:
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        return status
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    return status if isinstance(status, int) else None
+
+
+def _is_retryable_error(exc: Exception) -> bool:
+    """Return True for transient provider failures worth retrying."""
+    if isinstance(exc, anthropic.APIConnectionError):  # includes timeouts
+        return True
+    if not isinstance(exc, anthropic.APIStatusError):
+        return False
+    status = _error_status_code(exc)
+    if status is None:
+        return False
+    return status in _RETRYABLE_STATUS_CODES or status >= 500
+
+
+def _retry_after_seconds(exc: Exception) -> float | None:
+    """Parse a ``retry-after-ms`` / ``retry-after`` (seconds) header."""
+    headers = getattr(getattr(exc, "response", None), "headers", None)
+    if headers is None:
+        return None
+    try:
+        retry_after_ms = headers.get("retry-after-ms")
+        if retry_after_ms is not None:
+            return max(0.0, float(retry_after_ms) / 1000.0)
+        retry_after = headers.get("retry-after")
+        if retry_after is not None:
+            return max(0.0, float(retry_after))
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
+def _backoff_delay(attempt: int, exc: Exception) -> float:
+    """Seconds to wait before the next attempt (honors ``retry-after``)."""
+    retry_after = _retry_after_seconds(exc)
+    if retry_after is not None:
+        return min(retry_after, _RETRY_AFTER_MAX_SECONDS)
+    ceiling = min(_BACKOFF_MAX_SECONDS, _BACKOFF_BASE_SECONDS * (2**attempt))
+    # "Equal jitter": keep at least half of the exponential delay.
+    return ceiling / 2 + random.uniform(0, ceiling / 2)
+
+
+async def _backoff_sleep(seconds: float) -> None:
+    await asyncio.sleep(seconds)
 
 
 class AnthropicClient:
@@ -310,9 +401,12 @@ class AnthropicClient:
 
         self._default_model = default_model
         self._default_max_tokens = max_tokens
+        # Retries are handled by this wrapper (jitter + retry-after support);
+        # the SDK's own retries are disabled so attempts don't multiply.
         self._client = anthropic.AsyncAnthropic(
             api_key=api_key,
             base_url=base_url or None,
+            max_retries=0,
         )
 
     @property
@@ -400,25 +494,28 @@ class AnthropicClient:
                         hasattr(response, "reasoning_content"),
                     )
                 return _parse_response(response)
-            except (
-                anthropic.RateLimitError,
-                anthropic.InternalServerError,
-                anthropic.APIConnectionError,
-                anthropic.APITimeoutError,
-            ) as exc:
+            except anthropic.APIError as exc:
+                if not _is_retryable_error(exc):
+                    raise
                 last_exc = exc
-                logger.warning(
-                    "llm_retry model={} attempt={}/{} error={}",
-                    effective_model,
-                    attempt + 1,
-                    _MAX_RETRIES,
-                    exc,
-                )
-                if attempt < _MAX_RETRIES - 1:
-                    await asyncio.sleep(2**attempt)
+                await self._before_retry(effective_model, attempt, exc)
 
         # All retries exhausted — re-raise the last exception
         raise last_exc  # type: ignore[misc]
+
+    async def _before_retry(
+        self, effective_model: str, attempt: int, exc: Exception
+    ) -> None:
+        """Log a retryable failure and back off unless it was the last attempt."""
+        logger.warning(
+            "llm_retry model={} attempt={}/{} error={}",
+            effective_model,
+            attempt + 1,
+            _MAX_RETRIES,
+            exc,
+        )
+        if attempt < _MAX_RETRIES - 1:
+            await _backoff_sleep(_backoff_delay(attempt, exc))
 
     async def create_message_stream(
         self,
@@ -479,6 +576,9 @@ class AnthropicClient:
         debug_logging_enabled = getattr(get_settings(), "AGENT_DEBUG_LOGGING", False)
 
         last_exc: Exception | None = None
+        # Once any delta reached the caller a retry would replay it (duplicated
+        # text in the UI), so retries are only allowed before the first emit.
+        output_emitted = False
         for attempt in range(_MAX_RETRIES):
             try:
                 if debug_logging_enabled:
@@ -496,13 +596,14 @@ class AnthropicClient:
                     emitted_thinking = False
 
                     async def _emit_thinking_once() -> None:
-                        nonlocal emitted_thinking
+                        nonlocal emitted_thinking, output_emitted
                         if (
                             emitted_thinking
                             or on_thinking_ready is None
                             or not thinking_snapshot
                         ):
                             return
+                        output_emitted = True
                         await on_thinking_ready(thinking_snapshot)
                         emitted_thinking = True
 
@@ -520,6 +621,7 @@ class AnthropicClient:
                         if chunk_type == "text" and on_text_delta is not None:
                             text_delta = getattr(chunk, "text", "")
                             if isinstance(text_delta, str) and text_delta:
+                                output_emitted = True
                                 await on_text_delta(text_delta)
 
                     await _emit_thinking_once()
@@ -532,22 +634,25 @@ class AnthropicClient:
                         hasattr(response, "reasoning_content"),
                     )
                 return _parse_response(response)
-            except (
-                anthropic.RateLimitError,
-                anthropic.InternalServerError,
-                anthropic.APIConnectionError,
-                anthropic.APITimeoutError,
-            ) as exc:
+            except anthropic.APIError as exc:
+                if output_emitted and _is_retryable_error(exc):
+                    logger.warning(
+                        "llm_stream_not_retried_after_output model={} error={}",
+                        effective_model,
+                        exc,
+                    )
+                if output_emitted or not _is_retryable_error(exc):
+                    if debug_logging_enabled:
+                        logger.debug(
+                            "llm_stream_non_retryable_error model={} "
+                            "error_type={} payload={}",
+                            effective_model,
+                            type(exc).__name__,
+                            _extract_error_payload(exc),
+                        )
+                    raise
                 last_exc = exc
-                logger.warning(
-                    "llm_retry model={} attempt={}/{} error={}",
-                    effective_model,
-                    attempt + 1,
-                    _MAX_RETRIES,
-                    exc,
-                )
-                if attempt < _MAX_RETRIES - 1:
-                    await asyncio.sleep(2**attempt)
+                await self._before_retry(effective_model, attempt, exc)
             except Exception as exc:
                 if debug_logging_enabled:
                     logger.debug(
