@@ -158,7 +158,7 @@ export function Sidebar({
       {/* Header: logo + collapse/expand toggle */}
       <div className={cn("relative flex items-center py-3.5", collapsed ? "flex-col gap-2 px-2" : "justify-between px-4")}>
         <div className="flex items-center gap-2">
-          <Logo size={28} tone="auto" animated className="rounded-full" />
+          <Logo size={28} tone="auto" animated />
           {!collapsed && (
             <span className="brand-wordmark whitespace-nowrap">
               {t("sidebar.brand")}

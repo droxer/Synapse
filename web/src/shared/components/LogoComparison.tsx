@@ -106,7 +106,7 @@ function VariantCard({
               variant={variant}
               tone="auto"
               animated={animated}
-              className={size === 28 ? "rounded-full" : size === 56 ? "rounded-lg" : undefined}
+              className={size === 56 ? "rounded-lg" : undefined}
             />
             <span className="text-caption-bold text-muted-foreground tabular-nums">{size}px</span>
           </div>
@@ -133,7 +133,6 @@ function VariantCard({
             variant={variant}
             tone="auto"
             animated={animated}
-            className="rounded-full"
           />
           <span className="brand-wordmark">Synapse</span>
         </div>
