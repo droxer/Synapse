@@ -21,15 +21,21 @@ from agent.state.schemas import ConversationRecord, EventRecord, MessageRecord
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-key")
 os.environ.setdefault("TAVILY_API_KEY", "test-key")
 
+import api.routes.conversations as conversation_routes  # noqa: E402
 from agent.llm.client import AnthropicClient, LLMResponse, TokenUsage  # noqa: E402
 from api.db_subscriber import create_db_subscriber  # noqa: E402
-from api.models import ConversationEntry  # noqa: E402
-from api.models import ConversationMetricsResponse  # noqa: E402
-from api.models import MCPState  # noqa: E402
+from api.events import EventEmitter  # noqa: E402
+from api.models import (
+    ConversationEntry,  # noqa: E402
+    ConversationMetricsResponse,  # noqa: E402
+    MCPState,  # noqa: E402
+    UserInputRequest,  # noqa: E402
+)
 from api.routes.conversations import (  # noqa: E402
     _EXECUTION_ROUTER_SYSTEM_PROMPT,
-    _elapsed_ms,
-    _resolve_turn_locale,
+    _SUGGESTION_MAX_TOKENS,
+    _SUGGESTION_TRANSCRIPT_CHAR_LIMIT,
+    _SUGGESTION_TRANSCRIPT_MESSAGE_LIMIT,
     EXECUTION_SHAPE_ORCHESTRATOR_WORKERS,
     EXECUTION_SHAPE_PARALLEL,
     EXECUTION_SHAPE_PROMPT_CHAIN,
@@ -38,11 +44,10 @@ from api.routes.conversations import (  # noqa: E402
     ORCHESTRATOR_PLANNER,
     _build_conversation_metrics_response,
     _classify_execution_shape,
-    _SUGGESTION_MAX_TOKENS,
-    _SUGGESTION_TRANSCRIPT_CHAR_LIMIT,
-    _SUGGESTION_TRANSCRIPT_MESSAGE_LIMIT,
+    _elapsed_ms,
     _planner_flag_to_mode,
     _resolve_execution_route,
+    _resolve_turn_locale,
     create_conversation,
     get_conversation_events,
     get_conversation_messages,
@@ -51,11 +56,7 @@ from api.routes.conversations import (  # noqa: E402
     respond_to_prompt,
     send_message,
 )
-from api.events import EventEmitter  # noqa: E402
-from api.models import UserInputRequest  # noqa: E402
-import api.routes.conversations as conversation_routes  # noqa: E402
 from api.user_responses import SubmitResponseStatus  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -1464,6 +1465,9 @@ async def test_get_conversation_messages_returns_only_terminal_assistant_history
             role: str,
             content: dict[str, object],
             iteration: int | None = None,
+            *,
+            message_id: uuid.UUID | None = None,
+            commit: bool = True,
         ) -> MessageRecord:
             del session
             record = MessageRecord(
@@ -1578,6 +1582,9 @@ async def test_get_conversation_messages_skips_task_complete_assistant_row() -> 
             role: str,
             content: dict[str, object],
             iteration: int | None = None,
+            *,
+            message_id: uuid.UUID | None = None,
+            commit: bool = True,
         ) -> MessageRecord:
             del session
             record = MessageRecord(
@@ -1692,6 +1699,9 @@ async def test_get_conversation_events_returns_persisted_turn_start() -> None:
             role: str,
             content: dict[str, object],
             iteration: int | None = None,
+            *,
+            message_id: uuid.UUID | None = None,
+            commit: bool = True,
         ) -> MessageRecord:
             del session
             record = MessageRecord(

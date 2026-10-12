@@ -238,7 +238,9 @@ finally:
                 if has_more:
                     summary += f" (limit {_MAX_ROWS}, more rows available)"
                 return ToolResult.ok(
-                    f"{summary}\n{json.dumps(parsed['rows'], indent=2, default=str)}",
+                    (f"{summary}\n{json.dumps(parsed['rows'], indent=2, default=str)}")[
+                        :_MAX_OUTPUT_CHARS
+                    ],
                     metadata={
                         "row_count": row_count,
                         "columns": parsed["columns"],

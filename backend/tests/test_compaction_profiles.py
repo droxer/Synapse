@@ -224,7 +224,10 @@ async def test_reconstruction_uses_profile_reconstruct_tail(monkeypatch) -> None
     get_recent_messages.assert_awaited_once()
     assert get_recent_messages.await_args.args[2] == 12
     assert captured["profile"] == profile
-    assert messages[0]["role"] == "assistant"
+    # The earlier-sessions summary is user-role context so history starts with
+    # a user message (the API rejects assistant-first chains).
+    assert messages[0]["role"] == "user"
+    assert messages[0]["content"].startswith("## Earlier sessions (compressed)")
 
 
 def _dummy_session_factory():

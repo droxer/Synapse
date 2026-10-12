@@ -1466,10 +1466,13 @@ async def test_orchestrator_emits_cache_controls_on_stable_prompt_and_tools(
     first = captured_requests[0]
     system_blocks = first["system"]
     assert isinstance(system_blocks, tuple)
-    assert getattr(system_blocks[0].cache_control, "type", None) == "ephemeral"
     memory_block = next(
         block for block in system_blocks if "<personal_memory>" in block.text
     )
+    stable_end = system_blocks.index(memory_block) - 1
+    assert stable_end >= 0
+    assert system_blocks[stable_end].cache_control.type == "ephemeral"
+    assert all(block.cache_control is None for block in system_blocks[:stable_end])
     assert memory_block.cache_control is None
     assert system_blocks[-1].text.startswith("<verified_user_facts>")
     assert system_blocks[-1].cache_control is None
@@ -1543,10 +1546,13 @@ async def test_planner_accepts_builder_prompt_assembly_with_volatile_memory(
     assert captured_requests
     system_blocks = captured_requests[0]["system"]
     assert isinstance(system_blocks, tuple)
-    assert getattr(system_blocks[0].cache_control, "type", None) == "ephemeral"
     memory_block = next(
         block for block in system_blocks if "<personal_memory>" in block.text
     )
+    stable_end = system_blocks.index(memory_block) - 1
+    assert stable_end >= 0
+    assert system_blocks[stable_end].cache_control.type == "ephemeral"
+    assert all(block.cache_control is None for block in system_blocks[:stable_end])
     assert memory_block.cache_control is None
 
 

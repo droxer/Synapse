@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Protocol
 
+from loguru import logger
 
 ConversationTurnStatus = Literal["completed", "cancelled", "error"]
 
@@ -146,7 +147,11 @@ class NoopConversationHooks:
 
 
 class CompositeConversationHooks:
-    """Run multiple hook implementations as one lifecycle extension point."""
+    """Run multiple hook implementations as one lifecycle extension point.
+
+    Each hook is isolated: a failing hook is logged and skipped so the
+    remaining hooks still run.
+    """
 
     def __init__(self, hooks: tuple[ConversationHooks, ...]) -> None:
         self._hooks = hooks
@@ -157,7 +162,11 @@ class CompositeConversationHooks:
     ) -> ConversationSessionHookResult:
         values: dict[str, Any] = {}
         for hook in self._hooks:
-            result = await hook.before_session_start(context)
+            try:
+                result = await hook.before_session_start(context)
+            except Exception:
+                _log_hook_failure(hook, "before_session_start")
+                continue
             values.update(result.values)
         return ConversationSessionHookResult(values)
 
@@ -167,16 +176,11 @@ class CompositeConversationHooks:
     ) -> tuple[str, ...]:
         sections = context.runtime_prompt_sections
         for hook in self._hooks:
-            context = ConversationTurnContext(
-                conversation_id=context.conversation_id,
-                user_id=context.user_id,
-                turn_id=context.turn_id,
-                message=context.message,
-                source=context.source,
-                runtime_prompt_sections=sections,
-                metadata=context.metadata,
-            )
-            sections = await hook.before_turn(context)
+            hook_context = replace(context, runtime_prompt_sections=sections)
+            try:
+                sections = await hook.before_turn(hook_context)
+            except Exception:
+                _log_hook_failure(hook, "before_turn")
         return sections
 
     async def after_turn(
@@ -186,14 +190,20 @@ class CompositeConversationHooks:
         result: str,
     ) -> None:
         for hook in self._hooks:
-            await hook.after_turn(context, status, result)
+            try:
+                await hook.after_turn(context, status, result)
+            except Exception:
+                _log_hook_failure(hook, "after_turn")
 
     async def before_context_compaction(
         self,
         context: ContextCompactionContext,
     ) -> None:
         for hook in self._hooks:
-            await hook.before_context_compaction(context)
+            try:
+                await hook.before_context_compaction(context)
+            except Exception:
+                _log_hook_failure(hook, "before_context_compaction")
 
     async def after_context_compaction(
         self,
@@ -201,4 +211,15 @@ class CompositeConversationHooks:
         result: ContextCompactionResult,
     ) -> None:
         for hook in self._hooks:
-            await hook.after_context_compaction(context, result)
+            try:
+                await hook.after_context_compaction(context, result)
+            except Exception:
+                _log_hook_failure(hook, "after_context_compaction")
+
+
+def _log_hook_failure(hook: object, stage: str) -> None:
+    logger.exception(
+        "conversation_hook_failed hook={} stage={}",
+        type(hook).__name__,
+        stage,
+    )

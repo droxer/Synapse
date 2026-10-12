@@ -148,6 +148,22 @@ describe("FilePreview", () => {
 
     expect(html).toContain("iframe");
     expect(html).toContain("inline=1");
+    // Chromium refuses to render PDFs inside sandboxed frames.
+    expect(html).not.toContain("sandbox=");
+  });
+
+  it("renders HTML artifacts with scripts but never same-origin access", async () => {
+    const html = await renderWithState(
+      { status: "idle" },
+      {
+        url: "/api/conversations/c1/artifacts/a1",
+        contentType: "text/html",
+        fileName: "chart.html",
+      },
+    );
+
+    expect(html).toContain("allow-scripts");
+    expect(html).not.toContain("allow-same-origin");
   });
 
   it("renders markdown text through the markdown preview branch", async () => {

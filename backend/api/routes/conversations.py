@@ -57,6 +57,22 @@ from agent.runtime.hooks import (
     ConversationSessionContext,
     ConversationSessionHookResult,
     ConversationTurnContext,
+    ConversationTurnStatus,
+)
+from api.conversation_lifecycle import (
+    TurnInfo,
+    cleanup_executor_best_effort,
+    forget_activity,
+    get_turn_info,
+    last_activity,
+    normalize_reconstructed_messages,
+    register_turn_info,
+    resolve_turn_status,
+    shutdown_background_task_managers,
+    signal_cancel,
+    single_flight,
+    touch_activity,
+    turn_running,
 )
 from api.skill_scope import build_user_skill_registry
 from api.sse import _create_queue_subscriber, _event_generator
@@ -78,6 +94,9 @@ _MCP_RESTORE_FAST_PATH_TIMEOUT_SECONDS = 0.75
 _SUGGESTION_TRANSCRIPT_MESSAGE_LIMIT = 12
 _SUGGESTION_TRANSCRIPT_CHAR_LIMIT = 6000
 _SUGGESTION_MAX_TOKENS = 300
+_CONVERSATION_IDLE_TTL_SECONDS = 3600
+_STALE_SWEEP_INTERVAL_SECONDS = 300
+_CANCEL_GRACE_SECONDS = 5.0
 
 router = APIRouter(dependencies=common_dependencies)
 
@@ -364,6 +383,20 @@ def _start_turn_task(
         task,
         idempotency_key=idempotency_key,
     )
+    return task
+
+
+def _start_identified_turn(
+    entry: ConversationEntry,
+    coroutine: Any,
+    *,
+    idempotency_key: str | None,
+    turn_info: TurnInfo,
+) -> asyncio.Task[str] | None:
+    """Start a turn task and remember which turn it runs (for cancel/retry)."""
+    task = _start_turn_task(entry, coroutine, idempotency_key=idempotency_key)
+    if isinstance(task, asyncio.Task):
+        register_turn_info(task, turn_info)
     return task
 
 
@@ -904,27 +937,23 @@ async def _load_initial_messages_for_conversation(
                 ),
             )
 
-    initial_messages: list[dict[str, Any]] = []
-    if convo.context_summary and convo.context_summary.strip():
-        initial_messages.append(
-            {
-                "role": "assistant",
-                "content": "## Earlier sessions (compressed)\n"
-                + convo.context_summary.strip(),
-            }
-        )
+    history_messages: list[dict[str, Any]] = []
     for m in db_messages:
         if m.role not in ("user", "assistant"):
             continue
         content = m.content
         if isinstance(content, list):
-            initial_messages.append({"role": m.role, "content": content})
+            history_messages.append({"role": m.role, "content": content})
         elif isinstance(content, dict) and "text" in content:
-            initial_messages.append({"role": m.role, "content": content["text"]})
+            history_messages.append({"role": m.role, "content": content["text"]})
         elif isinstance(content, str):
-            initial_messages.append({"role": m.role, "content": content})
+            history_messages.append({"role": m.role, "content": content})
         else:
-            initial_messages.append({"role": m.role, "content": str(content)})
+            history_messages.append({"role": m.role, "content": str(content)})
+    initial_messages = normalize_reconstructed_messages(
+        history_messages,
+        context_summary=convo.context_summary,
+    )
 
     effective_sp = build_agent_system_prompt(memory_entries, user_skill_registry)
     obs = Observer(
@@ -951,8 +980,31 @@ async def _reconstruct_conversation(
 ) -> ConversationEntry | None:
     """Reconstruct a conversation from DB history when it's been evicted from memory.
 
-    Returns the new ConversationEntry, or None if the conversation doesn't exist in DB.
+    Single-flight per conversation: concurrent callers (e.g. GET /events and
+    POST /messages racing after eviction) share one reconstruction and get the
+    same entry. Returns the existing entry when one is already registered, or
+    None if the conversation doesn't exist in DB.
     """
+    existing = state.conversations.get(conversation_id)
+    if existing is not None:
+        return existing
+    return await single_flight(
+        state,
+        conversation_id,
+        lambda: _reconstruct_conversation_once(
+            state,
+            conversation_id,
+            compaction_runtime=compaction_runtime,
+        ),
+    )
+
+
+async def _reconstruct_conversation_once(
+    state: AppState,
+    conversation_id: str,
+    *,
+    compaction_runtime: CompactionRuntimeKind | None = None,
+) -> ConversationEntry | None:
     conv_uuid = uuid.UUID(conversation_id)
     async with state.db_session_factory() as session:
         convo = await state.db_repo.get_conversation(session, conv_uuid)
@@ -1013,13 +1065,15 @@ async def _reconstruct_conversation(
         )
         if not restore_task.done():
             restore_task.add_done_callback(
-                lambda done: logger.warning(
-                    "conversation_reconstruct_mcp_restore_failed id={} error={}",
-                    conversation_id,
-                    done.exception(),
+                lambda done: (
+                    logger.warning(
+                        "conversation_reconstruct_mcp_restore_failed id={} error={}",
+                        conversation_id,
+                        done.exception(),
+                    )
+                    if not done.cancelled() and done.exception() is not None
+                    else None
                 )
-                if not done.cancelled() and done.exception() is not None
-                else None
             )
     initial_messages = await _load_initial_messages_for_conversation(
         state,
@@ -1071,6 +1125,7 @@ async def _reconstruct_conversation(
     )
     entry.subscriber = subscriber
     state.conversations[conversation_id] = entry
+    touch_activity(conversation_id)
 
     # Re-register DB subscriber for new events
     db_sub = create_db_subscriber(
@@ -1109,6 +1164,25 @@ async def _run_turn(
     hook_metadata: dict[str, Any] | None = None,
 ) -> str:
     """Run a single turn of the conversation. Does NOT close the SSE connection."""
+    touch_activity(conversation_id)
+    hooks = _get_conversation_hooks(state)
+    effective_turn_id = turn_id or _new_turn_id(idempotency_key)
+    # The orchestrator tags TURN_START with the turn id so cancel/retry can
+    # target exactly this turn.
+    run_metadata = {**(turn_metadata or {}), "turn_id": effective_turn_id}
+    hook_context = ConversationTurnContext(
+        conversation_id=conversation_id,
+        user_id=user_id,
+        turn_id=effective_turn_id,
+        message=message,
+        source=source,
+        runtime_prompt_sections=runtime_prompt_sections,
+        metadata={
+            "db_session_factory": state.db_session_factory,
+            **run_metadata,
+            **(hook_metadata or {}),
+        },
+    )
     try:
         # Store attachments on the entry so retry can re-send them
         entry = state.conversations.get(conversation_id)
@@ -1130,21 +1204,6 @@ async def _run_turn(
         # NOTE: file upload to sandbox is now handled inside
         # orchestrator.run() — after skill matching — so that files
         # land in the correct sandbox template (e.g. data_science).
-        hooks = _get_conversation_hooks(state)
-        effective_turn_id = turn_id or _new_turn_id(idempotency_key)
-        hook_context = ConversationTurnContext(
-            conversation_id=conversation_id,
-            user_id=user_id,
-            turn_id=effective_turn_id,
-            message=message,
-            source=source,
-            runtime_prompt_sections=runtime_prompt_sections,
-            metadata={
-                "db_session_factory": state.db_session_factory,
-                **(turn_metadata or {}),
-                **(hook_metadata or {}),
-            },
-        )
         runtime_prompt_sections = await hooks.before_turn(
             hook_context,
         )
@@ -1155,7 +1214,7 @@ async def _run_turn(
             attachments=attachments,
             selected_skills=selected_skills,
             runtime_prompt_sections=runtime_prompt_sections,
-            turn_metadata=turn_metadata,
+            turn_metadata=run_metadata,
         )
         logger.info("turn_completed conversation_id={}", conversation_id)
         store_entry = state.conversations.get(conversation_id)
@@ -1164,22 +1223,10 @@ async def _run_turn(
                 drop_key = next(iter(store_entry.idempotency_cache))
                 del store_entry.idempotency_cache[drop_key]
             store_entry.idempotency_cache[idempotency_key] = result
-        if (
-            store_entry is not None
-            and isinstance(result, str)
-            and result
-            and not result.startswith("Error:")
-            and result != "Cancelled."
-        ):
-            _track_background_task(
-                store_entry,
-                asyncio.create_task(
-                    hooks.after_turn(
-                        hook_context,
-                        "completed",
-                        result,
-                    )
-                ),
+        status = resolve_turn_status(orchestrator, effective_turn_id, result)
+        if status != "completed" or result:
+            _schedule_after_turn(
+                state, conversation_id, hooks, hook_context, status, result
             )
         return result
     except asyncio.CancelledError:
@@ -1190,6 +1237,9 @@ async def _run_turn(
                 EventType.TURN_CANCELLED,
                 {"result": "Turn was cancelled."},
             )
+        _schedule_after_turn(
+            state, conversation_id, hooks, hook_context, "cancelled", "Cancelled."
+        )
         return "Cancelled."
     except Exception:
         logger.exception("turn_failed conversation_id={}", conversation_id)
@@ -1200,7 +1250,31 @@ async def _run_turn(
                 EventType.TASK_ERROR,
                 {"error": "An internal error occurred. Please try again."},
             )
-        return "Error: An internal error occurred."
+        result = "Error: An internal error occurred."
+        _schedule_after_turn(
+            state, conversation_id, hooks, hook_context, "error", result
+        )
+        return result
+    finally:
+        touch_activity(conversation_id)
+
+
+def _schedule_after_turn(
+    state: AppState,
+    conversation_id: str,
+    hooks: ConversationHooks,
+    hook_context: ConversationTurnContext,
+    status: ConversationTurnStatus,
+    result: str,
+) -> None:
+    """Run ``after_turn`` in the background for every terminal turn status."""
+    entry = state.conversations.get(conversation_id)
+    if entry is None:
+        return
+    _track_background_task(
+        entry,
+        asyncio.create_task(hooks.after_turn(hook_context, status, result)),
+    )
 
 
 async def _cleanup_conversation(
@@ -1209,6 +1283,7 @@ async def _cleanup_conversation(
 ) -> None:
     """Clean up conversation resources when SSE connection closes."""
     entry = state.conversations.pop(conversation_id, None)
+    forget_activity(conversation_id)
     if entry is None:
         return
 
@@ -1225,6 +1300,8 @@ async def _cleanup_conversation(
     if entry.background_tasks:
         await asyncio.gather(*entry.background_tasks, return_exceptions=True)
         entry.background_tasks.clear()
+
+    await shutdown_background_task_managers(entry, conversation_id=conversation_id)
 
     # Cleanup executor (sandbox, etc.)
     if entry.executor is not None:
@@ -1249,26 +1326,49 @@ async def _cleanup_conversation(
     logger.info("conversation_cleaned_up conversation_id={}", conversation_id)
 
 
-async def _cleanup_stale_conversations(state: AppState) -> None:
-    """Periodically remove conversations that have been idle too long (H2 fix)."""
-    import time as _time
+async def _sweep_stale_conversations(
+    state: AppState,
+    *,
+    now: float | None = None,
+    ttl_seconds: float = _CONVERSATION_IDLE_TTL_SECONDS,
+) -> list[str]:
+    """Evict conversations idle for longer than ``ttl_seconds``.
 
-    # Stale conversation TTL in seconds (1 hour)
-    conversation_ttl_seconds = 3600
+    Idleness is measured from the last activity (message sent, events
+    subscribed, turn finished), not from creation. Each candidate is
+    re-checked under its lock so a turn that just started is never evicted.
+    Returns the evicted conversation ids.
+    """
+    current = time.monotonic() if now is None else now
 
-    while True:
-        await asyncio.sleep(300)  # Check every 5 minutes
-        now = _time.monotonic()
-        stale_ids: list[str] = []
-        for cid, entry in state.conversations.items():
-            age = now - entry.created_at
-            if age > conversation_ttl_seconds:
-                # Only clean up if the turn is done and queue is drained
-                if entry.turn_task is None or entry.turn_task.done():
-                    stale_ids.append(cid)
-        for cid in stale_ids:
+    def _is_stale(cid: str, entry: ConversationEntry) -> bool:
+        idle = current - last_activity(cid, entry)
+        return idle > ttl_seconds and not turn_running(entry)
+
+    candidates = [
+        (cid, entry)
+        for cid, entry in tuple(state.conversations.items())
+        if _is_stale(cid, entry)
+    ]
+    evicted: list[str] = []
+    for cid, entry in candidates:
+        async with entry.lock:
+            if state.conversations.get(cid) is not entry or not _is_stale(cid, entry):
+                continue
             logger.info("cleaning_stale_conversation id={}", cid)
             await _cleanup_conversation(state, cid)
+            evicted.append(cid)
+    return evicted
+
+
+async def _cleanup_stale_conversations(state: AppState) -> None:
+    """Periodically remove conversations that have been idle too long (H2 fix)."""
+    while True:
+        await asyncio.sleep(_STALE_SWEEP_INTERVAL_SECONDS)
+        try:
+            await _sweep_stale_conversations(state)
+        except Exception:
+            logger.exception("stale_conversation_sweep_failed")
 
 
 async def _generate_title(
@@ -1601,6 +1701,7 @@ async def create_conversation(
         )
         entry.subscriber = subscriber
         state.conversations[conversation_id] = entry
+        touch_activity(conversation_id)
 
         user_resolution_started_at = time.perf_counter()
         user_id = await _resolve_user_id(auth_user, state)
@@ -1648,7 +1749,8 @@ async def create_conversation(
 
         # Start first turn — execution route is resolved inside the
         # background task so the HTTP response returns immediately.
-        _start_turn_task(
+        turn_id = _new_turn_id(idem_key)
+        _start_identified_turn(
             entry,
             _bootstrap_and_run_initial_turn(
                 state,
@@ -1660,8 +1762,15 @@ async def create_conversation(
                 idempotency_key=idem_key,
                 user_id=user_id,
                 turn_locale=turn_locale,
+                turn_id=turn_id,
             ),
             idempotency_key=idem_key,
+            turn_info=TurnInfo(
+                turn_id=turn_id,
+                message=message,
+                attachments=attachments,
+                selected_skills=selected_skills,
+            ),
         )
 
         # Generate a concise title in the background
@@ -1728,6 +1837,9 @@ async def send_message(
     """
     with conversation_log_context(conversation_id):
         await _verify_conversation_ownership(state, conversation_id, auth_user)
+        # Mark activity before anything else so a concurrent stale sweep
+        # re-checking under the entry lock keeps this conversation alive.
+        touch_activity(conversation_id)
         user_id = await _resolve_user_id(auth_user, state)
         turn_locale = await _resolve_turn_locale(
             request,
@@ -1912,9 +2024,21 @@ async def send_message(
                                 mcp_user_id=convo.user_id,
                                 conversation_hooks=_get_conversation_hooks(state),
                             )
+                        previous_executor = entry.executor
                         entry.orchestrator = orchestrator
                         entry.executor = executor
                         entry.orchestrator_mode = target_mode
+                        if (
+                            previous_executor is not None
+                            and previous_executor is not executor
+                        ):
+                            # No turn is running here (checked above under
+                            # the entry lock), so the old sandbox is unused.
+                            await cleanup_executor_best_effort(
+                                previous_executor,
+                                conversation_id=conversation_id,
+                                reason="mode_switch",
+                            )
                         async with state.db_session_factory() as session:
                             await state.db_repo.update_conversation(
                                 session,
@@ -1933,7 +2057,8 @@ async def send_message(
                     entry.last_selected_skills = selected_skills
                     if auto_detected:
                         await entry.emitter.emit(EventType.PLANNER_AUTO_SELECTED, {})
-                    _start_turn_task(
+                    turn_id = _new_turn_id(idem_key)
+                    _start_identified_turn(
                         entry,
                         _run_turn(
                             state,
@@ -1946,9 +2071,16 @@ async def send_message(
                             turn_metadata=turn_metadata,
                             idempotency_key=idem_key,
                             user_id=user_id,
+                            turn_id=turn_id,
                             source="web",
                         ),
                         idempotency_key=idem_key,
+                        turn_info=TurnInfo(
+                            turn_id=turn_id,
+                            message=message,
+                            attachments=attachments,
+                            selected_skills=selected_skills,
+                        ),
                     )
                     break
 
@@ -2052,6 +2184,7 @@ async def stream_events(
                     status_code=404,
                     detail=f"Unknown conversation: {conversation_id}",
                 )
+        touch_activity(conversation_id)
 
         return StreamingResponse(
             _event_generator(conversation_id, entry),
@@ -2218,27 +2351,99 @@ async def cancel_turn(
             if entry.turn_task is None or entry.turn_task.done():
                 return {"status": "no_active_turn"}
 
-            # Signal graceful cancellation via the orchestrator if supported
-            orch = entry.orchestrator
-            if orch is not None and hasattr(orch, "cancel"):
-                orch.cancel()  # type: ignore[union-attr]
-
-            # Force-cancel in background so the HTTP response returns immediately
+            # Signal graceful cancellation for this specific turn so the
+            # request can never leak into a later turn.
             turn_task = entry.turn_task
+            turn_info = get_turn_info(turn_task)
+            signal_cancel(
+                entry.orchestrator,
+                turn_info.turn_id if turn_info is not None else None,
+            )
 
         async def _force_cancel_after_timeout() -> None:
-            try:
-                await asyncio.wait_for(asyncio.shield(turn_task), timeout=5.0)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
-                turn_task.cancel()
-                try:
-                    await turn_task
-                except (asyncio.CancelledError, Exception):
-                    pass
+            await _await_turn_or_force_cancel(entry, turn_task)
             logger.info("turn_cancelled conversation_id={}", conversation_id)
 
         asyncio.create_task(_force_cancel_after_timeout())
         return {"status": "cancelling"}
+
+
+async def _await_turn_or_force_cancel(
+    entry: ConversationEntry,
+    turn_task: asyncio.Task[str],
+) -> None:
+    """Wait for a signalled turn to stop; hard-cancel it after the grace period.
+
+    Afterwards any leftover cancel signal is cleared (unless a newer turn has
+    already started) so it cannot cancel the next turn.
+    """
+    try:
+        await asyncio.wait_for(asyncio.shield(turn_task), timeout=_CANCEL_GRACE_SECONDS)
+    except (asyncio.TimeoutError, asyncio.CancelledError):
+        turn_task.cancel()
+        try:
+            await turn_task
+        except (asyncio.CancelledError, Exception):
+            pass
+    except Exception:
+        logger.exception("turn_task_failed_while_cancelling")
+    if entry.turn_task is turn_task:
+        reset_cancel = getattr(entry.orchestrator, "reset_cancel", None)
+        if callable(reset_cancel):
+            reset_cancel()
+
+
+def _resolve_retry_target(
+    entry: ConversationEntry,
+    orch: Any,
+    turn_info: TurnInfo | None,
+) -> tuple[str, tuple[FileAttachment, ...], tuple[str, ...], bool]:
+    """Pick the message to retry and roll back that turn's exchange.
+
+    Returns ``(message, attachments, selected_skills, already_persisted)``
+    where ``already_persisted`` tells whether the original turn emitted
+    TURN_START (and therefore already stored its user message).
+    """
+    if turn_info is not None:
+        last_turn_id = getattr(orch, "last_turn_id", None)
+        rollback_turn = getattr(orch, "rollback_turn", None)
+        if isinstance(last_turn_id, str) and callable(rollback_turn):
+            # Turn-scoped and idempotent: only this turn's messages go.
+            reached_runtime = last_turn_id == turn_info.turn_id
+            if reached_runtime:
+                rollback_turn(turn_info.turn_id)
+        else:
+            reached_runtime = True
+            get_last = getattr(orch, "get_last_user_message", None)
+            rollback = getattr(orch, "rollback_to_before_last_user_message", None)
+            if (
+                callable(get_last)
+                and callable(rollback)
+                and get_last() == turn_info.message
+            ):
+                rollback()
+        return (
+            turn_info.message,
+            turn_info.attachments,
+            turn_info.selected_skills,
+            reached_runtime,
+        )
+
+    if not hasattr(orch, "get_last_user_message") or not hasattr(
+        orch, "rollback_to_before_last_user_message"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Orchestrator does not support retry",
+        )
+    last_msg = orch.get_last_user_message()
+    if last_msg is None:
+        raise HTTPException(
+            status_code=400,
+            detail="No user message to retry",
+        )
+    orch.rollback_to_before_last_user_message()
+    return last_msg, entry.last_attachments, entry.last_selected_skills, True
 
 
 @router.post("/conversations/{conversation_id}/retry")
@@ -2250,6 +2455,7 @@ async def retry_turn(
     """Cancel the last turn, roll back, and re-run the last user message."""
     with conversation_log_context(conversation_id):
         await _verify_conversation_ownership(state, conversation_id, auth_user)
+        touch_activity(conversation_id)
         user_id = await _resolve_user_id(auth_user, state)
         entry = state.conversations.get(conversation_id)
         if entry is None:
@@ -2261,65 +2467,65 @@ async def retry_turn(
                 )
 
         async with entry.lock:
-            orch = entry.orchestrator
-            if orch is None:
+            if entry.orchestrator is None:
                 raise HTTPException(
                     status_code=409,
                     detail="Conversation runtime is not ready yet",
                 )
 
-            # Cancel running turn first if needed
-            if entry.turn_task is not None and not entry.turn_task.done():
-                if hasattr(orch, "cancel"):
-                    orch.cancel()  # type: ignore[union-attr]
-                try:
-                    await asyncio.wait_for(asyncio.shield(entry.turn_task), timeout=5.0)
-                except (asyncio.TimeoutError, asyncio.CancelledError):
-                    entry.turn_task.cancel()
-                    try:
-                        await entry.turn_task
-                    except (asyncio.CancelledError, Exception):
-                        pass
+            # Capture the in-flight turn before cancelling it: once cancelled
+            # its user message is rewound out of the orchestrator state.
+            turn_task = entry.turn_task
+            turn_info = get_turn_info(turn_task)
+            if turn_task is not None and not turn_task.done():
+                signal_cancel(
+                    entry.orchestrator,
+                    turn_info.turn_id if turn_info is not None else None,
+                )
+                await _await_turn_or_force_cancel(entry, turn_task)
 
-            # Get the last user message before rolling back
-            if not hasattr(orch, "get_last_user_message") or not hasattr(
-                orch, "rollback_to_before_last_user_message"
-            ):
+            # The runtime may have been (re)built while the turn was running.
+            orch = entry.orchestrator
+            if orch is None or isinstance(orch, _BootstrapPendingOrchestrator):
                 raise HTTPException(
-                    status_code=400,
-                    detail="Orchestrator does not support retry",
+                    status_code=409,
+                    detail="Conversation runtime is not ready yet",
                 )
 
-            last_msg = orch.get_last_user_message()  # type: ignore[union-attr]
-            if last_msg is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail="No user message to retry",
-                )
-
-            # Roll back state and reset cancellation
-            orch.rollback_to_before_last_user_message()  # type: ignore[attr-defined,union-attr]
+            retry_msg, attachments, selected_skills, already_persisted = (
+                _resolve_retry_target(entry, orch, turn_info)
+            )
             if hasattr(orch, "reset_cancel"):
-                orch.reset_cancel()  # type: ignore[union-attr]
+                orch.reset_cancel()
 
-            # Start a new turn with the same message and original attachments
-            _start_turn_task(
+            # Start a new turn with the same message and original attachments.
+            # ``retry`` tells the DB subscriber the user row already exists.
+            turn_id = _new_turn_id()
+            _start_identified_turn(
                 entry,
                 _run_turn(
                     state,
                     conversation_id,
                     orch,
-                    last_msg,
-                    attachments=entry.last_attachments,
-                    selected_skills=entry.last_selected_skills,
+                    retry_msg,
+                    attachments=attachments,
+                    selected_skills=selected_skills,
+                    turn_metadata={"retry": True} if already_persisted else None,
                     user_id=user_id,
+                    turn_id=turn_id,
                     source="web",
                 ),
                 idempotency_key=None,
+                turn_info=TurnInfo(
+                    turn_id=turn_id,
+                    message=retry_msg,
+                    attachments=attachments,
+                    selected_skills=selected_skills,
+                ),
             )
 
         logger.info("turn_retried conversation_id={}", conversation_id)
-        return {"status": "retrying", "message": last_msg}
+        return {"status": "retrying", "message": retry_msg}
 
 
 @router.delete("/conversations/{conversation_id}")

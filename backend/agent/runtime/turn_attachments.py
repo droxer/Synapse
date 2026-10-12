@@ -25,6 +25,8 @@ def safe_attachment_filename(filename: str) -> str:
 async def upload_attachments_to_sandbox(
     executor: ToolExecutor,
     attachments: tuple[Any, ...],
+    *,
+    consume_local_path: bool = True,
 ) -> tuple[str, ...]:
     """Upload file attachments into ``~/uploads`` in the active sandbox."""
     import shlex
@@ -55,7 +57,12 @@ async def upload_attachments_to_sandbox(
                 try:
                     await session.upload_file(local_path, remote_path)
                 finally:
-                    _cleanup_temp_upload(local_path)
+                    if consume_local_path:
+                        retain = getattr(executor, "retain_upload_spool", None)
+                        if callable(retain):
+                            retain(local_path)
+                        else:
+                            _cleanup_temp_upload(local_path)
             else:
                 with tempfile.NamedTemporaryFile(
                     delete=False, suffix=f"_{safe_name}"

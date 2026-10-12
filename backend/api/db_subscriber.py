@@ -249,6 +249,14 @@ async def _retry_with_backoff(
     )
 
 
+def _event_message_id(conversation_id: uuid.UUID, event: AgentEvent) -> uuid.UUID:
+    """Deterministic message id for an event so retried inserts are idempotent."""
+    return uuid.uuid5(
+        conversation_id,
+        f"{event.type.value}:{event.timestamp!r}:{event.iteration}",
+    )
+
+
 def create_db_subscriber(
     conversation_id: uuid.UUID,
     repo: ConversationRepository,
@@ -273,6 +281,7 @@ def create_db_subscriber(
 
         clean = _clean_data(event.data)
         persisted_timestamp = datetime.fromtimestamp(event.timestamp, tz=timezone.utc)
+        message_id = _event_message_id(conversation_id, event)
 
         async def _do_write() -> None:
             async with session_factory() as session:
@@ -293,12 +302,21 @@ def create_db_subscriber(
                     content: dict[str, Any] = {"text": message}
                     if isinstance(attachments, list) and attachments:
                         content["attachments"] = attachments
+                    # Message and event commit together (save_event commits),
+                    # so a retry after a failed event insert cannot duplicate
+                    # the message; the deterministic id covers lost commit acks.
+                    # A retried turn re-sends a message whose row already exists.
+                    if clean.get("retry") is True:
+                        await _save_event_record()
+                        return
                     await repo.save_message(
                         session,
                         conversation_id,
                         role="user",
                         content=content,
                         iteration=None,
+                        message_id=message_id,
+                        commit=False,
                     )
                     await _save_event_record()
                     logger.info(
@@ -314,6 +332,8 @@ def create_db_subscriber(
                         role="assistant",
                         content={"text": result},
                         iteration=event.iteration,
+                        message_id=message_id,
+                        commit=False,
                     )
                     await _save_event_record()
                     logger.info(
@@ -357,6 +377,8 @@ def create_db_subscriber(
                             role="user",
                             content={"text": reply},
                             iteration=event.iteration,
+                            message_id=message_id,
+                            commit=False,
                         )
                         logger.info(
                             "db_message_saved role=user (user_response) "
@@ -444,6 +466,7 @@ def create_db_subscriber(
                             conversation_id,
                             summary.strip(),
                             compaction_profile.context_summary_max_chars,
+                            commit=False,
                         )
                     await _save_event_record()
 

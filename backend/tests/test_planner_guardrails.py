@@ -25,7 +25,7 @@ class _RecordingManager:
 
     async def spawn(self, config: Any) -> str:
         self.spawn_calls.append(config)
-        return "agent-123"
+        return f"agent-{122 + len(self.spawn_calls)}"
 
 
 def _spawn_contract() -> dict[str, str]:
@@ -190,7 +190,7 @@ async def test_agent_spawn_requires_worker_contract_fields() -> None:
 
 
 @pytest.mark.asyncio
-async def test_plan_create_replan_clears_spawned_and_waited_state() -> None:
+async def test_plan_create_replan_preserves_turn_spawn_and_wait_tracking() -> None:
     planner_state = PlannerState()
     plan_tool = PlanCreate(EventEmitter(), planner_state=planner_state)
     manager = _RecordingManager()
@@ -233,8 +233,9 @@ async def test_plan_create_replan_clears_spawned_and_waited_state() -> None:
     assert first.success is True
     assert second.success is True
     assert len(manager.spawn_calls) == 2
-    assert planner_state.spawned_agent_count == 1
-    assert planner_state.waited_agent_count == 0
+    assert planner_state.spawned_agent_count == 2
+    assert planner_state.waited_agent_count == 1
+    assert planner_state.unobserved_agent_ids == {"agent-124"}
 
 
 @pytest.mark.asyncio

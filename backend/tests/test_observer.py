@@ -337,7 +337,10 @@ class TestTruncateToolResult:
 
         assert result is not block
         assert "a" * 20_000 not in str(result)
-        assert result["content"][1]["source"] == "[screenshot captured]"
+        assert result["content"][1] == {
+            "type": "text",
+            "text": "[screenshot captured]",
+        }
 
     def test_list_content_long_truncated(self) -> None:
         block = {"type": "tool_result", "content": [{"text": "y" * 1500}]}
@@ -355,11 +358,15 @@ class TestCompactContentBlock:
 
     def test_image_replaced(self) -> None:
         result = _compact_content_block(_image_block())
-        assert result["source"] == "[screenshot captured]"
+        assert result == {"type": "text", "text": "[image omitted]"}
+
+    def test_tool_message_image_replaced_with_screenshot_text(self) -> None:
+        result = _compact_content_block(_image_block(), from_tool_message=True)
+        assert result == {"type": "text", "text": "[screenshot captured]"}
 
     def test_screenshot_text_replaced(self) -> None:
         block = {"type": "text", "text": "Here is the screenshot result"}
-        result = _compact_content_block(block)
+        result = _compact_content_block(block, from_tool_message=True)
         assert result["text"] == "[screenshot captured]"
 
     def test_normal_text_untouched(self) -> None:
@@ -551,11 +558,11 @@ class TestCompact:
         compacted = await obs.compact(msgs)
 
         assert _estimate_tokens(compacted) <= 200
+        # The input tool_result has no matching tool_use, so the pairing
+        # repair rewrites it as text rather than emitting an orphan block.
         warm_block = compacted[1]["content"][0]
-        assert "HISTORY_TRUNCATED" in warm_block["content"]
-        assert warm_block["content"].startswith("x") or warm_block[
-            "content"
-        ].startswith("...[HISTORY_TRUNCATED]")
+        assert warm_block["type"] == "text"
+        assert "HISTORY_TRUNCATED" in warm_block["text"]
 
     @pytest.mark.asyncio
     async def test_fallback_without_client(self) -> None:
@@ -602,8 +609,13 @@ class TestCompact:
             if isinstance(content, list):
                 for block in content:
                     if isinstance(block, dict) and block.get("type") == "image":
-                        if block["source"] == "[screenshot captured]":
-                            found_compacted_image = True
+                        assert isinstance(block["source"], dict)
+                    if (
+                        isinstance(block, dict)
+                        and block.get("type") == "text"
+                        and block.get("text") == "[screenshot captured]"
+                    ):
+                        found_compacted_image = True
         assert _estimate_tokens(result) <= 100
         if not found_compacted_image:
             assert any(

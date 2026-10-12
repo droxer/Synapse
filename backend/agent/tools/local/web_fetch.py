@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import re
 import socket
@@ -9,6 +10,7 @@ import urllib.parse
 from typing import Any
 
 import httpx
+from httpcore._backends.auto import AutoBackend
 from loguru import logger
 
 from agent.tools.base import (
@@ -18,15 +20,6 @@ from agent.tools.base import (
     ToolResult,
 )
 
-_BLOCKED_NETWORKS = (
-    ipaddress.ip_network("127.0.0.0/8"),
-    ipaddress.ip_network("10.0.0.0/8"),
-    ipaddress.ip_network("172.16.0.0/12"),
-    ipaddress.ip_network("192.168.0.0/16"),
-    ipaddress.ip_network("169.254.0.0/16"),
-    ipaddress.ip_network("::1/128"),
-)
-
 
 def _is_private_ip(ip_str: str) -> bool:
     """Return True if *ip_str* belongs to a blocked private/internal network."""
@@ -34,7 +27,46 @@ def _is_private_ip(ip_str: str) -> bool:
         addr = ipaddress.ip_address(ip_str)
     except ValueError:
         return True  # unparseable → block
-    return any(addr in net for net in _BLOCKED_NETWORKS)
+    if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped is not None:
+        addr = addr.ipv4_mapped
+    return not addr.is_global or addr.is_multicast
+
+
+class PublicNetworkBackend(AutoBackend):
+    """Validate and connect to the same numeric address, preserving TLS SNI.
+
+    HTTPCore still owns the original hostname for Host and certificate checks;
+    only TCP connection establishment uses the validated numeric address.
+    """
+
+    async def connect_tcp(self, host: str, port: int, **kwargs: Any) -> Any:
+        addresses = await asyncio.to_thread(
+            socket.getaddrinfo, host, port, 0, socket.SOCK_STREAM
+        )
+        if not addresses or any(_is_private_ip(item[4][0]) for item in addresses):
+            raise ValueError("URL blocked: hostname resolves to a non-public address")
+        last_error: Exception | None = None
+        for address in dict.fromkeys(item[4][0] for item in addresses):
+            try:
+                return await super().connect_tcp(address, port, **kwargs)
+            except OSError as exc:
+                last_error = exc
+        raise last_error or RuntimeError("No public address available")
+
+
+def _public_transport() -> httpx.AsyncHTTPTransport:
+    transport = httpx.AsyncHTTPTransport()
+    # HTTPX has no public network_backend argument, so the pool's private
+    # backend is replaced. Assigning to a renamed attribute would silently
+    # disable socket-level SSRF checks, so refuse to fetch on any drift.
+    pool = getattr(transport, "_pool", None)
+    if pool is None or not hasattr(pool, "_network_backend"):
+        raise RuntimeError(
+            "web_fetch cannot install its network backend; "
+            "the installed httpx/httpcore internals have changed"
+        )
+    pool._network_backend = PublicNetworkBackend()
+    return transport
 
 
 def _validate_url(url: str) -> str | None:
@@ -47,6 +79,8 @@ def _validate_url(url: str) -> str | None:
     hostname = parsed.hostname
     if not hostname:
         return "URL has no hostname"
+    if parsed.username is not None or parsed.password is not None:
+        return "URL credentials are not allowed"
 
     lower_host = hostname.lower()
     if lower_host == "localhost" or lower_host.endswith(".local"):
@@ -71,6 +105,13 @@ _SCRIPT_STYLE_RE = re.compile(
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 _WHITESPACE_RE = re.compile(r"\n{3,}")
 _MAX_REDIRECTS = 10
+_MAX_RESPONSE_BYTES = 2_000_000
+_DEFAULT_MAX_LENGTH = 20_000
+_MAX_LENGTH_CAP = 50_000
+# The buffered body is already decoded; these headers describe the wire form.
+_WIRE_ONLY_HEADERS = frozenset(
+    {"content-encoding", "content-length", "transfer-encoding"}
+)
 
 
 def _strip_html_regex(html: str) -> str:
@@ -106,9 +147,14 @@ async def _fetch_with_safe_redirects(url: str) -> httpx.Response:
     """Fetch a URL while validating every redirect target."""
     current_url = url
 
-    async with httpx.AsyncClient(follow_redirects=False, timeout=30.0) as client:
+    async with httpx.AsyncClient(
+        follow_redirects=False,
+        timeout=30.0,
+        trust_env=False,
+        transport=_public_transport(),
+    ) as client:
         for redirect_count in range(_MAX_REDIRECTS + 1):
-            ssrf_error = _validate_url(current_url)
+            ssrf_error = await asyncio.to_thread(_validate_url, current_url)
             if ssrf_error is not None:
                 logger.warning(
                     "web_fetch_ssrf_blocked url={} reason={}",
@@ -117,7 +163,27 @@ async def _fetch_with_safe_redirects(url: str) -> httpx.Response:
                 )
                 raise ValueError(f"URL blocked: {ssrf_error}")
 
-            response = await client.get(current_url)
+            async with client.stream("GET", current_url) as streamed:
+                if not streamed.has_redirect_location:
+                    streamed.raise_for_status()
+                    body = bytearray()
+                    async for chunk in streamed.aiter_bytes():
+                        body.extend(chunk)
+                        if len(body) > _MAX_RESPONSE_BYTES:
+                            raise ValueError("Response exceeds web_fetch size limit")
+                    headers = [
+                        (name, value)
+                        for name, value in streamed.headers.multi_items()
+                        if name.lower() not in _WIRE_ONLY_HEADERS
+                    ]
+                    response = httpx.Response(
+                        streamed.status_code,
+                        headers=headers,
+                        content=bytes(body),
+                        request=streamed.request,
+                    )
+                else:
+                    response = streamed
             if not response.has_redirect_location:
                 response.raise_for_status()
                 return response
@@ -164,7 +230,10 @@ class WebFetch(LocalTool):
 
     async def execute(self, **kwargs: Any) -> ToolResult:
         url: str = kwargs.get("url", "")
-        max_length: int = kwargs.get("max_length", 20000)
+        requested_length = kwargs.get("max_length")
+        if not isinstance(requested_length, int) or isinstance(requested_length, bool):
+            requested_length = _DEFAULT_MAX_LENGTH
+        max_length = max(1, min(requested_length, _MAX_LENGTH_CAP))
 
         if not url.strip():
             return ToolResult.fail("URL must not be empty")

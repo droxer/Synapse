@@ -61,6 +61,10 @@ class BackgroundTaskManager:
     def get(self, task_id: str) -> ScheduledTask | None:
         return self._tasks.get(task_id)
 
+    async def cancel_all(self) -> None:
+        """Stop all notifications when their owning runtime is disposed."""
+        await asyncio.gather(*(self.cancel(task_id) for task_id in tuple(self._tasks)))
+
     async def cancel(self, task_id: str) -> ScheduledTask | None:
         record = self._tasks.get(task_id)
         if record is None:

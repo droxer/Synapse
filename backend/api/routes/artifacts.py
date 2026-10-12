@@ -7,12 +7,16 @@ import os
 import posixpath
 import shlex
 import uuid
+import httpx
 from typing import Any
 from urllib.parse import urlencode, urlsplit, urlunsplit
+
+from loguru import logger
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
 
 from agent.artifacts.storage import LocalStorageBackend
 from api.artifact_previews import (
@@ -34,6 +38,45 @@ _PREVIEW_HEADERS_START = "__SYNAPSE_PREVIEW_HEADERS_START__"
 _PREVIEW_HEADERS_END = "__SYNAPSE_PREVIEW_HEADERS_END__"
 _PREVIEW_BODY_START = "__SYNAPSE_PREVIEW_BODY_START__"
 _PREVIEW_BODY_END = "__SYNAPSE_PREVIEW_BODY_END__"
+_NOSNIFF_HEADER = {"X-Content-Type-Options": "nosniff"}
+# Generated HTML may run scripts (charts, demos) but only in an opaque origin,
+# so it can never read app cookies, storage, or same-origin API responses.
+_HTML_ARTIFACT_HEADERS = {
+    **_NOSNIFF_HEADER,
+    "Content-Security-Policy": (
+        "sandbox allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+    ),
+}
+_STRICT_ARTIFACT_HEADERS = {
+    **_NOSNIFF_HEADER,
+    "Content-Security-Policy": (
+        "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:; "
+        "base-uri 'none'; form-action 'none'"
+    ),
+}
+_HTML_CONTENT_TYPES = frozenset({"text/html", "application/xhtml+xml"})
+# Types a browser can execute script from when opened directly; these are
+# proxied so the sandbox policy cannot be bypassed via the storage origin.
+_ACTIVE_CONTENT_TYPES = _HTML_CONTENT_TYPES | {
+    "image/svg+xml",
+    "text/xml",
+    "application/xml",
+}
+# Chromium refuses to render PDFs in sandboxed documents.
+_UNSANDBOXED_CONTENT_TYPES = frozenset({"application/pdf"})
+
+
+def _base_content_type(content_type: str) -> str:
+    return content_type.split(";", 1)[0].strip().lower()
+
+
+def _artifact_security_headers(content_type: str) -> dict[str, str]:
+    base_type = _base_content_type(content_type)
+    if base_type in _HTML_CONTENT_TYPES:
+        return dict(_HTML_ARTIFACT_HEADERS)
+    if base_type in _UNSANDBOXED_CONTENT_TYPES:
+        return dict(_NOSNIFF_HEADER)
+    return dict(_STRICT_ARTIFACT_HEADERS)
 
 
 class BulkDeleteRequest(BaseModel):
@@ -94,7 +137,7 @@ async def get_artifact(
     session: Any = Depends(get_db_session),
     state: AppState = Depends(get_app_state),
     auth_user: AuthUser | None = Depends(get_current_user),
-) -> FileResponse | RedirectResponse:
+) -> FileResponse | RedirectResponse | StreamingResponse:
     """Serve an artifact file.
 
     Looks up artifact metadata from the database, then delegates
@@ -129,13 +172,66 @@ async def get_artifact(
             path=file_path,
             media_type=record.content_type,
             filename=None if inline else record.original_name,
+            headers=_artifact_security_headers(record.content_type),
         )
 
-    # Remote storage (R2): redirect to presigned URL
     url = await state.storage_backend.get_url(
         record.storage_key, record.content_type, record.original_name
     )
-    return RedirectResponse(url=url, status_code=307)
+    # Passive media keeps the direct storage redirect (range requests, CDN
+    # bandwidth). Active types are proxied: a redirect would discard the
+    # sandbox policy and execute generated markup on the storage origin.
+    if _base_content_type(record.content_type) not in _ACTIVE_CONTENT_TYPES:
+        return RedirectResponse(url=url, status_code=307)
+    return await _proxy_remote_artifact(url, record, inline=inline)
+
+
+async def _proxy_remote_artifact(
+    url: str, record: Any, *, inline: bool
+) -> StreamingResponse:
+    """Stream an active-content artifact from storage under sandbox headers."""
+    client = httpx.AsyncClient(timeout=30.0, trust_env=False)
+    try:
+        response = await client.send(client.build_request("GET", url), stream=True)
+        response.raise_for_status()
+    except (httpx.HTTPError, httpx.InvalidURL) as exc:
+        await client.aclose()
+        logger.warning(
+            "artifact_storage_read_failed artifact_id={} error={}",
+            record.id,
+            type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=502, detail="Artifact storage could not be read"
+        ) from None
+
+    async def close() -> None:
+        await response.aclose()
+        await client.aclose()
+
+    async def body():
+        try:
+            async for chunk in response.aiter_bytes():
+                yield chunk
+        finally:
+            await close()
+
+    headers = _artifact_security_headers(record.content_type)
+    upstream_length = response.headers.get("content-length")
+    if upstream_length and "content-encoding" not in response.headers:
+        headers["Content-Length"] = upstream_length
+    if not inline:
+        from urllib.parse import quote
+
+        headers["Content-Disposition"] = "attachment; filename*=UTF-8''" + quote(
+            record.original_name, safe=""
+        )
+    return StreamingResponse(
+        body(),
+        media_type=record.content_type,
+        headers=headers,
+        background=BackgroundTask(close),
+    )
 
 
 @router.get("/conversations/{conversation_id}/artifacts/{artifact_id}/preview")

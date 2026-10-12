@@ -50,6 +50,10 @@ _TERM_ALIASES = {
     "tz": {"timezone"},
 }
 
+# recall() loads at most this many matching rows before in-Python ranking.
+_RECALL_CANDIDATE_MULTIPLIER = 25
+_RECALL_MIN_CANDIDATES = 200
+
 
 def _is_unique_violation(error: IntegrityError) -> bool:
     """Best-effort cross-database unique-conflict detection."""
@@ -120,6 +124,16 @@ class PersistentMemoryStore:
         self._session_factory = session_factory
         self._user_id = user_id
         self._conversation_id = conversation_id
+        # Digests of user messages already scanned by the pre-compaction
+        # fact flush, so repeated compactions do not re-process them.
+        self._flushed_message_digests: set[str] = set()
+
+    def claim_flush_digest(self, digest: str) -> bool:
+        """Return True the first time *digest* is seen by this store."""
+        if digest in self._flushed_message_digests:
+            return False
+        self._flushed_message_digests.add(digest)
+        return True
 
     def _require_user_id(self) -> uuid.UUID:
         """Return the current user id or fail for anonymous sessions."""
@@ -197,12 +211,19 @@ class PersistentMemoryStore:
         raise RuntimeError("memory entry upsert retries exhausted")
 
     async def recall(
-        self, query: str, namespace: str = "default", limit: int = 20
+        self,
+        query: str,
+        namespace: str = "default",
+        limit: int = 20,
+        *,
+        candidate_limit: int | None = None,
     ) -> list[dict[str, str]]:
         """Search memory entries by substring match on key and value.
 
-        Returns all entries belonging to the current user across all
-        conversations.
+        Searches entries belonging to the current user across all
+        conversations. At most *candidate_limit* matching rows (newest first)
+        are loaded for ranking so a large memory table cannot be pulled into
+        memory by a single query.
         """
         if not query.strip():
             return []
@@ -221,6 +242,13 @@ class PersistentMemoryStore:
                     _memory_match_condition(MemoryEntry, terms),
                 )
                 .order_by(MemoryEntry.updated_at.desc())
+                .limit(
+                    candidate_limit
+                    if candidate_limit is not None
+                    else max(
+                        limit * _RECALL_CANDIDATE_MULTIPLIER, _RECALL_MIN_CANDIDATES
+                    )
+                )
             )
             result = await session.execute(stmt)
             entries = result.scalars().all()

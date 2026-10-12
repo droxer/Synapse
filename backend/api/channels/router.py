@@ -359,7 +359,7 @@ class ChannelRouter:
             await provider.send_text(message.provider_chat_id, "No saved facts yet.")
             return
 
-        lines = ["Known user facts (verified):"]
+        lines = ["Known user facts:"]
         for fact in facts:
             lines.append(f"- {fact['key']}: {fact['value']}")
         await provider.send_text(message.provider_chat_id, "\n".join(lines))
