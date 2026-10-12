@@ -30,6 +30,7 @@ class PlannerState:
         self._waited_agent_ids: set[str] = set()
         self._execution_shape: str | None = None
         self._max_worker_spawns: int | None = None
+        self._spawned_agent_ids: set[str] = set()
 
     def reset(self) -> None:
         """Clear any prior plan state at the start of a new turn."""
@@ -39,6 +40,7 @@ class PlannerState:
         self._waited_agent_ids.clear()
         self._execution_shape = None
         self._max_worker_spawns = None
+        self._spawned_agent_ids.clear()
 
     def configure_spawn_policy(
         self,
@@ -68,7 +70,6 @@ class PlannerState:
         self._steps_by_name = normalized
         self._plan_created = True
         self._agent_ids_by_spawned_step_name.clear()
-        self._waited_agent_ids.clear()
 
     @property
     def has_plan(self) -> bool:
@@ -78,7 +79,7 @@ class PlannerState:
     @property
     def spawned_agent_count(self) -> int:
         """Return the number of worker spawns recorded for the active turn."""
-        return len(self._agent_ids_by_spawned_step_name)
+        return len(self._spawned_agent_ids)
 
     @property
     def waited_agent_count(self) -> int:
@@ -132,6 +133,11 @@ class PlannerState:
         normalized_name = _normalize_step_name(step_name)
         if normalized_name and agent_id:
             self._agent_ids_by_spawned_step_name[normalized_name] = agent_id
+            self._spawned_agent_ids.add(agent_id)
+
+    @property
+    def unobserved_agent_ids(self) -> set[str]:
+        return self._spawned_agent_ids - self._waited_agent_ids
 
     def record_wait(self, agent_ids: list[str]) -> None:
         """Record worker results observed via a successful agent_wait call."""

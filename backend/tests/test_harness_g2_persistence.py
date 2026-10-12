@@ -73,6 +73,24 @@ async def test_retry_after_event_failure_does_not_duplicate_message(
 
 
 @pytest.mark.asyncio
+async def test_retried_turn_start_records_event_without_duplicate_user_row(
+    session_factory,
+) -> None:
+    repo = ConversationRepository()
+    async with session_factory() as s:
+        convo = await repo.create_conversation(s, title="t")
+
+    subscriber = create_db_subscriber(convo.id, repo, session_factory)
+    await subscriber(AgentEvent(type=EventType.TURN_START, data={"message": "hi"}))
+    await subscriber(
+        AgentEvent(type=EventType.TURN_START, data={"message": "hi", "retry": True})
+    )
+
+    assert await _count(session_factory, MessageModel) == 1
+    assert await _count(session_factory, EventModel) == 2
+
+
+@pytest.mark.asyncio
 async def test_save_message_with_same_id_is_idempotent(session_factory) -> None:
     repo = ConversationRepository()
     message_id = uuid.uuid4()

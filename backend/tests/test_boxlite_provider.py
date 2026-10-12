@@ -202,3 +202,35 @@ async def test_upload_file_raises_when_final_verification_fails(
             await session.upload_file(local_path, "/home/user/uploads/missing.bin")
     finally:
         os.unlink(local_path)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("requested", "expected"), [(None, 300), (30, 30), (10_000, 300)]
+)
+async def test_exec_deadline_defaults_to_tool_ceiling_and_is_capped(
+    boxlite_provider_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    requested: int | None,
+    expected: int,
+) -> None:
+    deadlines: list[float] = []
+    real_wait_for = boxlite_provider_module.asyncio.wait_for
+
+    async def _recording_wait_for(awaitable, timeout):
+        deadlines.append(timeout)
+        return await real_wait_for(awaitable, timeout)
+
+    monkeypatch.setattr(
+        boxlite_provider_module.asyncio, "wait_for", _recording_wait_for
+    )
+    box = types.SimpleNamespace(
+        exec=AsyncMock(
+            return_value=types.SimpleNamespace(stdout="ok", stderr="", exit_code=0)
+        )
+    )
+    session = boxlite_provider_module.BoxliteSession(box)
+
+    await session.exec("true", timeout=requested)
+
+    assert deadlines == [expected]

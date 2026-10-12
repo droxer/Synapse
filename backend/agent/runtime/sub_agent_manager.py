@@ -6,7 +6,7 @@ import asyncio
 import re
 import uuid
 from dataclasses import asdict, dataclass, replace
-from typing import Callable
+from typing import Any, Callable
 
 from agent.context.compaction import _estimate_tokens
 from agent.llm.client import AnthropicClient
@@ -158,6 +158,8 @@ class SubAgentManager:
         self._results: dict[str, AgentResult] = {}
         self._configs: dict[str, TaskAgentConfig] = {}
         self._executors: dict[str, list[ToolExecutor]] = {}
+        self._turn_attachments: tuple[Any, ...] = ()
+        self._live_agent_tokens: dict[str, int] = {}
         self._agent_memory_stores: dict[str, dict[str, str]] = {}
         self._reserved_agent_token_estimates: dict[str, int] = {}
         self._terminal_events_emitted: set[str] = set()
@@ -235,13 +237,37 @@ class SubAgentManager:
         """Total number of agents spawned (running + completed)."""
         return len(self._configs)
 
-    def _current_total_agent_tokens(self) -> int:
-        completed_tokens = sum(
-            r.metrics.input_tokens + r.metrics.output_tokens
-            for r in self._results.values()
-            if r.metrics is not None
+    def set_turn_attachments(self, attachments: tuple[Any, ...]) -> None:
+        self._turn_attachments = attachments
+
+    def _guard_token_budget(self) -> None:
+        budget = get_settings().AGENT_GLOBAL_TOKEN_BUDGET
+        if budget > 0 and sum(self._live_agent_tokens.values()) >= budget:
+            raise RuntimeError(
+                "Global agent token budget exhausted; no further model calls allowed"
+            )
+
+    def _charge_tokens(self, agent_id: str, count: int) -> None:
+        self._live_agent_tokens[agent_id] = (
+            self._live_agent_tokens.get(agent_id, 0) + count
         )
-        return completed_tokens + sum(self._reserved_agent_token_estimates.values())
+        self._guard_token_budget()
+
+    def _agent_token_usage(self, agent_id: str) -> int:
+        """Best known usage: reported metrics, live charges, or the spawn reservation."""
+        live = self._live_agent_tokens.get(agent_id, 0)
+        result = self._results.get(agent_id)
+        if result is not None and result.metrics is not None:
+            return max(live, result.metrics.input_tokens + result.metrics.output_tokens)
+        return max(live, self._reserved_agent_token_estimates.get(agent_id, 0))
+
+    def _current_total_agent_tokens(self) -> int:
+        agent_ids = (
+            self._results.keys()
+            | self._live_agent_tokens.keys()
+            | self._reserved_agent_token_estimates.keys()
+        )
+        return sum(self._agent_token_usage(agent_id) for agent_id in agent_ids)
 
     def _estimate_spawn_token_reservation(self, config: TaskAgentConfig) -> int:
         settings = get_settings()
@@ -426,6 +452,8 @@ class SubAgentManager:
         self._reserved_agent_token_estimates.clear()
         self._terminal_events_emitted.clear()
         self._message_bus.clear()
+        self._turn_attachments = ()
+        self._live_agent_tokens.clear()
 
     def _is_agent_active(self, agent_id: str) -> bool:
         task = self._agents.get(agent_id)
@@ -801,8 +829,19 @@ class SubAgentManager:
                 )
             )
 
-            executor = self._executor_factory(registry)
-            self._executors.setdefault(agent_id, []).append(executor)
+            previous = self._executors.get(agent_id)
+            if previous:
+                executor = previous[-1]
+                executor.update_registry(registry)
+            else:
+                executor = self._executor_factory(registry)
+                self._executors.setdefault(agent_id, []).append(executor)
+                for dependency in config.depends_on:
+                    for source in self._executors.get(dependency, []):
+                        if isinstance(source, ToolExecutor) and isinstance(
+                            executor, ToolExecutor
+                        ):
+                            await executor.copy_workspace_from(source)
 
             runner = TaskAgentRunner(
                 agent_id=agent_id,
@@ -817,6 +856,9 @@ class SubAgentManager:
                 memory_entries=self._memory_entries,
                 shared_tools=self._shared_bundle.tools,
                 shared_tools_fingerprint=self._shared_bundle.tools_fingerprint,
+                attachments=self._turn_attachments,
+                token_budget_guard=self._guard_token_budget,
+                token_usage_callback=lambda count: self._charge_tokens(agent_id, count),
             )
             callback_target[0] = runner
             handoff_target[0] = runner
@@ -830,22 +872,8 @@ class SubAgentManager:
                 summary="",
                 error=str(exc),
             )
-        finally:
-            if executor is not None:
-                try:
-                    maybe_cleanup = executor.cleanup()
-                    if asyncio.iscoroutine(maybe_cleanup):
-                        await maybe_cleanup
-                except Exception as exc:
-                    logger.error(
-                        "Failed to cleanup executor for agent {}: {}",
-                        agent_id[:8],
-                        exc,
-                    )
-                executors = self._executors.get(agent_id, [])
-                self._executors[agent_id] = [e for e in executors if e is not executor]
-                if not self._executors[agent_id]:
-                    self._executors.pop(agent_id, None)
+        # Executors live through handoffs and dependency consumption. The
+        # manager's cleanup owns disposal once the planner turn ends.
 
 
 def _collect_tasks(

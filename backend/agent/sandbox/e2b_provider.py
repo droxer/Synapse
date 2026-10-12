@@ -66,6 +66,16 @@ def _infer_display_type(mime_type: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+_DEFAULT_EXEC_SECONDS = 60
+_MAX_EXEC_SECONDS = 300
+_LEASE_MARGIN_SECONDS = 60
+_DEFAULT_LEASE_SECONDS = _MAX_EXEC_SECONDS + _LEASE_MARGIN_SECONDS
+
+
+def _bounded_exec_timeout(timeout: int | None) -> int:
+    return max(1, min(timeout or _DEFAULT_EXEC_SECONDS, _MAX_EXEC_SECONDS))
+
+
 class E2BSession:
     """A live sandbox session backed by an E2B cloud sandbox.
 
@@ -79,6 +89,29 @@ class E2BSession:
         self._sandbox = sandbox
         self._config = config
 
+    def _lease_seconds(self, timeout: int | None) -> int:
+        """Lease covering the operation plus margin, never below the session lifetime."""
+        lifetime = (
+            self._config.timeout if self._config is not None else _DEFAULT_LEASE_SECONDS
+        )
+        operation = _bounded_exec_timeout(timeout) + _LEASE_MARGIN_SECONDS
+        return max(lifetime, operation)
+
+    async def _renew(self, timeout: int | None = None) -> None:
+        """Extend the VM lease before an operation, never during a failed write."""
+        renew = getattr(self._sandbox, "set_timeout", None)
+        if not callable(renew):
+            return
+        try:
+            await asyncio.to_thread(renew, self._lease_seconds(timeout))
+        except Exception as exc:
+            if (
+                type(exc).__name__ == "NotFoundException"
+                or getattr(exc, "status_code", None) == 404
+            ):
+                raise RuntimeError("Sandbox session expired before execution") from exc
+            raise
+
     async def exec(
         self,
         command: str,
@@ -86,10 +119,10 @@ class E2BSession:
         workdir: str | None = None,
     ) -> ExecResult:
         """Run *command* inside the E2B sandbox."""
+        await self._renew(timeout)
         try:
             kwargs: dict[str, Any] = {"cwd": workdir or SANDBOX_HOME_DIR}
-            if timeout is not None:
-                kwargs["timeout"] = timeout
+            kwargs["timeout"] = _bounded_exec_timeout(timeout)
 
             result = await asyncio.to_thread(
                 self._sandbox.commands.run, command, **kwargs
@@ -112,6 +145,7 @@ class E2BSession:
 
     async def read_file(self, path: str) -> str:
         """Read file content from the E2B sandbox."""
+        await self._renew()
         try:
             content = await asyncio.to_thread(self._sandbox.files.read, path)
             if isinstance(content, bytes):
@@ -198,6 +232,7 @@ class E2BSession:
 
     async def run_code(self, code: str, language: str = "python") -> CodeResult:
         """Execute code via the E2B code interpreter."""
+        await self._renew()
         try:
             execution = await asyncio.to_thread(
                 self._sandbox.run_code, code, language=language
@@ -243,10 +278,10 @@ class E2BSession:
         workdir: str | None = None,
     ) -> ExecResult:
         """Execute a command with real-time streaming callbacks."""
+        await self._renew(timeout)
         try:
             kwargs: dict[str, Any] = {"cwd": workdir or SANDBOX_HOME_DIR}
-            if timeout is not None:
-                kwargs["timeout"] = timeout
+            kwargs["timeout"] = _bounded_exec_timeout(timeout)
             if on_stdout is not None:
                 kwargs["on_stdout"] = lambda data: on_stdout(
                     data.line if hasattr(data, "line") else str(data)

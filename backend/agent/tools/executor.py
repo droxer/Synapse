@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+from dataclasses import replace
 from typing import Any
 
 from loguru import logger
@@ -20,7 +22,15 @@ from api.events import EventType
 _STALE_SANDBOX_SESSION_MARKERS = (
     "Handle invalidated after stop()",
     "stopped:",
+    "Sandbox session expired before execution",
 )
+
+MAX_TOOL_OUTPUT_CHARS = 50_000
+MAX_TOOL_TIMEOUT_SECONDS = 300
+# Worker coordination waits on workers whose own tool calls are bounded, and
+# user prompts carry their own response timeout; an outer deadline would
+# report a legitimate long wait as a failed operation.
+_DEADLINE_EXEMPT_TAGS = frozenset({"agent", "communication"})
 
 
 class ToolExecutor:
@@ -51,6 +61,10 @@ class ToolExecutor:
         self._active_skill_directory: str | None = None
         self._allowed_tool_names: set[str] | None = None
         self._allowed_tool_tags: set[str] | None = None
+        self._sandbox_lock = asyncio.Lock()
+        self._upload_spool_paths: set[str] = set()
+        self._workspace_sources: list[Any] = []
+        self._publish_artifacts = True
 
     @property
     def sandbox_provider(self) -> Any | None:
@@ -76,12 +90,50 @@ class ToolExecutor:
             artifact_manager=self._artifact_manager,
             conversation_id=self._conversation_id,
         )
+        executor._sandbox_sessions = self._sandbox_sessions
+        executor._staged_skills_by_template = self._staged_skills_by_template
+        executor._sandbox_lock = self._sandbox_lock
+        executor._upload_spool_paths = self._upload_spool_paths
+        executor._workspace_sources = self._workspace_sources
+        executor._publish_artifacts = self._publish_artifacts
         if self._allowed_tool_names is not None or self._allowed_tool_tags is not None:
             executor.set_allowed_tools(
                 self._allowed_tool_names or set(),
                 self._allowed_tool_tags or set(),
             )
         return executor
+
+    def update_registry(self, registry: ToolRegistry) -> None:
+        """Rebind a sequential worker stage without replacing its owned VM."""
+        self._registry = registry
+
+    def retain_upload_spool(self, path: str) -> None:
+        self._upload_spool_paths.add(path)
+
+    async def copy_workspace_from(self, source: ToolExecutor) -> None:
+        from agent.tools.workspace_transfer import copy_workspace
+
+        # Keep completed dependencies alive until manager cleanup. Populate
+        # every new target VM, including templates selected by skill activation.
+        for session in tuple(source._sandbox_sessions.values()):
+            if not any(session is existing for existing in self._workspace_sources):
+                self._workspace_sources.append(session)
+                for destination in tuple(self._sandbox_sessions.values()):
+                    await copy_workspace(session, destination)
+
+    async def _populate_workspace(self, session: Any) -> None:
+        from agent.tools.workspace_transfer import copy_workspace
+
+        try:
+            for source in self._workspace_sources:
+                await copy_workspace(source, session)
+        except BaseException:
+            await self._sandbox_provider.destroy_session(session)
+            raise
+
+    def defer_artifact_publication(self) -> None:
+        """Let a containing tool publish its aggregate artifacts once."""
+        self._publish_artifacts = False
 
     def reset_turn_quotas(self) -> None:
         """Reset per-turn counters (call at the start of each user turn)."""
@@ -90,8 +142,22 @@ class ToolExecutor:
 
     def set_allowed_tools(self, names: set[str], tags: set[str]) -> None:
         """Apply a hard allowlist for the current turn."""
-        self._allowed_tool_names = set(names)
-        self._allowed_tool_tags = set(tags)
+        # Resolve tag/name permissions to actual tool names before intersecting.
+        # A later skill can narrow the turn's authority, never widen it.
+        permitted = {
+            definition.name
+            for definition in self._registry.list_tools()
+            if definition.name in names or set(definition.tags) & tags
+        }
+        if self._allowed_tool_names is not None:
+            permitted &= self._allowed_tool_names
+        self._allowed_tool_names = permitted
+        self._allowed_tool_tags = set()
+
+    def filter_allowed_registry(self, registry: ToolRegistry) -> ToolRegistry:
+        if self._allowed_tool_names is None:
+            return registry
+        return registry.filter_by_names(self._allowed_tool_names)
 
     def reset_allowed_tools(self) -> None:
         """Clear any hard tool allowlist for the current turn."""
@@ -160,6 +226,10 @@ class ToolExecutor:
         return "default"
 
     async def _get_sandbox_session(self, tool_tags: tuple[str, ...] = ()) -> Any:
+        async with self._sandbox_lock:
+            return await self._create_sandbox_session(tool_tags)
+
+    async def _create_sandbox_session(self, tool_tags: tuple[str, ...] = ()) -> Any:
         """Get or create a sandbox session for the required template.
 
         Sessions are keyed by template name so that browser tools get a
@@ -191,6 +261,7 @@ class ToolExecutor:
             config = SandboxConfig(template=template)
 
         session = await self._sandbox_provider.create_session(config)
+        await self._populate_workspace(session)
         self._sandbox_sessions[template] = session
         logger.info(
             "Sandbox session created (template={}, sandbox_id={})",
@@ -208,6 +279,10 @@ class ToolExecutor:
         return await self._get_sandbox_session(tool_tags)
 
     async def get_sandbox_session_for_template(self, template: str) -> Any:
+        async with self._sandbox_lock:
+            return await self._create_session_for_template(template)
+
+    async def _create_session_for_template(self, template: str) -> Any:
         """Return a sandbox session for a specific template name."""
         from agent.sandbox.base import SandboxConfig
 
@@ -234,6 +309,7 @@ class ToolExecutor:
             config = SandboxConfig(template=template)
 
         session = await self._sandbox_provider.create_session(config)
+        await self._populate_workspace(session)
         self._sandbox_sessions[template] = session
         logger.info(
             "Sandbox session created (template={}, sandbox_id={})",
@@ -312,6 +388,43 @@ class ToolExecutor:
         tool_name: str,
         tool_input: dict[str, Any],
     ) -> ToolResult:
+        """Enforce an outer deadline and result cap for every tool."""
+        bounded_input = dict(tool_input)
+        for key in ("timeout", "timeout_seconds"):
+            value = bounded_input.get(key)
+            if isinstance(value, int | float):
+                bounded_input[key] = max(1, min(value, MAX_TOOL_TIMEOUT_SECONDS))
+        try:
+            result = await asyncio.wait_for(
+                self._execute(tool_name, bounded_input),
+                timeout=self._deadline_for(tool_name),
+            )
+        except TimeoutError:
+            return ToolResult.fail(
+                "Tool deadline exceeded. Side effects may have occurred; inspect "
+                "the current state before attempting the operation again."
+            )
+        metadata = dict(result.metadata or {})
+        output, error = result.output, result.error
+        if len(output) > MAX_TOOL_OUTPUT_CHARS:
+            marker = "\n...[TOOL_OUTPUT_TRUNCATED]"
+            output = output[: MAX_TOOL_OUTPUT_CHARS - len(marker)] + marker
+            metadata["output_truncated"] = True
+        if error and len(error) > MAX_TOOL_OUTPUT_CHARS:
+            error = error[:MAX_TOOL_OUTPUT_CHARS]
+        return replace(result, output=output, error=error, metadata=metadata or None)
+
+    def _deadline_for(self, tool_name: str) -> float | None:
+        _, tool = self._resolve_tool(tool_name)
+        if tool is not None and _DEADLINE_EXEMPT_TAGS & set(tool.definition().tags):
+            return None
+        return MAX_TOOL_TIMEOUT_SECONDS
+
+    async def _execute(
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+    ) -> ToolResult:
         """Execute a tool by name with the given input.
 
         Local tools are called directly.
@@ -385,7 +498,24 @@ class ToolExecutor:
                             conversation_id=self._conversation_id,
                             **resolved_input,
                         )
-                        result = await self._extract_artifacts(result, session)
+                        # Artifact publication is a separate failure from the
+                        # operation: never invite repetition of a successful write.
+                        # Any publication error (storage, sandbox, DB) must be
+                        # contained, so this boundary is deliberately broad.
+                        try:
+                            if self._publish_artifacts:
+                                result = await self._extract_artifacts(result, session)
+                        except Exception:  # noqa: BLE001
+                            logger.exception(
+                                "artifact_publication_failed name={}", tool_name
+                            )
+                            result = replace(
+                                result,
+                                metadata={
+                                    **dict(result.metadata or {}),
+                                    "artifact_extraction_error": "Artifact publication failed; the tool operation succeeded.",
+                                },
+                            )
                         return self._validate_tool_result_schema(
                             tool_name=tool_name,
                             definition=definition,
@@ -542,6 +672,19 @@ class ToolExecutor:
         Safe to call multiple times; a second call is a no-op.
         Handles the case where the session or provider is ``None``.
         """
+        from agent.runtime.turn_attachments import _cleanup_temp_upload
+
+        for path in tuple(self._upload_spool_paths):
+            _cleanup_temp_upload(path)
+        self._upload_spool_paths.clear()
+        managers = {
+            tool._manager
+            for definition in self._registry.list_tools()
+            if (tool := self._registry.get(definition.name)) is not None
+            if isinstance(tool, LocalTool)
+            and callable(getattr(getattr(tool, "_manager", None), "cancel_all", None))
+        }
+        await asyncio.gather(*(manager.cancel_all() for manager in managers))
         if not self._sandbox_sessions:
             return
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import re
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any, Protocol
@@ -26,8 +27,8 @@ from agent.runtime.helpers import (
 )
 from agent.context.compaction import Observer
 from agent.context.compaction_step import CompactionStep
-from agent.runtime.engine import AgentLoop, LoopConfig, LoopPolicy
-from agent.runtime.orchestrator import AgentState
+from agent.runtime.engine import AgentLoop, LoopConfig
+from agent.runtime.orchestrator import AgentOrchestrator, AgentState
 from agent.runtime.prompting import PromptAssembly
 from agent.runtime.skill_activation import SkillActivationController
 from agent.runtime.task_runner import TaskAgentConfig
@@ -250,7 +251,7 @@ class SubAgentManagerProtocol(Protocol):
         ...
 
 
-class PlannerOrchestrator(LoopPolicy):
+class PlannerOrchestrator(AgentOrchestrator):
     """Top-level orchestrator that decomposes requests into sub-agent tasks.
 
     Uses a planning model to reason about task decomposition and coordinates
@@ -311,6 +312,13 @@ class PlannerOrchestrator(LoopPolicy):
         )
         self._task_complete_summary: str | None = None
         self._cancel_event = asyncio.Event()
+        self._turn_generation = 0
+        self._turn_active = False
+        self._active_turn_id = None
+        self._pending_cancel_turn_id = None
+        self._last_turn_id = None
+        self._last_turn_user_message = None
+        self._last_turn_status = None
         self._base_prompt_assembly = base_prompt_assembly
         self._system_prompt = base_prompt_assembly.system
         self._skill_registry = skill_registry
@@ -388,14 +396,6 @@ class PlannerOrchestrator(LoopPolicy):
         """Callback for the task_complete tool."""
         self._task_complete_summary = summary
 
-    def cancel(self) -> None:
-        """Signal the current planner turn to stop."""
-        self._cancel_event.set()
-
-    def reset_cancel(self) -> None:
-        """Clear the cancellation signal."""
-        self._cancel_event.clear()
-
     def get_last_user_message(self) -> str | None:
         """Return the content of the most recent user message, or None."""
         return get_last_user_message_text(self._state.messages)
@@ -430,14 +430,13 @@ class PlannerOrchestrator(LoopPolicy):
         runtime_prompt_sections: tuple[str, ...] = (),
         turn_metadata: dict[str, Any] | None = None,
     ) -> str:
-        async with self._run_lock:
-            return await self._run_locked(
-                user_message=user_message,
-                attachments=attachments,
-                selected_skills=selected_skills,
-                runtime_prompt_sections=runtime_prompt_sections,
-                turn_metadata=turn_metadata,
-            )
+        return await super().run(
+            user_message,
+            attachments,
+            selected_skills,
+            runtime_prompt_sections,
+            turn_metadata,
+        )
 
     async def _run_locked(
         self,
@@ -542,6 +541,11 @@ class PlannerOrchestrator(LoopPolicy):
         tools = activation.tools
 
         uploaded_paths: tuple[str, ...] = ()
+        set_attachments = getattr(self._sub_agent_manager, "set_turn_attachments", None)
+        if callable(set_attachments):
+            outcome = set_attachments(attachments)
+            if inspect.isawaitable(outcome):
+                await outcome
         if attachments:
             try:
                 uploaded_paths = await upload_attachments_to_sandbox(
@@ -604,7 +608,10 @@ class PlannerOrchestrator(LoopPolicy):
     async def loop_on_no_tool_calls(
         self, state: AgentState, response: LLMResponse
     ) -> AgentState:
-        if self._explicit_planner_completion_is_exempt(response.text):
+        if (
+            self._explicit_planner_completion_is_exempt(response.text)
+            and not self._planner_state.unobserved_agent_ids
+        ):
             self._explicit_policy_reminder = None
             return state.mark_completed()
         policy_state = await self._apply_explicit_planner_policy(
@@ -657,6 +664,11 @@ class PlannerOrchestrator(LoopPolicy):
         return tuple(sections)
 
     def _explicit_planner_policy_violation(self) -> str | None:
+        if self._planner_state.unobserved_agent_ids:
+            return (
+                "System notice: Worker results remain unobserved. Call agent_wait "
+                "for all spawned workers before finishing, then synthesize their results."
+            )
         if not self._explicit_planner_requested:
             return None
         if self._explicit_planner_requires_plan and not self._planner_state.has_plan:
@@ -692,7 +704,7 @@ class PlannerOrchestrator(LoopPolicy):
         self._explicit_policy_nudge_count += 1
         if self._explicit_policy_nudge_count >= 3:
             return state.mark_error(
-                "Explicit planner mode could not produce the required visible plan or worker delegation."
+                "Planner could not produce the required plan or collect all worker results."
             )
 
         await self._emitter.emit(
@@ -707,6 +719,7 @@ class PlannerOrchestrator(LoopPolicy):
 
     async def _finalize(self, state: AgentState) -> str:
         """Emit final event and return the result text."""
+        self._last_turn_status = self._classify_turn_status()
         final_text, self._state = await finalize_conversation_turn(
             state=state,
             cancel_event=self._cancel_event,

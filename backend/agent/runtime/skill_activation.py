@@ -254,10 +254,6 @@ class SkillActivationController:
             base_registry, skill.metadata.name
         )
 
-        reset_allowed_tools = getattr(self._executor, "reset_allowed_tools", None)
-        if callable(reset_allowed_tools):
-            reset_allowed_tools()
-
         await prepare_skill_for_turn(
             executor=self._executor,
             skill=skill,
@@ -275,6 +271,9 @@ class SkillActivationController:
         )
 
         updated_registry = self._apply_allowed_tools(updated_registry, skill)
+        filter_allowed = getattr(self._executor, "filter_allowed_registry", None)
+        if callable(filter_allowed):
+            updated_registry = filter_allowed(updated_registry)
         if tool_id is not None:
             self._processed_skill_activation_tool_ids.add(tool_id)
         logger.info(

@@ -1271,6 +1271,7 @@ class TestChannelRouterMemoryCommands:
 
         assert provider.messages
         assert "known user facts" in provider.messages[-1].lower()
+        assert "verified" not in provider.messages[-1].lower()
         assert "preferences.language" in provider.messages[-1]
 
     @pytest.mark.asyncio

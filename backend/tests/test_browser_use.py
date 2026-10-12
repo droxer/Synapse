@@ -1,98 +1,131 @@
-"""Tests for the high-level browser-use sandbox tool."""
+"""Browser inference stays in the backend; no credential enters the VM."""
 
-from __future__ import annotations
-
-import json
-import shlex
-from typing import Any
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
-from agent.sandbox.base import ExecResult
-from agent.tools.sandbox.browser import (
-    _RESULT_END,
-    _RESULT_START,
-    _SCRIPT_PATH,
-    BrowserUse,
-)
-
-
-class _FakeBrowserSession:
-    def __init__(self) -> None:
-        self.commands: list[str] = []
-        self.files: dict[str, str] = {}
-
-    async def exec(self, command: str, timeout: int | None = None) -> ExecResult:
-        del timeout
-        self.commands.append(command)
-        if command == "python3 -c 'import browser_use'":
-            return ExecResult(stdout="", stderr="", exit_code=0)
-        if command == "mkdir -p /home/user/.browser":
-            return ExecResult(stdout="", stderr="", exit_code=0)
-        if command.endswith(f"python3 {_SCRIPT_PATH}"):
-            payload = {
-                "success": True,
-                "output": "done",
-                "steps": 1,
-                "is_done": True,
-            }
-            return ExecResult(
-                stdout=f"\n{_RESULT_START}\n{json.dumps(payload)}\n{_RESULT_END}\n",
-                stderr="",
-                exit_code=0,
-            )
-        return ExecResult(stdout="", stderr="", exit_code=0)
-
-    async def write_file(self, path: str, content: str) -> None:
-        self.files[path] = content
-
-
-def _browser_command(session: _FakeBrowserSession) -> str:
-    for command in session.commands:
-        if command.endswith(f"python3 {_SCRIPT_PATH}"):
-            return command
-    raise AssertionError("browser agent command was not executed")
-
-
-def _env_value(command: str, name: str) -> Any:
-    parts = shlex.split(command)
-    prefix = f"{name}="
-    for part in parts:
-        if part.startswith(prefix):
-            return part[len(prefix) :]
-    raise AssertionError(f"{name} was not set")
+from agent.llm.client import LLMResponse, TokenUsage, ToolCall
+from agent.tools.base import ToolResult
+from agent.tools.sandbox.browser import BrowserUse
 
 
 @pytest.mark.asyncio
-async def test_browser_use_script_retries_thinking_tool_choice_error() -> None:
-    session = _FakeBrowserSession()
-    tool = BrowserUse(anthropic_api_key="test-key")
-
-    result = await tool.execute(session, task="Inspect the page")
-
+async def test_browser_agent_keeps_credentials_off_sandbox(monkeypatch):
+    session = SimpleNamespace(exec=AsyncMock(), write_file=AsyncMock())
+    response = LLMResponse("done", (), "end_turn", TokenUsage(1, 1))
+    client = SimpleNamespace(
+        create_message=AsyncMock(return_value=response), close=AsyncMock()
+    )
+    monkeypatch.setattr(
+        "agent.tools.sandbox.browser.AnthropicClient",
+        lambda **kwargs: client,
+        raising=False,
+    )
+    result = await BrowserUse(anthropic_api_key="private-server-key").execute(
+        session, task="Inspect page"
+    )
     assert result.success
-    script = session.files[_SCRIPT_PATH]
-    assert "SynapseChatAnthropic" in script
-    assert "_is_tool_choice_thinking_error" in script
-    assert 'retry_kwargs.pop("tool_choice", None)' in script
-    assert "use_thinking=False" in script
+    session.exec.assert_not_awaited()
+    session.write_file.assert_not_awaited()
+    client.close.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_browser_use_shell_quotes_config_and_env() -> None:
-    session = _FakeBrowserSession()
-    tool = BrowserUse(
-        anthropic_api_key="key with space",
-        anthropic_base_url="https://example.test/custom path",
+async def test_browser_agent_drives_tools_and_pairs_results(monkeypatch):
+    calls = [
+        LLMResponse(
+            "",
+            (ToolCall("nav", "browser_navigate", {"url": "https://example.com"}),),
+            "tool_use",
+            TokenUsage(1, 1),
+        ),
+        LLMResponse("Found it", (), "end_turn", TokenUsage(1, 1)),
+    ]
+    client = SimpleNamespace(
+        create_message=AsyncMock(side_effect=calls), close=AsyncMock()
     )
-
-    result = await tool.execute(session, task="Click Bob's profile")
-
+    monkeypatch.setattr(
+        "agent.tools.sandbox.browser.AnthropicClient",
+        lambda **kwargs: client,
+        raising=False,
+    )
+    navigate = AsyncMock(return_value=ToolResult.ok("Page text"))
+    monkeypatch.setattr(
+        "agent.tools.sandbox.browser_tools.BrowserNavigate.execute", navigate
+    )
+    result = await BrowserUse(anthropic_api_key="private-server-key").execute(
+        object(), task="Find story"
+    )
     assert result.success
-    command = _browser_command(session)
-    config = json.loads(_env_value(command, "BROWSER_USE_CONFIG"))
-    assert config["task"] == "Click Bob's profile"
-    assert _env_value(command, "ANTHROPIC_API_KEY") == "key with space"
-    assert (
-        _env_value(command, "ANTHROPIC_BASE_URL") == "https://example.test/custom path"
+    assert "Found it" in result.output
+    navigate.assert_awaited_once()
+    messages = client.create_message.call_args.kwargs["messages"]
+    assert messages[-1]["content"][0]["tool_use_id"] == "nav"
+
+
+@pytest.mark.asyncio
+async def test_browser_never_executes_truncated_calls(monkeypatch):
+    response = LLMResponse(
+        "", (ToolCall("nav", "browser_navigate", {}),), "max_tokens", TokenUsage(1, 1)
     )
+    client = SimpleNamespace(
+        create_message=AsyncMock(return_value=response), close=AsyncMock()
+    )
+    monkeypatch.setattr(
+        "agent.tools.sandbox.browser.AnthropicClient",
+        lambda **kwargs: client,
+        raising=False,
+    )
+    navigate = AsyncMock()
+    monkeypatch.setattr(
+        "agent.tools.sandbox.browser_tools.BrowserNavigate.execute", navigate
+    )
+    result = await BrowserUse(anthropic_api_key="private-server-key").execute(
+        object(), task="Find story"
+    )
+    assert not result.success
+    navigate.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_browser_agent_failure_is_logged_with_cause(monkeypatch):
+    from loguru import logger
+
+    client = SimpleNamespace(
+        create_message=AsyncMock(side_effect=RuntimeError("invalid x-api-key")),
+        close=AsyncMock(),
+    )
+    monkeypatch.setattr(
+        "agent.tools.sandbox.browser.AnthropicClient",
+        lambda **kwargs: client,
+        raising=False,
+    )
+    records: list[str] = []
+    sink_id = logger.add(lambda message: records.append(str(message)), level="ERROR")
+    try:
+        result = await BrowserUse(anthropic_api_key="key").execute(
+            object(), task="Find story"
+        )
+    finally:
+        logger.remove(sink_id)
+    assert not result.success
+    assert any("invalid x-api-key" in record for record in records)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("max_steps", [None, "many", True])
+async def test_browser_agent_tolerates_invalid_max_steps(monkeypatch, max_steps):
+    response = LLMResponse("done", (), "end_turn", TokenUsage(1, 1))
+    client = SimpleNamespace(
+        create_message=AsyncMock(return_value=response), close=AsyncMock()
+    )
+    monkeypatch.setattr(
+        "agent.tools.sandbox.browser.AnthropicClient",
+        lambda **kwargs: client,
+        raising=False,
+    )
+    result = await BrowserUse(anthropic_api_key="key").execute(
+        object(), task="Inspect", max_steps=max_steps
+    )
+    assert result.success

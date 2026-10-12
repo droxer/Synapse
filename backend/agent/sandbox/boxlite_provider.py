@@ -40,6 +40,7 @@ TEMPLATE_IMAGES: dict[str, str] = {
 }
 
 DEFAULT_IMAGE = "ghcr.io/droxer/synapse-sandbox-default"
+_MAX_EXEC_SECONDS = 300
 
 
 # ---------------------------------------------------------------------------
@@ -86,6 +87,9 @@ class BoxliteSession:
             )
             env_prefix = f"export {exports} && "
 
+        # Unspecified timeouts get the tool-level ceiling rather than a short
+        # default, so long installs and builds keep working.
+        effective_timeout = max(1, min(timeout or _MAX_EXEC_SECONDS, _MAX_EXEC_SECONDS))
         try:
             # Use sh -c to support full shell syntax
             coro = self._box.exec(
@@ -93,14 +97,11 @@ class BoxliteSession:
                 "-c",
                 f"{env_prefix}cd {shlex.quote(effective_workdir)} && {command}",
             )
-            if timeout is not None:
-                result = await asyncio.wait_for(coro, timeout=timeout)
-            else:
-                result = await coro
+            result = await asyncio.wait_for(coro, timeout=effective_timeout)
         except asyncio.TimeoutError:
             return ExecResult(
                 stdout="",
-                stderr=f"Command timed out after {timeout}s",
+                stderr=f"Command timed out after {effective_timeout}s",
                 exit_code=124,
             )
         except boxlite.TimeoutError:
@@ -156,7 +157,7 @@ class BoxliteSession:
 
         try:
             # copy_in destination must be a directory
-            await self._box.copy_in(tmp_path, dir_path)
+            await asyncio.wait_for(self._box.copy_in(tmp_path, dir_path), timeout=60)
 
             # Rename the uploaded temp file to the target name
             tmp_name = os.path.basename(tmp_path)
@@ -266,7 +267,7 @@ class BoxliteSession:
 
         copy_succeeded = False
         try:
-            await self._box.copy_in(local_path, dir_path)
+            await asyncio.wait_for(self._box.copy_in(local_path, dir_path), timeout=60)
             copy_succeeded = await self._file_exists(uploaded_path)
         except Exception as exc:
             copy_error = str(exc)
@@ -315,7 +316,9 @@ class BoxliteSession:
 
         # Attempt 1: copy_out
         try:
-            await self._box.copy_out(remote_path, local_dir or ".")
+            await asyncio.wait_for(
+                self._box.copy_out(remote_path, local_dir or "."), timeout=60
+            )
 
             downloaded_name = os.path.basename(remote_path)
             target_name = os.path.basename(local_path)

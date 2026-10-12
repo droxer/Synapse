@@ -305,6 +305,10 @@ def create_db_subscriber(
                     # Message and event commit together (save_event commits),
                     # so a retry after a failed event insert cannot duplicate
                     # the message; the deterministic id covers lost commit acks.
+                    # A retried turn re-sends a message whose row already exists.
+                    if clean.get("retry") is True:
+                        await _save_event_record()
+                        return
                     await repo.save_message(
                         session,
                         conversation_id,

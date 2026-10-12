@@ -418,10 +418,12 @@ export function FilePreview({
   if (ct === "text/html") {
     return (
       <div className={className}>
+        {/* Generated HTML may script itself but must stay in an opaque
+            origin; the artifact response enforces the same CSP sandbox. */}
         <iframe
           src={inlineUrl}
           title={fileName}
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-downloads allow-forms allow-modals allow-popups allow-scripts"
           className="h-[70vh] w-full rounded-lg bg-muted"
         />
       </div>
@@ -430,12 +432,13 @@ export function FilePreview({
 
   /* ---- PDF ---- */
   if (ct === "application/pdf") {
+    // No sandbox: Chromium refuses to render PDFs inside sandboxed frames.
+    // The response is served as application/pdf with nosniff.
     return (
       <div className={className}>
         <iframe
           src={inlineUrl}
           title={fileName}
-          sandbox="allow-same-origin"
           className="h-[70vh] w-full rounded-lg bg-muted"
         />
       </div>

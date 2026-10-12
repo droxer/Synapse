@@ -114,6 +114,7 @@ def test_settings_allows_exa_without_tavily_key() -> None:
         ANTHROPIC_API_KEY="anthropic-key",
         SEARCH_PROVIDER="exa",
         EXA_API_KEY="exa-key",
+        TAVILY_API_KEY="",
     )
 
     assert settings.SEARCH_PROVIDER == "exa"
@@ -134,4 +135,8 @@ def test_settings_requires_selected_provider_key() -> None:
     with pytest.raises(
         ValueError, match="SEARCH_PROVIDER=tavily requires TAVILY_API_KEY"
     ):
-        Settings(ANTHROPIC_API_KEY="anthropic-key")
+        Settings(
+            ANTHROPIC_API_KEY="anthropic-key",
+            SEARCH_PROVIDER="tavily",
+            TAVILY_API_KEY="",
+        )
