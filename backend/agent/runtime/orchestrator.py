@@ -18,6 +18,7 @@ from agent.context.profiles import CompactionProfile, resolve_compaction_profile
 from agent.memory.store import PersistentMemoryStore
 from agent.runtime.hooks import (
     ConversationHooks,
+    ConversationTurnStatus,
     NoopConversationHooks,
 )
 from agent.runtime.helpers import (
@@ -159,6 +160,15 @@ class AgentOrchestrator(LoopPolicy):
         self._turn_artifact_ids: list[str] = []
         self._current_turn_start_index = len(initial_messages)
         self._current_turn_base_messages = initial_messages
+        # Turn identity: cancellation and retry target one specific turn so a
+        # stale cancel signal can never leak into a later turn.
+        self._turn_generation = 0
+        self._turn_active = False
+        self._active_turn_id: str | None = None
+        self._pending_cancel_turn_id: str | None = None
+        self._last_turn_id: str | None = None
+        self._last_turn_user_message: str | None = None
+        self._last_turn_status: ConversationTurnStatus | None = None
         self._loop = AgentLoop(
             client=claude_client,
             emitter=event_emitter,
@@ -172,13 +182,97 @@ class AgentOrchestrator(LoopPolicy):
         """Callback for the task_complete tool."""
         self._task_complete_summary = summary
 
-    def cancel(self) -> None:
-        """Signal the current turn to stop."""
-        self._cancel_event.set()
+    def cancel(self, turn_id: str | None = None) -> None:
+        """Signal a turn to stop.
+
+        Without ``turn_id`` only the currently running turn is targeted; the
+        request is ignored when no turn is running.  With ``turn_id`` the
+        running turn is cancelled when it matches, otherwise the request is
+        remembered so the turn is cancelled as soon as it starts.  Requests
+        for a turn that already finished are ignored.
+        """
+        if self._turn_active and turn_id in (None, self._active_turn_id):
+            self._cancel_event.set()
+            return
+        if turn_id is None or turn_id == self._last_turn_id:
+            logger.debug("orchestrator_cancel_ignored turn_id={}", turn_id)
+            return
+        self._pending_cancel_turn_id = turn_id
 
     def reset_cancel(self) -> None:
-        """Clear the cancellation signal."""
+        """Clear the cancellation signal and any pending cancel request."""
         self._cancel_event.clear()
+        self._pending_cancel_turn_id = None
+
+    @property
+    def active_turn_id(self) -> str | None:
+        """Identifier of the turn currently running, if any."""
+        return self._active_turn_id if self._turn_active else None
+
+    @property
+    def last_turn_id(self) -> str | None:
+        """Identifier of the most recently started turn."""
+        return self._last_turn_id
+
+    @property
+    def last_turn_user_message(self) -> str | None:
+        """User message of the most recently started turn."""
+        return self._last_turn_user_message
+
+    @property
+    def last_turn_status(self) -> ConversationTurnStatus | None:
+        """Terminal status of the most recently finished turn."""
+        return self._last_turn_status
+
+    def rollback_turn(self, turn_id: str | None) -> bool:
+        """Rewind state to before ``turn_id`` started.
+
+        Only the most recent, already finished turn can be rolled back.  The
+        call is idempotent: once rewound (or when the turn never added
+        messages, e.g. graceful cancel) it is a no-op.  Returns whether state
+        changed.
+        """
+        if turn_id is None or turn_id != self._last_turn_id or self._turn_active:
+            return False
+        return self._rewind_to_turn_base()
+
+    def _rewind_to_turn_base(self) -> bool:
+        base_messages = self._current_turn_base_messages
+        if self._state.messages == base_messages:
+            return False
+        self._state = replace(
+            self._state,
+            messages=base_messages,
+            completed=False,
+            error=None,
+        )
+        return True
+
+    def _begin_turn(
+        self,
+        user_message: str,
+        turn_metadata: dict[str, Any] | None,
+    ) -> str:
+        """Register a new turn; must run before any await in the turn."""
+        self._turn_generation += 1
+        raw_turn_id = (turn_metadata or {}).get("turn_id")
+        turn_id = (
+            raw_turn_id
+            if isinstance(raw_turn_id, str) and raw_turn_id
+            else f"orchestrator_turn_{self._turn_generation}"
+        )
+        self._cancel_event.clear()
+        if self._pending_cancel_turn_id == turn_id:
+            self._cancel_event.set()
+        self._pending_cancel_turn_id = None
+        self._turn_active = True
+        self._active_turn_id = turn_id
+        self._last_turn_id = turn_id
+        self._last_turn_user_message = user_message
+        self._last_turn_status = None
+        self._current_turn_start_index = len(self._state.messages)
+        self._current_turn_base_messages = self._state.messages
+        return turn_id
 
     def get_last_user_message(self) -> str | None:
         """Return the content of the most recent user message, or None."""
@@ -259,13 +353,27 @@ class AgentOrchestrator(LoopPolicy):
             raise ValueError("user_message must not be empty")
 
         async with self._run_lock:
-            return await self._run_locked(
-                user_message=user_message,
-                attachments=attachments,
-                selected_skills=selected_skills,
-                runtime_prompt_sections=runtime_prompt_sections,
-                turn_metadata=turn_metadata,
-            )
+            self._begin_turn(user_message, turn_metadata)
+            try:
+                return await self._run_locked(
+                    user_message=user_message,
+                    attachments=attachments,
+                    selected_skills=selected_skills,
+                    runtime_prompt_sections=runtime_prompt_sections,
+                    turn_metadata=turn_metadata,
+                )
+            except asyncio.CancelledError:
+                # Hard cancel: leave state exactly as a graceful cancel would.
+                self._rewind_to_turn_base()
+                self._last_turn_status = "cancelled"
+                raise
+            except Exception:
+                self._last_turn_status = "error"
+                raise
+            finally:
+                self._turn_active = False
+                self._active_turn_id = None
+                self._cancel_event.clear()
 
     async def _run_locked(
         self,
@@ -300,8 +408,6 @@ class AgentOrchestrator(LoopPolicy):
             reset_active_skill_directory()
         self._last_tool_batch_signature = None
         self._identical_tool_batch_count = 0
-        self._current_turn_start_index = len(self._state.messages)
-        self._current_turn_base_messages = self._state.messages
 
         # Append user message to existing state (preserves conversation history)
         self._task_complete_summary = None
@@ -323,18 +429,20 @@ class AgentOrchestrator(LoopPolicy):
             registry=self._base_registry,
         )
         try:
-            activation, _matched = (
-                await self._skill_controller.match_and_activate_turn_start(
-                    user_message=user_message,
-                    selected_skills=selected_skills,
-                    prompt_assembly=prompt_assembly,
-                    registry=self._base_registry,
-                    cache_prompt=cache_prompt,
-                    attachments=attachments,
-                )
+            (
+                activation,
+                _matched,
+            ) = await self._skill_controller.match_and_activate_turn_start(
+                user_message=user_message,
+                selected_skills=selected_skills,
+                prompt_assembly=prompt_assembly,
+                registry=self._base_registry,
+                cache_prompt=cache_prompt,
+                attachments=attachments,
             )
         except Exception as exc:
             error = str(exc)
+            self._last_turn_status = "error"
             await self._emit_task_error(error, code="skill_setup", retryable=False)
             return f"Error: {error}"
         prompt_assembly = activation.prompt_assembly
@@ -349,6 +457,7 @@ class AgentOrchestrator(LoopPolicy):
                 )
             except Exception as exc:
                 error = f"Failed to upload attached files to the sandbox: {exc}"
+                self._last_turn_status = "error"
                 await self._emit_task_error(
                     error,
                     code="attachment_upload",
@@ -378,6 +487,7 @@ class AgentOrchestrator(LoopPolicy):
 
         logger.info("turn_complete iterations={}", self._state.iteration)
 
+        self._last_turn_status = self._classify_turn_status()
         final_text, self._state = await finalize_conversation_turn(
             state=self._state,
             cancel_event=self._cancel_event,
@@ -387,6 +497,13 @@ class AgentOrchestrator(LoopPolicy):
             artifact_ids=self._turn_artifact_ids,
         )
         return final_text
+
+    def _classify_turn_status(self) -> ConversationTurnStatus:
+        if self._cancel_event.is_set():
+            return "cancelled"
+        if self._state.error:
+            return "error"
+        return "completed"
 
     @property
     def loop_config(self) -> LoopConfig:
