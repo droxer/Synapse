@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "@/shared/components/Logo";
 import { PulsingDot } from "@/shared/components/PulsingDot";
-import { Plus, PanelLeftClose, PanelLeftOpen, Trash2, Blocks, FolderOpen, Lightbulb, Radio, GitFork } from "lucide-react";
+import { Plus, PanelLeftClose, PanelLeftOpen, Trash2, Blocks, FolderOpen, Lightbulb, Radio, GitFork, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Tooltip,
@@ -24,9 +24,12 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { useTranslation } from "@/i18n";
 import type { ConversationHistoryItem } from "@/shared/stores";
+import { ALL_TASKS_PATH, getSidebarRecentTasks } from "./sidebar-recent-tasks";
 
 interface SidebarProps {
   taskHistory: readonly ConversationHistoryItem[];
+  /** Server-side task count; used to decide whether to show the "View all" link. */
+  totalTasks?: number;
   activeTaskId?: string | null;
   onNewTask: () => void;
   onSelectTask?: (taskId: string) => void;
@@ -35,7 +38,6 @@ interface SidebarProps {
   width?: number;
   onToggle?: () => void;
   onWidthChange?: (width: number) => void;
-  onLoadMore?: () => void;
   onDeleteTask?: (taskId: string) => void;
   onClose?: () => void;
   isMobile?: boolean;
@@ -58,6 +60,7 @@ const RESIZE_STEP = 16;
 
 export function Sidebar({
   taskHistory,
+  totalTasks = 0,
   activeTaskId,
   onNewTask,
   onSelectTask,
@@ -66,7 +69,6 @@ export function Sidebar({
   width = 256,
   onToggle,
   onWidthChange,
-  onLoadMore,
   onDeleteTask,
   onClose,
   isMobile = false,
@@ -119,33 +121,8 @@ export function Sidebar({
     [onWidthChange, width],
   );
 
-  // Infinite-scroll via native scroll listener on the task list container.
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const loadMorePending = useRef(false);
-  const onLoadMoreRef = useRef(onLoadMore);
-  onLoadMoreRef.current = onLoadMore;
-
-  useEffect(() => {
-    const viewport = scrollRef.current;
-    if (!viewport) return;
-
-    const handleScroll = () => {
-      if (loadMorePending.current || !onLoadMoreRef.current) return;
-      const { scrollTop, scrollHeight, clientHeight } = viewport;
-      if (
-        scrollHeight > clientHeight &&
-        scrollHeight - scrollTop - clientHeight < 100
-      ) {
-        loadMorePending.current = true;
-        Promise.resolve(onLoadMoreRef.current()).finally(() => {
-          loadMorePending.current = false;
-        });
-      }
-    };
-
-    viewport.addEventListener("scroll", handleScroll, { passive: true });
-    return () => viewport.removeEventListener("scroll", handleScroll);
-  }, []);
+  const { visibleTasks, hasMore: hasMoreTasks } = getSidebarRecentTasks(taskHistory, totalTasks);
+  const isAllTasksActive = activePath === ALL_TASKS_PATH;
 
   const handleConfirmDelete = useCallback(() => {
     if (taskToDelete && onDeleteTask) {
@@ -331,14 +308,14 @@ export function Sidebar({
           </span>
         </div>
       )}
-      <div ref={scrollRef} className={cn("relative min-h-0 flex-1 overflow-y-auto", collapsed ? "px-2" : "px-4 pt-0.5")}>
+      <div className={cn("relative min-h-0 flex-1 overflow-y-auto", collapsed ? "px-2" : "px-4 pt-0.5")}>
           <div className="space-y-1 pb-2">
             {!collapsed && taskHistory.length === 0 && (
               <p className="px-3 py-6 text-center text-xs text-text-subtle">
                 {t("sidebar.noTasks")}
               </p>
             )}
-            {taskHistory.map((task) => {
+            {visibleTasks.map((task) => {
               const isActive = task.id === activeTaskId;
               const isPlanner = task.orchestratorMode === "planner";
               const taskTooltip = isPlanner
@@ -439,6 +416,45 @@ export function Sidebar({
                 </div>
               );
             })}
+            {hasMoreTasks && (collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={ALL_TASKS_PATH}
+                    onClick={createNavClickHandler(ALL_TASKS_PATH)}
+                    aria-label={t("sidebar.viewAllTasks")}
+                    aria-current={isAllTasksActive ? "page" : undefined}
+                    className={cn(
+                      "flex w-full items-center justify-center rounded-md p-1.5 transition-colors duration-200",
+                      NAV_FOCUS_CLASS,
+                      isAllTasksActive
+                        ? "bg-sidebar-active text-foreground"
+                        : "text-sidebar-foreground-muted hover:bg-sidebar-hover hover:text-foreground",
+                    )}
+                  >
+                    <MoreHorizontal aria-hidden="true" className="h-3.5 w-3.5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">{t("sidebar.viewAllTasks")}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Link
+                href={ALL_TASKS_PATH}
+                onClick={createNavClickHandler(ALL_TASKS_PATH)}
+                aria-current={isAllTasksActive ? "page" : undefined}
+                className={cn(
+                  "group flex items-center gap-1 rounded-md px-2 py-1.5 text-body-sm transition-colors duration-150",
+                  NAV_FOCUS_CLASS,
+                  isMobile && "min-h-11",
+                  isAllTasksActive
+                    ? "bg-sidebar-active text-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-hover hover:text-foreground",
+                )}
+              >
+                {t("sidebar.viewAllTasks")}
+                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
+              </Link>
+            ))}
           </div>
       </div>
 
