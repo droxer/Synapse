@@ -241,6 +241,7 @@ class AgentLoop:
         except Exception as exc:
             return state.mark_error(str(exc))
 
+        state = tool_result.state
         state = await self._policy.loop_on_tools_processed(state, response, tool_result)
 
         completed = await self._policy.loop_on_task_complete(state)
