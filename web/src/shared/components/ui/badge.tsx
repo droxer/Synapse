@@ -5,20 +5,20 @@ import { Slot } from "radix-ui"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * Badge variants — all pill-shaped, caption-bold (12px / 700 / 1.33).
+ * Badge variants — compact 20px pills, caption-bold (12px / 510), Linear label style.
  *
  * - `neutral`: muted chip — default, general-purpose labels.
  * - `success`: green subtle tint — "In stock", "Verified".
  * - `warning`: amber subtle tint — "Almost gone", "Selling fast".
  * - `danger`: red subtle tint — "Out of stock", validation labels.
  * - `info`: blue subtle tint — informational notices.
- * - `accent`: teal subtle tint — brand/feature highlights.
+ * - `accent`: indigo subtle tint — brand/feature highlights.
  * - `outline`: bordered chip — secondary labels, compat alias.
  */
 const badgeVariants = cva(
   [
     "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden",
-    "rounded-full border border-transparent px-2.5 py-1",
+    "h-5 rounded-full border border-transparent px-2",
     "text-caption-bold whitespace-nowrap",
     "transition-[color,box-shadow]",
     "[a&]:focus-visible:ring-2 [a&]:focus-visible:ring-ring/40 [a&]:focus-visible:ring-offset-2 [a&]:focus-visible:ring-offset-background",
@@ -33,8 +33,8 @@ const badgeVariants = cva(
         warning: "bg-warning-subtle text-warning-text",
         danger: "bg-danger-subtle text-destructive",
         info: "bg-info-subtle text-info",
-        accent: "bg-accent-subtle text-primary",
-        outline: "border border-border text-foreground [a&]:hover:bg-muted",
+        accent: "bg-accent-subtle text-info",
+        outline: "border border-border-strong text-muted-foreground [a&]:hover:bg-muted",
       },
     },
     defaultVariants: {

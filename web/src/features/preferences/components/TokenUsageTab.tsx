@@ -112,7 +112,7 @@ export function TokenUsageTab() {
           {/* Header */}
           <div
             role="row"
-            className="hidden gap-3 px-4 py-3 label-mono text-muted-foreground md:grid"
+            className="hidden gap-3 px-4 py-3 label-section text-muted-foreground md:grid"
             style={USAGE_GRID_STYLE}
           >
             <span role="columnheader">{t("preferences.usage.taskName")}</span>

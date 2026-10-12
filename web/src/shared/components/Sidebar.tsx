@@ -225,7 +225,7 @@ export function Sidebar({
                 aria-label={t("sidebar.newTask")}
                 aria-current={isHomeActive ? "page" : undefined}
                 className={cn(
-                  "group/new flex w-full items-center justify-center rounded-full p-2",
+                  "group/new flex w-full items-center justify-center rounded-md p-1.5",
                   "transition-[color,background-color] duration-200",
                   NAV_FOCUS_CLASS,
                   isHomeActive
@@ -244,7 +244,7 @@ export function Sidebar({
             onClick={onNewTask}
             aria-current={isHomeActive ? "page" : undefined}
             className={cn(
-              "group/new flex w-full items-center gap-2.5 rounded-full px-3 py-2",
+              "group/new flex w-full items-center gap-2.5 rounded-md px-2 py-1.5",
               "transition-colors duration-200 ease-out",
               NAV_FOCUS_CLASS,
               isMobile && "min-h-11",
@@ -298,7 +298,7 @@ export function Sidebar({
                 onClick={createNavClickHandler(href)}
                 aria-current={isCurrent ? "page" : undefined}
                 className={cn(
-                  "group flex items-center gap-2.5 rounded-full px-3 py-2 text-body-sm-bold transition-colors duration-150",
+                  "group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-body-sm-bold transition-colors duration-150",
                   NAV_FOCUS_CLASS,
                   isMobile && "min-h-11",
                   isCurrent
@@ -326,7 +326,7 @@ export function Sidebar({
       {/* Task list */}
       {!collapsed && (
         <div className="px-4 pb-1 pt-4">
-          <span className="label-mono whitespace-nowrap text-muted-foreground">
+          <span className="label-section whitespace-nowrap text-muted-foreground">
             {t("sidebar.recentTasks")}
           </span>
         </div>
@@ -352,7 +352,7 @@ export function Sidebar({
                       onClick={() => onSelectTask?.(task.id)}
                       aria-label={task.title}
                       className={cn(
-                        "relative flex w-full cursor-pointer items-center justify-center rounded-full p-2 transition-colors duration-200",
+                        "relative flex w-full cursor-pointer items-center justify-center rounded-md p-1.5 transition-colors duration-200",
                         "hover:bg-sidebar-hover",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         isActive && "bg-sidebar-active",
@@ -387,7 +387,7 @@ export function Sidebar({
                     aria-current={isActive ? "true" : undefined}
                     onClick={() => onSelectTask?.(task.id)}
                     className={cn(
-                      "relative flex w-full cursor-pointer items-center gap-2.5 rounded-full px-3 py-2 pr-9 text-left",
+                      "relative flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 pr-9 text-left",
                       "transition-colors duration-200 ease-out",
                       "hover:bg-sidebar-hover",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",

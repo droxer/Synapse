@@ -57,7 +57,7 @@ export function ProductPageHeader({
               {icon}
             </div>
             <div className="min-w-0">
-              <p className="label-mono text-text-subtle">{eyebrow}</p>
+              <p className="label-section text-text-subtle">{eyebrow}</p>
               <h1 className="mt-2 text-heading-sm text-balance text-foreground">
                 {title}
               </h1>
@@ -115,7 +115,7 @@ export function ProductSectionHeader({
     >
       <div className="min-w-0 flex-1">
         {eyebrow ? (
-          <p className="label-mono text-text-subtle">{eyebrow}</p>
+          <p className="label-section text-text-subtle">{eyebrow}</p>
         ) : null}
         {title ? (
           <h2 className="text-body-sm-bold text-balance text-foreground">{title}</h2>
@@ -146,7 +146,7 @@ export function ProductStatCard({
     <div className={cn("surface-panel px-4 py-3", className)}>
       <div className="flex items-center gap-2">
         {icon ? <span className="shrink-0 text-muted-foreground">{icon}</span> : null}
-        <span className="label-mono text-text-subtle">{label}</span>
+        <span className="label-section text-text-subtle">{label}</span>
       </div>
       <div className="mt-2 text-heading-sm text-foreground tabular-nums">
         {value}

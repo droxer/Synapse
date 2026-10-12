@@ -120,7 +120,7 @@ export function SkillCard({ skill, onDelete, onToggle, isToggling = false }: Ski
         ) : null
       }
       footerLeft={
-        <span className="label-mono truncate text-text-subtle">
+        <span className="label-section truncate text-text-subtle">
           {t(SOURCE_FOOTER_KEY[skill.source_type] ?? "skills.sectionInstalled")}
         </span>
       }

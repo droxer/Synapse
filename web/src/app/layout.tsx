@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { geistMono } from "./fonts";
+import { geistMono, inter } from "./fonts";
 import { Providers } from "./providers";
 import { THEME_FAVICON_BOOTSTRAP } from "@/shared/lib/theme-favicon-bootstrap";
 import "./globals.css";
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a1317" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1011" },
   ],
 };
 
@@ -30,7 +30,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={geistMono.variable}
+      className={`${inter.variable} ${geistMono.variable}`}
     >
       <head>
         <Script id="sync-theme-favicon" strategy="beforeInteractive">
@@ -41,7 +41,7 @@ export default function RootLayout({
         </Script>
       </head>
       <body className="font-sans antialiased">
-        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-button-md focus:text-primary-foreground">
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-sm focus:bg-primary focus:px-4 focus:py-2 focus:text-button-md focus:text-primary-foreground">
           Skip to main content
         </a>
         <Providers>{children}</Providers>

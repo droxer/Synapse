@@ -118,7 +118,7 @@ export function InputPrompt({
                   key={option.id ?? option.value ?? option.label ?? idx}
                   type="button"
                   variant="secondary"
-                  className="h-auto min-h-10 items-start justify-start whitespace-normal rounded-xl px-4 py-2 text-left"
+                  className="h-auto min-h-10 items-start justify-start whitespace-normal rounded-sm px-3 py-2 text-left"
                   onClick={() => onSubmit(option.value ?? option.label)}
                 >
                   <span className="flex min-w-0 flex-col gap-0.5">

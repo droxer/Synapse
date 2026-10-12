@@ -9,11 +9,14 @@ describe("badgeVariants", () => {
     expect(badgeVariants({ variant: "success" })).toContain("text-success");
     expect(badgeVariants({ variant: "danger" })).toContain("text-destructive");
     expect(badgeVariants({ variant: "info" })).toContain("text-info");
-    expect(badgeVariants({ variant: "accent" })).toContain("text-primary");
+    expect(badgeVariants({ variant: "accent" })).toContain("text-info");
   });
   it("every badge stays pill-shaped", () => {
     for (const v of ["neutral","success","warning","danger","info","accent","outline"] as const) {
       expect(badgeVariants({ variant: v })).toContain("rounded-full");
     }
+  });
+  it("badges are compact 20px-tall chips", () => {
+    expect(badgeVariants({})).toContain("h-5");
   });
 });

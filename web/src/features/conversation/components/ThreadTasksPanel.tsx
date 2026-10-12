@@ -75,7 +75,7 @@ export function ThreadTasksPanel({
                     <Badge variant={getStatusBadgeVariant(task.status)}>
                       {getStatusLabel(task.status, t)}
                     </Badge>
-                    <span className="label-mono text-text-subtle">
+                    <span className="label-section text-text-subtle">
                       {t("threadTasks.scope")}
                     </span>
                   </div>

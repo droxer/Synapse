@@ -27,7 +27,7 @@ export default function DesignReviewPage() {
             <Bot aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="label-mono text-text-subtle">Local visual fixture</p>
+            <p className="label-section text-text-subtle">Local visual fixture</p>
             <h1 className="mt-2 text-balance text-heading-sm">Frontend Design Review</h1>
             <p className="mt-1 max-w-3xl text-body-sm text-muted-foreground">
               Development-only authenticated UI fixture with side-by-side light and dark theme previews.
@@ -46,7 +46,7 @@ export default function DesignReviewPage() {
               </div>
               <a
                 href={`/design-review/preview/${preview.id}`}
-                className="rounded-sm text-caption-bold text-primary underline-offset-4 hover:text-cobalt-deep hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="rounded-sm text-caption-bold text-info underline-offset-4 hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 Open Full Preview
               </a>

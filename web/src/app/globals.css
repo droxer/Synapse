@@ -11,48 +11,48 @@
    - Every semantic token change must be reflected in @theme, :root, and .dark.
    - Components should consume semantic utilities/classes instead of hardcoded color literals. */
 @theme {
-  /* ─── DESIGN.md canonical tokens (Meta-inspired commerce system) ───
+  /* ─── DESIGN.md canonical tokens (Linear-inspired product system) ───
      New code should consume these names; legacy semantic aliases below remap to them. */
   --color-canvas: #ffffff;
-  --color-surface-soft: #f1f4f7;
-  --color-ink-deep: #0a1317;
-  --color-ink: #1c1e21;
-  --color-charcoal: #444950;
-  --color-slate: #4b4c4f;
-  --color-steel: #5d6c7b;
-  --color-stone: #8595a4;
-  --color-hairline: #ced0d4;
-  --color-hairline-soft: #dee3e9;
-  --color-disabled-text: #bcc0c4;
-  --color-ink-button: #000000;
+  --color-surface-soft: #f5f6f8;
+  --color-surface-hover: #eceef1;
+  --color-ink-deep: #18191b;
+  --color-ink: #2c2d31;
+  --color-charcoal: #3c3e44;
+  --color-slate: #50535a;
+  --color-steel: #5f636a;
+  --color-stone: #71757d;
+  --color-hairline: #dfe1e5;
+  --color-hairline-soft: #ebecef;
+  --color-disabled-text: #b8bbc1;
+  --color-ink-button: #18191b;
   --color-on-ink-button: #ffffff;
-  --color-cobalt: #0064e0;
-  --color-cobalt-deep: #0457cb;
-  --color-cobalt-soft: #0091ff;
-  --color-cobalt-selected: #0143b5;
-  --color-on-cobalt: #ffffff;
-  --color-fb-blue: #1876f2;
-  --color-meta-link: #385898;
-  --color-oculus-purple: #a121ce;
-  --color-success: #31a24c;
-  --color-success-bg: #24e400;
-  --color-attention: #f2a918;
-  --color-warning: #f7b928;
-  --color-warning-bg: #ffe200;
-  --color-critical: #e41e3f;
-  --color-critical-strong: #f0284a;
+  --color-indigo: #5e6ad2;
+  --color-indigo-deep: #5360c7;
+  --color-indigo-soft: #7170ff;
+  --color-indigo-selected: #4652bb;
+  --color-indigo-text: #5e6ad2;
+  --color-on-indigo: #ffffff;
+  --color-violet: #8e5bd8;
+  --color-success: #4cb782;
+  --color-success-bg: #4cb782;
+  --color-attention: #f2994a;
+  --color-warning: #f2c94c;
+  --color-warning-bg: #f2c94c;
+  --color-critical: #d4373e;
+  --color-critical-strong: #c42f36;
 
   /* ─── Legacy semantic aliases — remapped to DESIGN.md values ───
      Existing components reference these names; values now resolve to the new palette. */
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink-deep);
-  --color-primary: var(--color-cobalt);
-  --color-primary-foreground: var(--color-on-cobalt);
+  --color-primary: var(--color-indigo);
+  --color-primary-foreground: var(--color-on-indigo);
   --color-secondary: var(--color-surface-soft);
   --color-secondary-foreground: var(--color-ink);
   --color-muted: var(--color-surface-soft);
   --color-muted-foreground: var(--color-steel);
-  --color-destructive: var(--color-critical-strong);
+  --color-destructive: var(--color-critical);
   --color-border: var(--color-hairline-soft);
   --color-input: var(--color-hairline);
   --color-ring: var(--color-focus);
@@ -61,21 +61,21 @@
   --color-popover: var(--color-canvas);
   --color-popover-foreground: var(--color-ink-deep);
 
-  /* ─── Radius scale — DESIGN.md ─── */
+  /* ─── Radius scale — Linear: tight, 6px controls, 8–12px surfaces ─── */
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  --radius-xl: 16px;
-  --radius-xxl: 24px;
-  --radius-xxxl: 32px;
-  --radius-feature: 40px;
-  --radius-full: 100px;
+  --radius-xl: 10px;
+  --radius-xxl: 12px;
+  --radius-xxxl: 16px;
+  --radius-feature: 20px;
+  --radius-full: 9999px;
   --radius-circle: 9999px;
-  /* Legacy alias retained so existing `rounded-2xl` resolves to the new 24px tier */
+  /* Legacy alias retained so existing `rounded-2xl` resolves to the 12px tier */
   --radius-2xl: var(--radius-xxl);
 
-  /* ─── Spacing scale — DESIGN.md named steps (4px base) ─── */
+  /* ─── Spacing scale — 4px base ─── */
   --spacing-xxs: 4px;
   --spacing-xs: 8px;
   --spacing-sm: 10px;
@@ -91,52 +91,52 @@
   --spacing-hero: 120px;
 
   --color-border-strong: var(--color-hairline);
-  --color-border-active: var(--color-charcoal);
+  --color-border-active: var(--color-stone);
   --color-placeholder: var(--color-stone);
   --color-muted-foreground-dim: var(--color-stone);
 
   /* Compat aliases — names still consumed by components; resolve to canonical tokens. */
   --color-text-subtle: var(--color-stone);
   --color-text-muted: var(--color-steel);
-  --color-accent-hover: var(--color-cobalt-deep);
-  --color-accent-active: var(--color-cobalt-selected);
-  --color-info: var(--color-cobalt);
-  --color-accent-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
-  --color-info-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
-  --color-success-subtle: color-mix(in srgb, var(--color-success) 12%, transparent);
-  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  --color-accent-hover: var(--color-indigo-deep);
+  --color-accent-active: var(--color-indigo-selected);
+  --color-info: var(--color-indigo-text);
+  --color-accent-subtle: color-mix(in srgb, var(--color-indigo) 12%, transparent);
+  --color-info-subtle: color-mix(in srgb, var(--color-indigo) 12%, transparent);
+  --color-success-subtle: color-mix(in srgb, var(--color-success) 14%, transparent);
+  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 22%, transparent);
   --color-danger-subtle: color-mix(in srgb, var(--color-critical) 10%, transparent);
   /* Foreground-safe status text (AA on canvas). Fill tokens above stay for backgrounds. */
   --color-warning-text: #8a5a00;
-  --color-success-text: #1e7a36;
+  --color-success-text: #1d7a4f;
   --color-on-destructive: #ffffff;
 
   --color-accent-emerald: var(--color-success);
   --color-accent-amber: var(--color-attention);
   --color-accent-rose: var(--color-critical);
-  --color-focus: var(--color-fb-blue);
-  --color-accent-indigo: var(--color-cobalt-deep);
-  --color-accent-purple: var(--color-oculus-purple);
-  --color-accent-blue: var(--color-cobalt);
-  --color-ai-glow: var(--color-cobalt);
+  --color-focus: var(--color-indigo);
+  --color-accent-indigo: var(--color-indigo-deep);
+  --color-accent-purple: var(--color-violet);
+  --color-accent-blue: var(--color-indigo);
+  --color-ai-glow: var(--color-indigo);
 
-  --color-accent: var(--color-surface-soft);
+  --color-accent: var(--color-surface-hover);
   --color-accent-foreground: var(--color-foreground);
 
   --color-user-accent: var(--color-ink-deep);
-  --color-user-accent-dim: rgba(10, 19, 23, 0.04);
-  --color-ai-surface: rgba(0, 100, 224, 0.06);
-  --color-ai-border: rgba(10, 19, 23, 0.08);
-  --color-input-glow: rgba(0, 100, 224, 0.10);
-  --color-overlay: rgba(10, 19, 23, 0.45);
+  --color-user-accent-dim: rgba(24, 25, 27, 0.04);
+  --color-ai-surface: rgba(94, 106, 210, 0.06);
+  --color-ai-border: rgba(24, 25, 27, 0.08);
+  --color-input-glow: rgba(94, 106, 210, 0.12);
+  --color-overlay: rgba(15, 16, 17, 0.32);
 
   --color-sidebar-bg: var(--color-surface-soft);
-  --color-sidebar-active: color-mix(in srgb, var(--color-cobalt) 8%, var(--color-surface-soft));
-  --color-sidebar-hover: color-mix(in srgb, var(--color-cobalt) 4%, var(--color-surface-soft));
+  --color-sidebar-active: var(--color-surface-hover);
+  --color-sidebar-hover: color-mix(in srgb, var(--color-surface-hover) 60%, var(--color-surface-soft));
   --color-sidebar-foreground-muted: var(--color-steel);
 
-  --color-profile-ring: rgba(10, 19, 23, 0.18);
-  --color-profile-ring-hover: rgba(10, 19, 23, 0.28);
+  --color-profile-ring: rgba(24, 25, 27, 0.14);
+  --color-profile-ring-hover: rgba(24, 25, 27, 0.24);
 
   --color-terminal-bg: var(--color-canvas);
   --color-terminal-surface: var(--color-surface-soft);
@@ -154,11 +154,11 @@
   --ring-profile: var(--color-profile-ring);
   --ring-profile-hover: var(--color-profile-ring-hover);
 
-  /* Font families — native system stack, matching eveland.ai. Latin resolves to
-     SF Pro / Segoe UI / Roboto; CJK falls through to the OS face (PingFang on macOS,
-     Microsoft YaHei/JhengHei on Windows, Noto Sans CJK on Linux). No web font download. */
+  /* Font families — Inter Variable (Linear's UI face, bundled Latin subset via next/font)
+     with the native stack as fallback. CJK falls through to the OS face (PingFang on macOS,
+     Microsoft YaHei on Windows, Noto Sans CJK on Linux). */
   --font-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC";
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, var(--font-cjk-sans), sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-inter), "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, var(--font-cjk-sans), sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-brand-family: var(--font-sans);
@@ -170,45 +170,52 @@
 
   /* Legacy aliases */
   --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.875rem;     /* 14px — primary body */
-  --text-base: 1rem;       /* 16px */
-  --text-lg: 1.125rem;     /* 18px */
+  --text-sm: 0.8125rem;    /* 13px — Linear UI base */
+  --text-base: 0.9375rem;  /* 15px — Linear "regular" */
+  --text-lg: 1.0625rem;    /* 17px */
   --text-xl: 1.25rem;      /* 20px */
   --text-2xl: 1.5rem;      /* 24px — page titles */
-  --text-display: clamp(2.25rem, 1.5rem + 3.5vw, 4rem);
+  --text-display: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
 
   /* Line heights */
   --lh-tight: 1.2;
   --lh-display: 1.1;
   --lh-normal: 1.5;
-  --lh-relaxed: 1.625;
+  --lh-relaxed: 1.6;
 
   /* Legacy aliases (used by text-micro / text-caption utilities) */
-  --font-size-micro: 0.75rem;   /* 12px — DESIGN.md caption floor */
+  --font-size-micro: 0.75rem;   /* 12px — caption floor */
   --font-size-micro--line-height: 1.33;
   --font-size-caption: var(--text-xs);
   --font-size-caption--line-height: var(--lh-normal);
 
-  /* Elevation — DESIGN.md uses 3 levels. Level 0 flat (default), level 2 only on sticky panels. */
+  /* Font weights — Inter Variable's Linear stops */
+  --font-weight-normal: 400;
+  --font-weight-medium: 510;
+  --font-weight-semibold: 590;
+  --font-weight-bold: 680;
+
+  /* Elevation — flat surfaces; overlays get a faint edge ring + soft drop. */
   --shadow-card: none;
   --shadow-card-hover: none;
-  --shadow-elevated: 0 6px 20px -10px rgba(10, 19, 23, 0.10);
-  --shadow-sticky-rail: rgba(20, 22, 26, 0.3) 0px 1px 4px 0px;
+  --shadow-xs: 0 1px 2px rgba(15, 16, 17, 0.05);
+  --shadow-elevated: 0 0 0 1px rgba(15, 16, 17, 0.06), 0 4px 16px -2px rgba(15, 16, 17, 0.10), 0 2px 4px -2px rgba(15, 16, 17, 0.06);
+  --shadow-sticky-rail: 0 0 0 1px rgba(15, 16, 17, 0.05), 0 1px 3px rgba(15, 16, 17, 0.08);
 
   --shadow-input-focus: none;
   --shadow-primary-glow: none;
   --shadow-message: none;
-  --shadow-glow-subtle: 0 0 0 2px color-mix(in srgb, var(--color-focus), transparent 70%);
+  --shadow-glow-subtle: 0 0 0 3px color-mix(in srgb, var(--color-focus), transparent 78%);
   --gradient-primary: var(--color-primary);
   --gradient-text-accent: none;
 
   /* Agent computer panel width */
   --agent-panel-width: 44%;
 
-  /* Animations — keep useful ones, remove glow/orbital */
-  --animate-fade-in: fadeIn 0.35s ease-out;
-  --animate-slide-up: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-slide-in-right: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Motion — Linear-quick: 120–250ms, decisive ease-out */
+  --animate-fade-in: fadeIn 0.2s ease-out;
+  --animate-slide-up: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slide-in-right: slideInRight 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 
   @keyframes fadeIn {
     0% { opacity: 0; }
@@ -216,12 +223,12 @@
   }
 
   @keyframes slideUp {
-    0% { opacity: 0; transform: translateY(12px); }
+    0% { opacity: 0; transform: translateY(8px); }
     100% { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes slideInRight {
-    0% { opacity: 0; transform: translateX(12px); }
+    0% { opacity: 0; transform: translateX(8px); }
     100% { opacity: 1; transform: translateX(0); }
   }
 
@@ -245,32 +252,32 @@
   --animate-pulsing-dot-fade: pulsingDotFade 2s ease-in-out infinite;
 
   @keyframes scaleIn {
-    0% { opacity: 0; transform: scale(0.95); }
+    0% { opacity: 0; transform: scale(0.97); }
     100% { opacity: 1; transform: scale(1); }
   }
 
-  --animate-scale-in: scaleIn 0.15s ease-out;
+  --animate-scale-in: scaleIn 0.12s ease-out;
 
   @keyframes modalIn {
-    0% { opacity: 0; transform: translateY(4px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% { opacity: 0; transform: translateY(4px) scale(0.99); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   --animate-modal-in: modalIn 0.15s ease-out;
 
   @keyframes contentReveal {
-    0% { opacity: 0; transform: translateY(6px); }
+    0% { opacity: 0; transform: translateY(4px); }
     100% { opacity: 1; transform: translateY(0); }
   }
 
-  --animate-content-reveal: contentReveal 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-content-reveal: contentReveal 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 
   @keyframes slideInFromRight {
     0% { opacity: 0; transform: translateX(8px); }
     100% { opacity: 1; transform: translateX(0); }
   }
 
-  --animate-slide-in-from-right: slideInFromRight 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slide-in-from-right: slideInFromRight 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 
   @keyframes subtleFloat {
     0%, 100% { transform: translateY(0); }
@@ -299,44 +306,44 @@
 
   /* DESIGN.md canonical */
   --color-canvas: #ffffff;
-  --color-surface-soft: #f1f4f7;
-  --color-ink-deep: #0a1317;
-  --color-ink: #1c1e21;
-  --color-charcoal: #444950;
-  --color-slate: #4b4c4f;
-  --color-steel: #5d6c7b;
-  --color-stone: #8595a4;
-  --color-hairline: #ced0d4;
-  --color-hairline-soft: #dee3e9;
-  --color-disabled-text: #bcc0c4;
-  --color-ink-button: #000000;
+  --color-surface-soft: #f5f6f8;
+  --color-surface-hover: #eceef1;
+  --color-ink-deep: #18191b;
+  --color-ink: #2c2d31;
+  --color-charcoal: #3c3e44;
+  --color-slate: #50535a;
+  --color-steel: #5f636a;
+  --color-stone: #71757d;
+  --color-hairline: #dfe1e5;
+  --color-hairline-soft: #ebecef;
+  --color-disabled-text: #b8bbc1;
+  --color-ink-button: #18191b;
   --color-on-ink-button: #ffffff;
-  --color-cobalt: #0064e0;
-  --color-cobalt-deep: #0457cb;
-  --color-cobalt-soft: #0091ff;
-  --color-cobalt-selected: #0143b5;
-  --color-on-cobalt: #ffffff;
-  --color-fb-blue: #1876f2;
-  --color-meta-link: #385898;
-  --color-oculus-purple: #a121ce;
-  --color-success: #31a24c;
-  --color-success-bg: #24e400;
-  --color-attention: #f2a918;
-  --color-warning: #f7b928;
-  --color-warning-bg: #ffe200;
-  --color-critical: #e41e3f;
-  --color-critical-strong: #f0284a;
+  --color-indigo: #5e6ad2;
+  --color-indigo-deep: #5360c7;
+  --color-indigo-soft: #7170ff;
+  --color-indigo-selected: #4652bb;
+  --color-indigo-text: #5e6ad2;
+  --color-on-indigo: #ffffff;
+  --color-violet: #8e5bd8;
+  --color-success: #4cb782;
+  --color-success-bg: #4cb782;
+  --color-attention: #f2994a;
+  --color-warning: #f2c94c;
+  --color-warning-bg: #f2c94c;
+  --color-critical: #d4373e;
+  --color-critical-strong: #c42f36;
 
   /* Legacy aliases */
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink-deep);
-  --color-primary: var(--color-cobalt);
-  --color-primary-foreground: var(--color-on-cobalt);
+  --color-primary: var(--color-indigo);
+  --color-primary-foreground: var(--color-on-indigo);
   --color-secondary: var(--color-surface-soft);
   --color-secondary-foreground: var(--color-ink);
   --color-muted: var(--color-surface-soft);
   --color-muted-foreground: var(--color-steel);
-  --color-destructive: var(--color-critical-strong);
+  --color-destructive: var(--color-critical);
   --color-border: var(--color-hairline-soft);
   --color-input: var(--color-hairline);
   --color-ring: var(--color-focus);
@@ -349,55 +356,55 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  --radius-xl: 16px;
-  --radius-xxl: 24px;
-  --radius-xxxl: 32px;
-  --radius-feature: 40px;
-  --radius-full: 100px;
+  --radius-xl: 10px;
+  --radius-xxl: 12px;
+  --radius-xxxl: 16px;
+  --radius-feature: 20px;
+  --radius-full: 9999px;
   --radius-circle: 9999px;
   --radius-2xl: var(--radius-xxl);
 
   --color-border-strong: var(--color-hairline);
-  --color-border-active: var(--color-charcoal);
+  --color-border-active: var(--color-stone);
   --color-placeholder: var(--color-stone);
   --color-muted-foreground-dim: var(--color-stone);
 
   /* Compat aliases — names still consumed by components; resolve to canonical tokens. */
   --color-text-subtle: var(--color-stone);
   --color-text-muted: var(--color-steel);
-  --color-accent-hover: var(--color-cobalt-deep);
-  --color-accent-active: var(--color-cobalt-selected);
-  --color-info: var(--color-cobalt);
-  --color-accent-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
-  --color-info-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
-  --color-success-subtle: color-mix(in srgb, var(--color-success) 12%, transparent);
-  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  --color-accent-hover: var(--color-indigo-deep);
+  --color-accent-active: var(--color-indigo-selected);
+  --color-info: var(--color-indigo-text);
+  --color-accent-subtle: color-mix(in srgb, var(--color-indigo) 12%, transparent);
+  --color-info-subtle: color-mix(in srgb, var(--color-indigo) 12%, transparent);
+  --color-success-subtle: color-mix(in srgb, var(--color-success) 14%, transparent);
+  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 22%, transparent);
   --color-danger-subtle: color-mix(in srgb, var(--color-critical) 10%, transparent);
   /* Foreground-safe status text (AA on canvas). Fill tokens above stay for backgrounds. */
   --color-warning-text: #8a5a00;
-  --color-success-text: #1e7a36;
+  --color-success-text: #1d7a4f;
   --color-on-destructive: #ffffff;
   --color-accent-emerald: var(--color-success);
   --color-accent-amber: var(--color-attention);
   --color-accent-rose: var(--color-critical);
-  --color-focus: var(--color-fb-blue);
-  --color-accent-indigo: var(--color-cobalt-deep);
-  --color-accent-purple: var(--color-oculus-purple);
-  --color-accent-blue: var(--color-cobalt);
-  --color-ai-glow: var(--color-cobalt);
-  --color-accent: var(--color-surface-soft);
+  --color-focus: var(--color-indigo);
+  --color-accent-indigo: var(--color-indigo-deep);
+  --color-accent-purple: var(--color-violet);
+  --color-accent-blue: var(--color-indigo);
+  --color-ai-glow: var(--color-indigo);
+  --color-accent: var(--color-surface-hover);
   --color-accent-foreground: var(--color-foreground);
   --color-user-accent: var(--color-ink-deep);
-  --color-user-accent-dim: rgba(10, 19, 23, 0.04);
-  --color-ai-surface: rgba(0, 100, 224, 0.06);
-  --color-ai-border: rgba(10, 19, 23, 0.08);
-  --color-input-glow: rgba(0, 100, 224, 0.10);
+  --color-user-accent-dim: rgba(24, 25, 27, 0.04);
+  --color-ai-surface: rgba(94, 106, 210, 0.06);
+  --color-ai-border: rgba(24, 25, 27, 0.08);
+  --color-input-glow: rgba(94, 106, 210, 0.12);
   --color-sidebar-bg: var(--color-surface-soft);
-  --color-sidebar-active: color-mix(in srgb, var(--color-cobalt) 8%, var(--color-surface-soft));
-  --color-sidebar-hover: color-mix(in srgb, var(--color-cobalt) 4%, var(--color-surface-soft));
+  --color-sidebar-active: var(--color-surface-hover);
+  --color-sidebar-hover: color-mix(in srgb, var(--color-surface-hover) 60%, var(--color-surface-soft));
   --color-sidebar-foreground-muted: var(--color-steel);
-  --color-profile-ring: rgba(10, 19, 23, 0.18);
-  --color-profile-ring-hover: rgba(10, 19, 23, 0.28);
+  --color-profile-ring: rgba(24, 25, 27, 0.14);
+  --color-profile-ring-hover: rgba(24, 25, 27, 0.24);
   --color-terminal-bg: var(--color-canvas);
   --color-terminal-surface: var(--color-surface-soft);
   --color-terminal-border: var(--color-hairline-soft);
@@ -409,14 +416,15 @@
   --logo-neutral-300: #D9D9D9;
   --logo-bg: var(--logo-black);
   --logo-glyph: var(--logo-white);
-  --color-overlay: rgba(10, 19, 23, 0.45);
+  --color-overlay: rgba(15, 16, 17, 0.32);
   --topbar-bg: var(--color-background);
   --shadow-card: none;
   --shadow-card-hover: none;
-  --shadow-elevated: 0 6px 20px -10px rgba(10, 19, 23, 0.10);
-  --shadow-sticky-rail: rgba(20, 22, 26, 0.3) 0px 1px 4px 0px;
+  --shadow-xs: 0 1px 2px rgba(15, 16, 17, 0.05);
+  --shadow-elevated: 0 0 0 1px rgba(15, 16, 17, 0.06), 0 4px 16px -2px rgba(15, 16, 17, 0.10), 0 2px 4px -2px rgba(15, 16, 17, 0.06);
+  --shadow-sticky-rail: 0 0 0 1px rgba(15, 16, 17, 0.05), 0 1px 3px rgba(15, 16, 17, 0.08);
   --shadow-message: none;
-  --shadow-glow-subtle: 0 0 0 2px color-mix(in srgb, var(--color-focus), transparent 70%);
+  --shadow-glow-subtle: 0 0 0 3px color-mix(in srgb, var(--color-focus), transparent 78%);
   --gradient-primary: var(--color-primary);
   --shadow-input-focus: none;
   --shadow-primary-glow: none;
@@ -424,129 +432,130 @@
 }
 
 /* ─── Dark mode ───
-   Dark semantic overrides for all tokens declared in @theme/:root. */
+   Linear's signature near-black: sidebar sits darker than the content canvas,
+   raised surfaces step up in small increments, text is cool off-white. */
 
 .dark {
 
-  /* Dark-mode canonical (not in DESIGN.md — synthesized to keep cobalt readable on dark canvas) */
-  --color-canvas: #0a1317;
-  --color-surface-soft: #131c22;
-  --color-ink-deep: #f5f7fa;
-  --color-ink: #e6e9ee;
-  --color-charcoal: #c2c7cf;
-  --color-slate: #a8aeb8;
-  --color-steel: #8a93a0;
-  --color-stone: #6a7280;
-  --color-hairline: #2a323a;
-  --color-hairline-soft: #1e252c;
-  --color-disabled-text: #4b525a;
-  --color-ink-button: #ffffff;
-  --color-on-ink-button: #0a1317;
-  --color-cobalt: #4d99f0;
-  --color-cobalt-deep: #2f7ee0;
-  --color-cobalt-soft: #6fb4ff;
-  --color-cobalt-selected: #6fb4ff;
-  --color-on-cobalt: #0a1317;
-  --color-fb-blue: #4f93f6;
-  --color-meta-link: #7d9bd1;
-  --color-oculus-purple: #c266dd;
-  --color-success: #4cc873;
-  --color-success-bg: #24e400;
-  --color-attention: #f5b53d;
-  --color-warning: #f5c449;
-  --color-warning-bg: #ffe200;
-  --color-critical: #ef5570;
-  --color-critical-strong: #f26880;
+  --color-canvas: #0f1011;
+  --color-surface-soft: #17181a;
+  --color-surface-hover: #202124;
+  --color-ink-deep: #f7f8f8;
+  --color-ink: #e3e4e6;
+  --color-charcoal: #d0d6e0;
+  --color-slate: #b4b8c0;
+  --color-steel: #8a8f98;
+  --color-stone: #7a7f88;
+  --color-hairline: #2a2c31;
+  --color-hairline-soft: #1f2023;
+  --color-disabled-text: #484b51;
+  --color-ink-button: #f7f8f8;
+  --color-on-ink-button: #0f1011;
+  --color-indigo: #5e6ad2;
+  --color-indigo-deep: #6b76da;
+  --color-indigo-soft: #828fff;
+  --color-indigo-selected: #7c86e0;
+  --color-indigo-text: #828fff;
+  --color-on-indigo: #ffffff;
+  --color-violet: #b18cf0;
+  --color-success: #4cb782;
+  --color-success-bg: #4cb782;
+  --color-attention: #f2994a;
+  --color-warning: #f2c94c;
+  --color-warning-bg: #f2c94c;
+  --color-critical: #eb5757;
+  --color-critical-strong: #f07070;
 
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink-deep);
-  --color-primary: var(--color-cobalt);
-  --color-primary-foreground: var(--color-on-cobalt);
+  --color-primary: var(--color-indigo);
+  --color-primary-foreground: var(--color-on-indigo);
   --color-secondary: var(--color-surface-soft);
   --color-secondary-foreground: var(--color-ink);
   --color-muted: var(--color-surface-soft);
   --color-muted-foreground: var(--color-steel);
-  --color-destructive: var(--color-critical-strong);
+  --color-destructive: var(--color-critical);
   --color-border: var(--color-hairline-soft);
   --color-input: var(--color-hairline);
   --color-ring: var(--color-focus);
   --color-card: var(--color-surface-soft);
   --color-card-foreground: var(--color-ink-deep);
-  --color-popover: color-mix(in srgb, var(--color-surface-soft), var(--color-ink-deep) 4%);
+  --color-popover: #1b1c1f;
   --color-popover-foreground: var(--color-ink-deep);
 
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  --radius-xl: 16px;
-  --radius-xxl: 24px;
-  --radius-xxxl: 32px;
-  --radius-feature: 40px;
-  --radius-full: 100px;
+  --radius-xl: 10px;
+  --radius-xxl: 12px;
+  --radius-xxxl: 16px;
+  --radius-feature: 20px;
+  --radius-full: 9999px;
   --radius-circle: 9999px;
   --radius-2xl: var(--radius-xxl);
 
   --color-border-strong: var(--color-hairline);
-  --color-border-active: var(--color-charcoal);
+  --color-border-active: var(--color-stone);
   --color-placeholder: var(--color-stone);
   --color-muted-foreground-dim: var(--color-stone);
 
   /* Compat aliases — names still consumed by components; resolve to canonical tokens. */
   --color-text-subtle: var(--color-stone);
   --color-text-muted: var(--color-steel);
-  --color-accent-hover: var(--color-cobalt-deep);
-  --color-accent-active: var(--color-cobalt-selected);
-  --color-info: var(--color-cobalt);
-  --color-accent-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
-  --color-info-subtle: color-mix(in srgb, var(--color-cobalt) 10%, transparent);
-  --color-success-subtle: color-mix(in srgb, var(--color-success) 12%, transparent);
-  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 18%, transparent);
-  --color-danger-subtle: color-mix(in srgb, var(--color-critical) 10%, transparent);
+  --color-accent-hover: var(--color-indigo-deep);
+  --color-accent-active: var(--color-indigo-selected);
+  --color-info: var(--color-indigo-text);
+  --color-accent-subtle: color-mix(in srgb, var(--color-indigo) 18%, transparent);
+  --color-info-subtle: color-mix(in srgb, var(--color-indigo) 18%, transparent);
+  --color-success-subtle: color-mix(in srgb, var(--color-success) 14%, transparent);
+  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 16%, transparent);
+  --color-danger-subtle: color-mix(in srgb, var(--color-critical) 14%, transparent);
   /* Foreground-safe status text (AA on canvas). Fill tokens above stay for backgrounds. */
   --color-warning-text: var(--color-warning);
   --color-success-text: var(--color-success);
-  --color-on-destructive: #0a1317;
+  --color-on-destructive: #0f1011;
   --color-accent-emerald: var(--color-success);
   --color-accent-amber: var(--color-attention);
   --color-accent-rose: var(--color-critical);
-  --color-focus: var(--color-fb-blue);
-  --color-accent-indigo: var(--color-cobalt-deep);
-  --color-accent-purple: var(--color-oculus-purple);
-  --color-accent-blue: var(--color-cobalt);
-  --color-ai-glow: var(--color-cobalt);
-  --color-accent: var(--color-surface-soft);
+  --color-focus: var(--color-indigo-deep);
+  --color-accent-indigo: var(--color-indigo-deep);
+  --color-accent-purple: var(--color-violet);
+  --color-accent-blue: var(--color-indigo);
+  --color-ai-glow: var(--color-indigo-soft);
+  --color-accent: var(--color-surface-hover);
   --color-accent-foreground: var(--color-foreground);
   --color-user-accent: var(--color-ink-deep);
-  --color-user-accent-dim: rgba(245, 247, 250, 0.06);
-  --color-ai-surface: rgba(77, 153, 240, 0.07);
-  --color-ai-border: rgba(245, 247, 250, 0.10);
-  --color-input-glow: rgba(77, 153, 240, 0.10);
-  --color-sidebar-bg: var(--color-surface-soft);
-  --color-sidebar-active: color-mix(in srgb, var(--color-cobalt) 8%, var(--color-surface-soft));
-  --color-sidebar-hover: color-mix(in srgb, var(--color-cobalt) 4%, var(--color-surface-soft));
+  --color-user-accent-dim: rgba(247, 248, 248, 0.05);
+  --color-ai-surface: rgba(130, 143, 255, 0.07);
+  --color-ai-border: rgba(247, 248, 248, 0.08);
+  --color-input-glow: rgba(130, 143, 255, 0.12);
+  --color-sidebar-bg: #090a0b;
+  --color-sidebar-active: #1c1d20;
+  --color-sidebar-hover: #141517;
   --color-sidebar-foreground-muted: var(--color-steel);
-  --color-profile-ring: rgba(236, 236, 234, 0.16);
-  --color-profile-ring-hover: rgba(236, 236, 234, 0.28);
-  --color-terminal-bg: #0F1115;
-  --color-terminal-surface: #15171C;
-  --color-terminal-border: #1F2228;
-  --color-terminal-text: #E3E5E8;
-  --color-terminal-dim: #7B8090;
+  --color-profile-ring: rgba(247, 248, 248, 0.14);
+  --color-profile-ring-hover: rgba(247, 248, 248, 0.26);
+  --color-terminal-bg: #0b0c0d;
+  --color-terminal-surface: #141517;
+  --color-terminal-border: #1f2023;
+  --color-terminal-text: #e3e4e6;
+  --color-terminal-dim: #7a7f88;
   --logo-black: #0A0A0A;
   --logo-white: #FFFFFF;
   --logo-neutral-700: #2B2B2B;
   --logo-neutral-300: #D9D9D9;
   --logo-bg: var(--logo-white);
   --logo-glyph: var(--logo-black);
-  --color-overlay: rgba(0, 0, 0, 0.55);
+  --color-overlay: rgba(0, 0, 0, 0.6);
   --topbar-bg: var(--color-background);
   --shadow-card: none;
   --shadow-card-hover: none;
-  --shadow-elevated: 0 8px 24px -12px rgba(0, 0, 0, 0.45);
-  --shadow-sticky-rail: rgba(0, 0, 0, 0.6) 0px 1px 4px 0px;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 8px 24px -4px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-sticky-rail: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 2px 8px rgba(0, 0, 0, 0.5);
   --shadow-message: none;
-  --shadow-glow-subtle: 0 0 0 2px color-mix(in srgb, var(--color-focus), transparent 70%);
+  --shadow-glow-subtle: 0 0 0 3px color-mix(in srgb, var(--color-focus), transparent 70%);
   --gradient-primary: var(--color-primary);
   --shadow-input-focus: none;
   --shadow-primary-glow: none;
@@ -587,138 +596,130 @@ html:lang(zh-CN) {
   background-color: var(--color-surface-soft);
 }
 
-/* ─── Typography roles — sizes, weights, and tracking match eveland.ai ───
-   Display roles use fluid clamp() sizes with tight negative tracking; `:lang(zh)`
-   steps sizes down, opens line-height, and relaxes tracking for CJK glyphs
-   (eveland.ai's zh-CN overrides). Body copy carries no tracking. */
+/* ─── Typography roles — Linear scale on Inter Variable ───
+   Display/heading roles use weight 510–590 with tight negative tracking; UI copy sits
+   at 13px (Linear "small"), reading copy at 15px (Linear "regular"). `:lang(zh)` relaxes
+   tracking and opens line-height for CJK glyphs. Inter features cv01 + ss03 always pair. */
 @utility text-hero-display {
-  /* eveland .hero h1 */
   font-family: var(--font-sans);
-  font-size: clamp(38px, 4.6vw, 68px);
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -0.075em;
-  font-feature-settings: "ss01", "ss02";
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 510;
+  line-height: 1.06;
+  letter-spacing: -0.032em;
+  font-feature-settings: "cv01", "ss03";
 
   &:lang(zh) {
-    font-size: clamp(34px, 4vw, 58px);
-    line-height: 1.12;
+    font-size: clamp(34px, 4.2vw, 54px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
   }
 }
 @utility text-display-lg {
-  /* eveland .manifesto-statement */
   font-family: var(--font-sans);
-  font-size: clamp(32px, 4.2vw, 56px);
-  font-weight: 500;
-  line-height: 1.18;
-  letter-spacing: -0.055em;
-  font-feature-settings: "ss01", "ss02";
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 510;
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  font-feature-settings: "cv01", "ss03";
 
   &:lang(zh) {
-    font-size: clamp(28px, 3.6vw, 48px);
-    line-height: 1.28;
-    letter-spacing: -0.03em;
+    font-size: clamp(28px, 3.4vw, 42px);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
   }
 }
 @utility text-heading-lg {
-  /* eveland docs page h1 */
   font-family: var(--font-sans);
-  font-size: 2rem;
-  font-weight: 450;
-  line-height: 2.5rem;
-  letter-spacing: -0.04em;
-  font-feature-settings: "ss01", "ss02";
+  font-size: 1.75rem;
+  font-weight: 590;
+  line-height: 1.2;
+  letter-spacing: -0.022em;
+  font-feature-settings: "cv01", "ss03";
 
   @media (min-width: 48rem) {
-    font-size: 2.5rem;
-    line-height: 3rem;
-    letter-spacing: -0.05em;
+    font-size: 2.25rem;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
   }
 }
 @utility text-heading-md {
-  /* eveland .manifesto-substatement */
   font-family: var(--font-sans);
-  font-size: clamp(20px, 2.3vw, 32px);
-  font-weight: 460;
-  line-height: 1.35;
-  letter-spacing: -0.035em;
-  font-feature-settings: "ss01", "ss02";
+  font-size: 1.5rem;
+  font-weight: 590;
+  line-height: 1.3;
+  letter-spacing: -0.018em;
+  font-feature-settings: "cv01", "ss03";
 
   &:lang(zh) {
-    font-size: clamp(18px, 2vw, 28px);
-    letter-spacing: -0.02em;
+    font-size: 1.375rem;
+    letter-spacing: 0;
   }
 }
 @utility text-heading-sm {
-  /* eveland .deployment-flow h3 */
   font-family: var(--font-sans);
-  font-size: 25px;
-  font-weight: 520;
-  line-height: 1.25;
-  letter-spacing: -0.04em;
-  font-feature-settings: "ss01", "ss02";
+  font-size: 1.25rem;
+  font-weight: 590;
+  line-height: 1.33;
+  letter-spacing: -0.012em;
+  font-feature-settings: "cv01", "ss03";
 }
 @utility text-subtitle-lg {
-  /* eveland 17px lead size at its 620 emphasis weight */
   font-family: var(--font-sans);
-  font-size: 17px;
-  font-weight: 620;
+  font-size: 1.0625rem;
+  font-weight: 590;
   line-height: 1.45;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.008em;
+  font-feature-settings: "cv01", "ss03";
 }
 @utility text-subtitle-md {
-  /* eveland .proof-section p */
   font-family: var(--font-sans);
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 400;
-  line-height: 1.65;
+  line-height: 1.6;
+  letter-spacing: -0.006em;
 }
 @utility text-body-md {
-  /* eveland .flow-copy p */
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 0.9375rem;
   font-weight: 400;
-  line-height: 1.75;
+  line-height: 1.6;
+  letter-spacing: -0.004em;
 }
 @utility text-body-md-bold {
   font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 620;
-  line-height: 1.75;
+  font-size: 0.9375rem;
+  font-weight: 590;
+  line-height: 1.6;
+  letter-spacing: -0.004em;
 }
 @utility text-body-sm {
-  /* eveland docs nav / toc */
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 0.8125rem;
   font-weight: 400;
-  line-height: 1.43;
+  line-height: 1.5;
 }
 @utility text-body-sm-bold {
-  /* eveland docs toc heading / page actions */
   font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.43;
+  font-size: 0.8125rem;
+  font-weight: 510;
+  line-height: 1.5;
 }
 @utility text-caption-bold {
-  /* eveland .hero-install-link / .foundation-list a */
   font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 620;
+  font-size: 0.75rem;
+  font-weight: 510;
   line-height: 1.33;
 }
 @utility text-button-md {
-  /* eveland .button */
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 620;
+  font-size: 0.8125rem;
+  font-weight: 510;
   line-height: 1.43;
 }
 @utility text-link-md {
-  /* eveland .text-link */
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 620;
+  font-size: 0.8125rem;
+  font-weight: 510;
   line-height: 1.43;
 }
 
@@ -784,14 +785,14 @@ html:lang(zh-CN) {
 }
 
 /* DESIGN.md `search-pill` — top-nav search field.
-   Surface-soft fill, pill radius, 40px height, body-sm text in steel. */
+   Surface-soft fill, 6px radius, 32px height, body-sm text in steel. */
 @utility search-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: var(--radius-full);
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
   background-color: var(--color-surface-soft);
   color: var(--color-steel);
   @apply text-body-sm;
@@ -801,7 +802,7 @@ html:lang(zh-CN) {
 
 
 @utility surface-overlay {
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-xxl);
   background-color: var(--color-popover);
   box-shadow: var(--shadow-elevated);
 }
@@ -809,8 +810,8 @@ html:lang(zh-CN) {
 @utility focus-ring {
   outline: none;
   box-shadow:
-    0 0 0 2px var(--color-background),
-    0 0 0 4px color-mix(in srgb, var(--color-focus), transparent 30%);
+    0 0 0 1px var(--color-background),
+    0 0 0 3px color-mix(in srgb, var(--color-focus), transparent 40%);
 }
 
 @utility focus-glow {
@@ -831,7 +832,7 @@ html:lang(zh-CN) {
   padding: 0.125rem 0.5rem;
   font-family: var(--font-sans);
   font-size: var(--font-size-micro);
-  font-weight: 500;
+  font-weight: 510;
   line-height: var(--font-size-micro--line-height);
 }
 
@@ -846,13 +847,13 @@ html:lang(zh-CN) {
 }
 
 @utility status-info {
-  background-color: color-mix(in srgb, var(--color-cobalt), transparent 90%);
-  color: var(--color-cobalt);
+  background-color: var(--color-info-subtle);
+  color: var(--color-info);
 }
 
 @utility status-primary {
-  background-color: color-mix(in srgb, var(--color-primary), transparent 90%);
-  color: var(--color-primary);
+  background-color: var(--color-accent-subtle);
+  color: var(--color-info);
 }
 
 @utility status-ai {
@@ -905,37 +906,39 @@ html:lang(zh-CN) {
   line-height: var(--lh-normal);
 }
 
-@utility label-mono {
-  font-family: var(--font-mono);
+/* Linear-style section label — sentence case, 12px / 510, muted by the call site.
+   Replaces the old uppercase mono eyebrow; tabular figures keep counts aligned. */
+@utility label-section {
+  font-family: var(--font-sans);
   font-size: var(--font-size-caption);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 510;
+  line-height: 1.33;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
 @utility heading-display {
-  /* eveland .hero h1 */
   font-family: var(--font-sans);
-  font-size: clamp(38px, 4.6vw, 68px);
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -0.075em;
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 510;
+  line-height: 1.06;
+  letter-spacing: -0.032em;
+  font-feature-settings: "cv01", "ss03";
   text-wrap: balance;
 
   &:lang(zh) {
-    font-size: clamp(34px, 4vw, 58px);
-    line-height: 1.12;
+    font-size: clamp(34px, 4.2vw, 54px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
   }
 }
 
 @utility brand-wordmark {
   font-family: var(--font-brand-family);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 590;
   line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   color: var(--color-foreground);
   text-shadow: none;
 }
@@ -972,27 +975,26 @@ html:lang(zh-CN) {
 
 /* ─── Typography ───
    Contract:
-   - Body defaults to text-sm (14px) for dense, readable UI copy.
-   - Section headings in product surfaces should prefer text-lg unless intentionally compact.
-   - Metadata should use text-micro (10px) or text-caption (12px), not ad hoc sizes. */
+   - Body defaults to text-sm (13px, Linear "small") for dense UI copy; reading copy uses text-body-md (15px).
+   - Section headings in product surfaces should prefer text-heading-sm unless intentionally compact.
+   - Metadata should use text-micro / text-caption (both 12px), not ad hoc sizes. */
 
 h1, h2, h3, h4, h5, h6,
 p, span, input, textarea, label, li, td {
   font-family: var(--font-sans);
 }
 
-/* DESIGN.md: headings use Optimistic VF with ss01/ss02. The system stack ignores those
-   stylistic sets — the declaration is harmless and future-proofs an Optimistic VF swap.
+/* Headings use Inter's cv01 + ss03 (Linear's alternates: open digits, rounded quotes).
    We deliberately do NOT set font-size on the bare tag selector — role utilities
    (`text-heading-lg`, `text-subtitle-lg`, etc.) or Tailwind sizing classes drive that. */
 h1, h2, h3, h4, h5, h6 {
-  font-feature-settings: "ss01", "ss02";
-  font-weight: 500;
+  font-feature-settings: "cv01", "ss03";
+  font-weight: 590;
   line-height: 1.25;
-  letter-spacing: 0;
+  letter-spacing: -0.012em;
 }
 
-h3, h4, h5, h6 { font-weight: 700; }
+h4, h5, h6 { font-weight: 510; letter-spacing: 0; }
 
 /* ─── Base ─── */
 
@@ -1010,16 +1012,17 @@ html.dark {
 
 body {
   font-size: var(--text-sm);
-  line-height: 1.6;
+  line-height: 1.5;
+  font-feature-settings: "cv01", "ss03";
   touch-action: manipulation;
 }
 
 /* DESIGN.md geometry contract (see docs/design.md §3.3):
-   - All buttons, badges, and pill-tabs use rounded-full (100px).
-   - Photographic cards use rounded-xxxl (32px) minimum; form inputs use rounded-lg (8px).
-   - Overlays use surface-overlay (24px radius) with shadow-elevated.
-   - Text inputs: 1px hairline at rest, 2px fb-blue border on focus (text-input contract).
-   - Default focus: ring-2 ring-focus/40 ring-offset-2 ring-offset-canvas. */
+   - CTAs (buttons, icon buttons, toggles, tab triggers) use rounded-sm (4px); fields and rows use rounded-md (6px).
+     Badges/avatars stay rounded-full.
+   - Cards use rounded-xl (10px); overlays use surface-overlay (12px radius) with shadow-elevated.
+   - Text inputs: 1px hairline at rest; focus darkens the border and adds a 3px indigo halo.
+   - Default focus: ring-2 ring-focus/50 ring-offset-1 ring-offset-canvas. */
 /* Exception: wrapper-driven focus-within on composite controls (command palette search). */
 
 html,
@@ -1153,7 +1156,7 @@ pre, code {
 }
 
 .hljs-strong {
-  font-weight: 700;
+  font-weight: 590;
 }
 
 /* ─── Dot-grid texture overlay ─── */
@@ -1172,6 +1175,7 @@ pre, code {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   background-color: var(--color-card);
+  box-shadow: var(--shadow-xs);
   transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
 }
 
@@ -1181,7 +1185,8 @@ pre, code {
 }
 
 @utility surface-input-composer-welcome {
-  border: 1px solid var(--color-border);
+  /* Edge comes from the 1px ring baked into shadow-elevated — no stacked hairline. */
+  border: 1px solid transparent;
   border-radius: var(--radius-xxl);
   background-color: var(--color-card);
   box-shadow: var(--shadow-elevated);
@@ -1293,8 +1298,8 @@ pre, code {
 .conversation-markdown :where(h1, h2, h3, h4) {
   margin-top: 1.1rem;
   margin-bottom: 0.55rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-weight: 590;
+  letter-spacing: -0.012em;
 }
 
 .conversation-markdown blockquote {
@@ -1351,7 +1356,7 @@ pre, code {
 .markdown-reasoning h5,
 .markdown-reasoning h6 {
   margin: 0.9em 0 0.35em;
-  font-weight: 700;
+  font-weight: 590;
   color: var(--color-foreground);
   opacity: 0.92;
 }
@@ -1385,6 +1390,6 @@ pre, code {
 }
 
 /* CJK glyphs should keep native spacing; Latin-only tightening above stays for en UI. */
-html:lang(zh-CN) :where(h1, h2, h3, h4, h5, h6, p:not(.label-mono):not(.brand-wordmark), li, .prose, .conversation-markdown, .markdown-reasoning) {
+html:lang(zh-CN) :where(h1, h2, h3, h4, h5, h6, p:not(.label-section):not(.brand-wordmark), li, .prose, .conversation-markdown, .markdown-reasoning) {
   letter-spacing: 0;
 }

@@ -146,7 +146,7 @@ function LoginForm() {
             <div className="flex flex-col gap-6">
 
               <div className="flex w-full flex-col items-center space-y-2 text-center">
-                <p className="label-mono text-text-subtle">{t("login.eyebrow")}</p>
+                <p className="label-section text-text-subtle">{t("login.eyebrow")}</p>
                 <h1 className="w-full text-balance text-heading-sm text-foreground">
                   {t("login.welcome")}
                 </h1>

@@ -51,9 +51,9 @@ export function SkillSelector({
       {/* Trigger button + popover */}
       <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) setFilter(""); }}>
         {selectedSkill && variant !== "shelf" ? (
-          /* Active skill pill — morphs in-place to show selection */
+          /* Active skill chip — morphs in-place to show selection */
           <div className={cn(
-            "group flex items-center gap-1 rounded-full transition-colors",
+            "group flex items-center gap-1 rounded-sm transition-colors",
             "bg-muted text-foreground",
             "hover:bg-[color-mix(in_srgb,var(--color-muted),var(--color-foreground)_6%)]",
             variant === "welcome" ? "h-8 pl-2.5 pr-1" : "h-7 pl-2 pr-0.5",
@@ -63,7 +63,7 @@ export function SkillSelector({
                 type="button"
                 aria-label={`${t("skills.selector.select")}: ${normalizeSkillName(selectedSkill)}`}
                 className={cn(
-                  "flex cursor-pointer items-center gap-1.5 rounded-full text-caption-bold outline-none",
+                  "flex cursor-pointer items-center gap-1.5 rounded-xs text-caption-bold outline-none",
                   "focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 )}
               >
@@ -78,7 +78,7 @@ export function SkillSelector({
               onClick={(e) => { e.stopPropagation(); onSelect(null); }}
               aria-label={t("skills.selector.remove", { name: normalizeSkillName(selectedSkill) })}
               className={cn(
-                "relative flex items-center justify-center rounded-circle transition-colors",
+                "relative flex items-center justify-center rounded-xs transition-colors",
                 "text-muted-foreground hover:bg-background hover:text-foreground",
                 // Expand the hit area to 24px+ without growing the visual chip.
                 "after:absolute after:-inset-1.5 after:content-['']",

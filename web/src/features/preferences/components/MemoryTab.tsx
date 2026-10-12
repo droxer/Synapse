@@ -121,7 +121,7 @@ export function MemoryTab() {
       <div role="table" aria-label={t("preferences.memory.title")} className="overflow-hidden rounded-xl bg-muted/60">
         <div
           role="row"
-          className="hidden grid-cols-[180px_minmax(0,1fr)_100px_100px_40px] gap-3 px-4 py-3 label-mono text-muted-foreground md:grid"
+          className="hidden grid-cols-[180px_minmax(0,1fr)_100px_100px_40px] gap-3 px-4 py-3 label-section text-muted-foreground md:grid"
         >
           <span role="columnheader">{t("preferences.memory.key")}</span>
           <span role="columnheader">{t("preferences.memory.value")}</span>

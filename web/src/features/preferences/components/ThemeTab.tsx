@@ -43,7 +43,7 @@ function ThemePreview() {
         >
           Aa
         </span>
-        <span className="label-mono text-text-subtle">Synapse</span>
+        <span className="label-section text-text-subtle">Synapse</span>
       </div>
       <div className="px-4 py-3">
         <p className="text-body-sm text-foreground">
@@ -57,7 +57,7 @@ function ThemePreview() {
         {SWATCHES.map(({ token, labelKey }) => (
           <div key={labelKey} className="flex min-w-0 flex-1 flex-col items-stretch gap-1">
             <div className="h-6 rounded-sm shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-foreground)_8%,transparent)]" style={{ background: token }} />
-            <span className="label-mono truncate text-center text-text-subtle">{t(labelKey)}</span>
+            <span className="label-section truncate text-center text-text-subtle">{t(labelKey)}</span>
           </div>
         ))}
       </div>

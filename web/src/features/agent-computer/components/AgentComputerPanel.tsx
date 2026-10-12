@@ -344,7 +344,7 @@ const PANEL_TAB_META: Record<PanelTab, { readonly icon: LucideIcon; readonly lab
 };
 
 const PANEL_TAB_CLASSES = cn(
-  "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-mono transition-colors",
+  "relative flex items-center gap-1.5 px-2 pb-2 pt-1 label-section transition-colors",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 );
 
@@ -709,7 +709,7 @@ export function AgentComputerPanel({
       <div className="shrink-0 bg-background">
         {/* Title bar */}
         <div className="flex items-center gap-2 px-3 py-2">
-          <span className="label-mono flex-1 truncate text-muted-foreground">
+          <span className="label-section flex-1 truncate text-muted-foreground">
             {t("computer.title")}
           </span>
           {/* Inline running status — animated entrance/exit */}
@@ -909,7 +909,7 @@ export function AgentComputerPanel({
               ) : taskState === "error" ? (
                 <CircleX className="h-3 w-3 text-destructive" />
               ) : null}
-              <span className="label-mono">
+              <span className="label-section">
                 {taskState === "complete"
                   ? t("computer.statusDone")
                   : isRunning

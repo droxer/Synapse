@@ -3,8 +3,7 @@ import * as React from "react"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * Card variants — surfaces separate by tonal fill, not borders (lighter look).
- * Cards are white on the slightly-grey page background, so no hairline border is needed.
+ * Card variants — Linear-style 10px surfaces that separate by tonal fill, not borders.
  * - `default`: primary card surface, borderless, separated by fill.
  * - `sunken`: recessed card with muted background, borderless.
  * - `interactive`: borderless card that lifts with a subtle shadow on hover.
@@ -14,13 +13,13 @@ import { cn } from "@/shared/lib/utils"
 type CardVariant = "default" | "sunken" | "interactive" | "outlined" | "panel"
 
 const cardVariantClass: Record<CardVariant, string> = {
-  default: "flex flex-col gap-6 py-6 rounded-xl bg-card text-card-foreground",
-  sunken: "flex flex-col gap-6 py-6 rounded-xl bg-muted text-card-foreground",
+  default: "flex flex-col gap-4 py-5 rounded-xl bg-card text-card-foreground",
+  sunken: "flex flex-col gap-4 py-5 rounded-xl bg-muted text-card-foreground",
   interactive:
-    "flex flex-col gap-6 py-6 rounded-xl bg-card text-card-foreground transition-shadow hover:shadow-elevated",
+    "flex flex-col gap-4 py-5 rounded-xl bg-card text-card-foreground transition-shadow hover:shadow-elevated",
   outlined:
-    "flex flex-col gap-6 py-6 rounded-xl border border-border bg-card text-card-foreground",
-  panel: "flex flex-col gap-6 py-6 rounded-lg bg-card text-card-foreground",
+    "flex flex-col gap-4 py-5 rounded-xl border border-border bg-card text-card-foreground",
+  panel: "flex flex-col gap-4 py-5 rounded-lg bg-card text-card-foreground",
 }
 
 function Card({
@@ -47,7 +46,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1 px-5 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-5",
         className
       )}
       {...props}
@@ -59,7 +58,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("text-subtitle-lg text-foreground", className)}
+      className={cn("text-body-md-bold text-foreground", className)}
       {...props}
     />
   )
@@ -92,7 +91,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-6", className)}
+      className={cn("px-5", className)}
       {...props}
     />
   )
@@ -102,7 +101,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-footer"
-      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      className={cn("flex items-center px-5 [.border-t]:pt-5", className)}
       {...props}
     />
   )

@@ -72,7 +72,7 @@ export function MCPServerForm({
       )}
 
       <div className="space-y-1.5">
-        <Label htmlFor={`${idPrefix}-schema`} className="label-mono text-text-subtle">
+        <Label htmlFor={`${idPrefix}-schema`} className="label-section text-text-subtle">
           {t("mcp.schema")}
         </Label>
         <p className="text-caption text-muted-foreground">{schemaHelper}</p>

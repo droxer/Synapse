@@ -23,7 +23,7 @@ export function SuggestionPill({ label, icon, onClick, disabled = false, "aria-l
       whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
       transition={{ duration: shouldReduceMotion ? 0 : 0.15, ease: "easeOut" }}
       onClick={onClick}
-      className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface-soft px-4 text-body-sm text-ink-deep transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_6%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+      className="touch-target inline-flex min-h-9 items-center gap-2 rounded-sm bg-surface-soft px-3 text-body-sm text-ink-deep transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_6%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
     >
       {icon}
       <span>{label}</span>

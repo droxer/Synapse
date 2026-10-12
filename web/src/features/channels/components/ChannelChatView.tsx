@@ -261,7 +261,7 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
               <MessageCircle className="h-4 w-4" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="label-mono text-muted-foreground">
+              <p className="label-section text-muted-foreground">
                 {pendingAsk.title ?? t("inputPrompt.title")}
               </p>
               <p className="mt-1 whitespace-pre-wrap break-words text-body-sm text-foreground">
@@ -279,7 +279,7 @@ export function ChannelChatView({ conversation, hideTopBar }: ChannelChatViewPro
                       key={option.id ?? option.value ?? option.label ?? idx}
                       type="button"
                       onClick={() => void handlePromptSubmit(option.value ?? option.label)}
-                      className="flex min-h-10 w-full items-start rounded-xl bg-background px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      className="flex min-h-10 w-full items-start rounded-sm bg-background px-3 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <span className="text-body-sm-bold text-foreground">

@@ -186,12 +186,12 @@ export function fileCategoryColor(contentType: string, name?: string): FileCateg
       case "wav":
       case "mp4":
       case "mkv":
-        return { icon: "text-primary", bg: "bg-primary/10" };
+        return { icon: "text-info", bg: "bg-accent-subtle" };
     }
   }
 
   if (contentType.startsWith("image/"))
-    return { icon: "text-primary", bg: "bg-primary/10" };
+    return { icon: "text-info", bg: "bg-accent-subtle" };
   if (contentType === "application/pdf")
     return { icon: "text-destructive", bg: "bg-destructive/10" };
   if (

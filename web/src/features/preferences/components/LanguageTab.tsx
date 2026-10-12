@@ -104,7 +104,7 @@ export function LanguageTab() {
 
       <section className="surface-panel mt-8 overflow-hidden">
         <div className="px-4 pt-4">
-          <p className="label-mono text-text-subtle">{t("preferences.language.preview")}</p>
+          <p className="label-section text-text-subtle">{t("preferences.language.preview")}</p>
         </div>
         <div className="relative px-5 pb-6 pt-4 sm:px-6 sm:pb-8 sm:pt-5">
           <div
