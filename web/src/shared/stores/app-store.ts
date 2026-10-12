@@ -190,8 +190,9 @@ export const useAppStore = create<AppState>()(
       loadConversations: async () => {
         set({ isLoadingHistory: true });
         try {
+          // Refresh everything already loaded so the /tasks page keeps its pages on focus refresh.
           const { items, total } = await fetchConversations(
-            PAGE_SIZE,
+            Math.max(PAGE_SIZE, get().conversationHistory.length),
             0,
           );
           set({

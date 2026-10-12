@@ -24,7 +24,7 @@ export function AppSidebar() {
   const setSidebarWidth = useAppStore((s) => s.setSidebarWidth);
   const closeSidebar = useAppStore((s) => s.closeSidebar);
   const loadConversations = useAppStore((s) => s.loadConversations);
-  const loadMore = useAppStore((s) => s.loadMore);
+  const totalConversations = useAppStore((s) => s.totalConversations);
   const deleteConversation = useAppStore((s) => s.deleteConversation);
   const switchConversation = useAppStore((s) => s.switchConversation);
   const resetConversation = useAppStore((s) => s.resetConversation);
@@ -145,6 +145,7 @@ export function AppSidebar() {
   const sidebar = (
     <Sidebar
       taskHistory={conversationHistory}
+      totalTasks={totalConversations}
       activeTaskId={conversationId}
       onNewTask={handleNewConversation}
       onSelectTask={handleSelectConversation}
@@ -153,7 +154,6 @@ export function AppSidebar() {
       width={isMobile ? 256 : sidebarWidth}
       onToggle={isMobile ? undefined : toggleSidebar}
       onWidthChange={isMobile ? undefined : setSidebarWidth}
-      onLoadMore={loadMore}
       onDeleteTask={handleDeleteConversation}
       onClose={isMobile ? closeSidebar : undefined}
       isMobile={isMobile}
