@@ -86,9 +86,11 @@ jest.mock("./ChatInput", () => ({
   ChatInput: () => <div data-testid="chat-input" />,
 }));
 
-jest.mock("./SuggestionPill", () => ({
+jest.mock("./SuggestionRow", () => ({
   __esModule: true,
-  SuggestionPill: ({ label }: { label: string }) => <span data-testid="suggestion-pill">{label}</span>,
+  SuggestionRow: ({ label, prompt }: { label: string; prompt: string }) => (
+    <span data-testid="suggestion-row">{label}|{prompt}</span>
+  ),
 }));
 
 jest.mock("@/shared/components/ErrorBanner", () => ({
@@ -96,17 +98,18 @@ jest.mock("@/shared/components/ErrorBanner", () => ({
   ErrorBanner: ({ message }: { message: string }) => <div>{message}</div>,
 }));
 
-const zhSubtitle = "描述你想构建的内容。Synapse 会规划、编写代码、在安全的沙盒中运行，并实时回传每一步进展。";
+const zhHeading = "让下一个想法成真";
+const zhSubtitle = "描述你想要的结果。Synapse 会规划、编写代码，并在沙盒中运行，每一步都实时可见。";
 
 jest.mock("@/i18n", () => ({
   __esModule: true,
   useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
-        "sidebar.brand": "Synapse",
-        "welcome.heading": "把想法变成可运行的软件",
+        "welcome.heading": zhHeading,
         "welcome.subtitle": zhSubtitle,
-        "welcome.suggestionsLabel": "Suggested starting points",
+        "welcome.suggestionsLabel": "Start from",
+        "welcome.suggestionsRecentLabel": "From your recent work",
         "welcome.suggestion.prototype": "Prototype a feature",
         "welcome.suggestion.prototypePrompt": "Prototype a focused feature with polished UI, accessible interactions, edge cases, and tests.",
         "welcome.suggestion.improve": "Improve this screen",
@@ -125,23 +128,25 @@ jest.mock("@/i18n", () => ({
 const { HomeScreen } = require("./HomeScreen");
 
 describe("HomeScreen", () => {
-  it("renders the Studio Desk headline, eyebrow, and subtitle", () => {
+  it("renders the task heading and subtitle without a brand eyebrow", () => {
     const html = renderToStaticMarkup(<HomeScreen onSubmitTask={jest.fn()} />);
 
-    expect(html).toContain("Synapse");
-    expect(html).toContain("把想法变成可运行的软件");
+    expect(html).toContain(zhHeading);
     expect(html).toContain(zhSubtitle);
+    expect(html).not.toContain("sidebar.brand");
   });
 
-  it("renders suggestion pills", () => {
+  it("renders default starter rows with prompt previews under a visible label", () => {
     const html = renderToStaticMarkup(<HomeScreen onSubmitTask={jest.fn()} />);
 
-    expect(html).toContain("Prototype a feature");
+    expect(html).toContain("Start from");
+    expect(html).not.toContain("sr-only\">Start from");
+    expect(html).toContain("Prototype a feature|Prototype a focused feature");
     expect(html).toContain("Improve this screen");
     expect(html).toContain("Plan the build");
   });
 
-  it("renders generated suggestions when provided", () => {
+  it("labels generated suggestions as coming from recent work", () => {
     const html = renderToStaticMarkup(
       <HomeScreen
         onSubmitTask={jest.fn()}
@@ -153,7 +158,8 @@ describe("HomeScreen", () => {
       />,
     );
 
-    expect(html).toContain("Verify speed");
+    expect(html).toContain("From your recent work");
+    expect(html).toContain("Verify speed|Can you verify speed?");
     expect(html).toContain("Add tests");
     expect(html).toContain("Review risks");
     expect(html).not.toContain("Prototype a feature");

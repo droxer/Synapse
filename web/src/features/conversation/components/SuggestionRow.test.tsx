@@ -4,7 +4,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Zap } from "lucide-react";
 
 interface CapturedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  whileHover?: unknown;
   whileTap?: unknown;
   transition?: unknown;
 }
@@ -17,42 +16,49 @@ jest.mock("framer-motion", () => ({
   motion: {
     button: (props: CapturedButtonProps) => {
       capturedButtonProps(props);
-      const { children, whileHover: _whileHover, whileTap: _whileTap, transition: _transition, ...rest } = props;
+      const { children, whileTap: _whileTap, transition: _transition, ...rest } = props;
       return <button {...rest}>{children}</button>;
     },
   },
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { SuggestionPill } = require("./SuggestionPill");
+const { SuggestionRow } = require("./SuggestionRow");
 
-describe("SuggestionPill", () => {
+describe("SuggestionRow", () => {
   beforeEach(() => {
     capturedButtonProps.mockClear();
   });
 
-  it("renders label and icon as a compact Linear-style chip button", () => {
+  it("renders label, prompt preview, and icon as a borderless list row", () => {
     const html = renderToStaticMarkup(
-      <SuggestionPill label="Prototype a feature" icon={<Zap data-testid="icon" />} onClick={jest.fn()} />,
+      <SuggestionRow
+        label="Prototype a feature"
+        prompt="Prototype a focused feature with tests."
+        icon={<Zap data-testid="icon" />}
+        onClick={jest.fn()}
+      />,
     );
 
     expect(html).toContain("Prototype a feature");
+    expect(html).toContain("Prototype a focused feature with tests.");
     expect(html).toContain("data-testid=\"icon\"");
-    expect(html).toContain("rounded-sm");
-    expect(html).toContain("min-h-9");
+    expect(html).toContain("rounded-md");
+    expect(html).toContain("truncate");
+    expect(html).not.toMatch(/\bborder\b/);
   });
 
   it("is disabled when disabled prop is true", () => {
     const html = renderToStaticMarkup(
-      <SuggestionPill label="Disabled" onClick={jest.fn()} disabled />,
+      <SuggestionRow label="Disabled" prompt="p" onClick={jest.fn()} disabled />,
     );
 
     expect(html).toContain("disabled");
   });
 
-  it("calls onClick when the pill is clicked", () => {
+  it("calls onClick when the row is clicked", () => {
     const handleClick = jest.fn();
-    renderToStaticMarkup(<SuggestionPill label="Click me" onClick={handleClick} />);
+    renderToStaticMarkup(<SuggestionRow label="Click me" prompt="p" onClick={handleClick} />);
 
     const lastProps = capturedButtonProps.mock.results[capturedButtonProps.mock.results.length - 1]?.value as CapturedButtonProps;
     expect(lastProps.onClick).toBe(handleClick);
@@ -62,7 +68,7 @@ describe("SuggestionPill", () => {
 
   it("renders aria-label when provided", () => {
     const html = renderToStaticMarkup(
-      <SuggestionPill label="Hint" onClick={jest.fn()} aria-label="fills the message box" />,
+      <SuggestionRow label="Hint" prompt="p" onClick={jest.fn()} aria-label="fills the message box" />,
     );
 
     expect(html).toContain('aria-label="fills the message box"');
