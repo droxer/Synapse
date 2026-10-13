@@ -33,7 +33,7 @@ from agent.runtime.turn_attachments import (
 from agent.skills.loader import SkillRegistry
 from agent.tools.executor import ToolExecutor
 from agent.tools.registry import ToolRegistry
-from api.events import EventEmitter
+from agent.events import EventEmitter
 from config.settings import get_settings
 from loguru import logger
 

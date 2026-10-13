@@ -11,7 +11,7 @@ from loguru import logger
 from agent.llm.client import LLMResponse, ToolCall, is_content_policy_error
 from agent.tools.base import ToolResult
 from agent.tools.executor import ToolExecutor
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 from config.settings import get_settings
 
 if TYPE_CHECKING:

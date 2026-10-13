@@ -9,7 +9,7 @@ from agent.runtime.skill_dependencies import (
     group_safe_dependencies,
 )
 from agent.tools.executor import ToolExecutor
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 from config.settings import get_settings
 
 

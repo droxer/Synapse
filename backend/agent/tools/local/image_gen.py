@@ -14,7 +14,7 @@ from agent.tools.base import (
     ToolDefinition,
     ToolResult,
 )
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 
 
 class ImageGen(LocalTool):

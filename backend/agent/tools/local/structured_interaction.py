@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 from agent.tools.base import ExecutionContext, LocalTool, ToolDefinition, ToolResult
-from api.events import EventType
+from agent.events import EventType
 
 
 def _normalize_options(raw: Any) -> list[dict[str, str]]:

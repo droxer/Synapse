@@ -10,7 +10,7 @@ from typing import Any
 from uuid import uuid4
 
 from agent.tools.base import ExecutionContext, LocalTool, ToolDefinition, ToolResult
-from api.events import EventType
+from agent.events import EventType
 
 
 @dataclass

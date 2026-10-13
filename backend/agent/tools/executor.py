@@ -17,7 +17,7 @@ from agent.tools.schema_validation import (
     validate_schema,
 )
 from agent.tools.sandbox.artifact_detection import extract_artifact_paths_from_text
-from api.events import EventType
+from agent.events import EventType
 
 _STALE_SANDBOX_SESSION_MARKERS = (
     "Handle invalidated after stop()",

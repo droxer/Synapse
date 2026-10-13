@@ -22,7 +22,7 @@ from agent.runtime.hooks import (
     ContextCompactionResult,
     ConversationHooks,
 )
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 
 
 @dataclass(frozen=True)
