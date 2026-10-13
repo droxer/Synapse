@@ -42,7 +42,7 @@ from agent.tools.executor import ToolExecutor
 from agent.tools.registry import ToolRegistry
 from agent.events import EventEmitter, EventType
 from agent.attachments import serialize_attachment_metadata
-from config.settings import get_settings
+from agent.config import get_settings
 
 
 @dataclass(frozen=True)

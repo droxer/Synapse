@@ -189,7 +189,7 @@ class SpawnTaskAgent(LocalTool):
         config: TaskAgentConfig
         try:
             from agent.runtime.task_runner import DependencyFailureMode, TaskAgentConfig
-            from config.settings import get_settings
+            from agent.config import get_settings
 
             model = get_settings().LITE_MODEL if use_lite_model else None
             worker_contract = (

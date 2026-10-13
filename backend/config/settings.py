@@ -4,7 +4,9 @@ from typing import Literal, Self
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-TokenCounterStrategy = Literal["weighted", "legacy"]
+from agent.config import TokenCounterStrategy as TokenCounterStrategy
+from agent.config import configure_settings
+
 SearchProvider = Literal["tavily", "exa"]
 
 
@@ -225,3 +227,12 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return a cached, immutable Settings instance."""
     return Settings()
+
+
+def install_harness_settings() -> None:
+    """Make the agent core read this app's env-driven Settings.
+
+    The lambda looks ``get_settings`` up at call time, so patches of
+    ``config.settings.get_settings`` (used by tests) also steer the core.
+    """
+    configure_settings(lambda: get_settings())

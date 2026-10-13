@@ -472,7 +472,7 @@ class ToolExecutor:
                 )
 
             if isinstance(tool, SandboxTool):
-                from config.settings import get_settings
+                from agent.config import get_settings
 
                 tags = definition.tags
                 if "shell" in tags:

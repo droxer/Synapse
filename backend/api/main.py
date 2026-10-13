@@ -51,13 +51,14 @@ from api.routes import (
     usage,
     v1,
 )
-from config.settings import get_settings
+from config.settings import get_settings, install_harness_settings
 
 
 def _create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     from agent.logging import setup_logging
 
+    install_harness_settings()
     settings = get_settings()
     setup_logging(log_level=settings.LOG_LEVEL)
 

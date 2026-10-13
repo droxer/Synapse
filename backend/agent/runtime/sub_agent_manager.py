@@ -36,7 +36,7 @@ from agent.tools.meta.send_message import (
 )
 from agent.tools.registry import ToolRegistry
 from agent.events import EventEmitter, EventType
-from config.settings import get_settings
+from agent.config import get_settings
 from loguru import logger
 
 # Type aliases for factory callables

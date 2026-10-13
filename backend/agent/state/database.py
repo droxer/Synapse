@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from config.settings import get_settings
+from agent.config import get_settings
 
 
 def get_engine(database_url: str) -> AsyncEngine:

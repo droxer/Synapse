@@ -33,7 +33,7 @@ from agent.skills.models import SkillContent
 from agent.tools.executor import ToolExecutor
 from agent.tools.registry import ToolRegistry
 from agent.events import EventEmitter
-from config.settings import get_settings
+from agent.config import get_settings
 
 
 def _attachment_descriptors(

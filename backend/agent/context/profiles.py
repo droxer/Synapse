@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, cast
 
-from config.settings import Settings, TokenCounterStrategy
+from agent.config import HarnessSettings, TokenCounterStrategy
 
 CompactionRuntimeKind = Literal[
     "web_conversation",
@@ -56,7 +56,7 @@ class CompactionProfile:
 
 
 def resolve_compaction_profile(
-    settings: Settings,
+    settings: HarnessSettings,
     runtime: CompactionRuntimeKind,
 ) -> CompactionProfile:
     """Resolve runtime-specific compaction settings with inheritance."""
@@ -135,7 +135,7 @@ def resolve_compaction_profile(
 
 
 def resolve_compaction_profile_by_name(
-    settings: Settings,
+    settings: HarnessSettings,
     profile_name: str | None,
     *,
     default: CompactionRuntimeKind = "web_conversation",
@@ -146,7 +146,7 @@ def resolve_compaction_profile_by_name(
     return resolve_compaction_profile(settings, cast(CompactionRuntimeKind, runtime))
 
 
-def _endpoint_default_summary_model(settings: Settings) -> str:
+def _endpoint_default_summary_model(settings: HarnessSettings) -> str:
     """Pick a summary model when the default LITE_MODEL cannot work.
 
     ``LITE_MODEL`` defaults to a Claude Haiku id. Against a non-Anthropic
@@ -165,7 +165,7 @@ def _endpoint_default_summary_model(settings: Settings) -> str:
 
 
 def _get_override(
-    settings: Settings,
+    settings: HarnessSettings,
     prefix: str,
     suffix: str,
     fallback: TokenCounterStrategy | int | str | bool,
@@ -175,7 +175,7 @@ def _get_override(
 
 
 def _base_value(
-    settings: Settings,
+    settings: HarnessSettings,
     suffix: str,
 ) -> TokenCounterStrategy | int | str | bool:
     return getattr(settings, f"COMPACT_{suffix}", _BASE_DEFAULTS[suffix])

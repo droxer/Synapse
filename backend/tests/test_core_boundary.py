@@ -14,17 +14,10 @@ import sys
 import textwrap
 from pathlib import Path
 
-import pytest
-
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 _APP_ONLY_PACKAGES = ("api", "config", "fastapi", "starlette", "pydantic_settings")
 _CREDENTIAL_VARS = ("ANTHROPIC_API_KEY", "TAVILY_API_KEY", "EXA_API_KEY")
 _SUBPROCESS_TIMEOUT_SECONDS = 120
-
-_PENDING = pytest.mark.xfail(
-    strict=True,
-    reason="core still imports api/config; removed by the core-boundary plan, Task 4",
-)
 
 _IMPORT_EVERY_CORE_MODULE = f"""
     import importlib, json, pkgutil, sys
@@ -87,7 +80,6 @@ def _run_isolated(script: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-@_PENDING
 def test_core_imports_without_app_layers(tmp_path: Path) -> None:
     proc = _run_isolated(_IMPORT_EVERY_CORE_MODULE, tmp_path)
 
@@ -96,7 +88,6 @@ def test_core_imports_without_app_layers(tmp_path: Path) -> None:
     assert leaked == []
 
 
-@_PENDING
 def test_core_runs_a_turn_without_credentials_or_app(tmp_path: Path) -> None:
     proc = _run_isolated(_RUN_ONE_TURN, tmp_path)
 

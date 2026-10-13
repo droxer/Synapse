@@ -25,7 +25,7 @@ from agent.runtime.hooks import (
     ConversationTurnContext,
     ConversationTurnStatus,
 )
-from config.settings import get_settings
+from agent.config import get_settings
 
 MemoryStoreFactory = Callable[
     [async_sessionmaker[AsyncSession], uuid.UUID | None, uuid.UUID | None],

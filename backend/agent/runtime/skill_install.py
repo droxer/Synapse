@@ -10,7 +10,7 @@ from agent.runtime.skill_dependencies import (
 )
 from agent.tools.executor import ToolExecutor
 from agent.events import EventEmitter, EventType
-from config.settings import get_settings
+from agent.config import get_settings
 
 
 async def install_skill_dependencies_for_turn(

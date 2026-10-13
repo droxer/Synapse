@@ -13,7 +13,7 @@ from agent.memory.heuristic_extract import (
     heuristic_fact_source,
 )
 from agent.memory.store import PersistentMemoryStore
-from config.settings import get_settings
+from agent.config import get_settings
 
 
 def _user_text_for_fact_flush(message: dict[str, Any]) -> str:

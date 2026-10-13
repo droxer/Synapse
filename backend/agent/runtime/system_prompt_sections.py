@@ -7,7 +7,7 @@ from typing import Any
 from agent.llm.client import PromptTextBlock, build_system_prompt_blocks
 from agent.memory.safety import validate_memory_text
 from agent.skills.loader import SkillRegistry
-from config.settings import get_settings
+from agent.config import get_settings
 
 MEMORY_TOOL_PROMPT_SECTION = (
     "<memory_tool_policy>\n"
