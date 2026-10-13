@@ -189,5 +189,3 @@
 - **匿名会话**：持久化内存需要用户 id；未认证部署下，KV 记忆与事实无法以相同方式经 `PersistentMemoryStore` 持久化。
 - **压缩用 token 为启发式**：用于判断「是否该压缩」，不是计费级 token 统计。
 - **事实 vs KV 记忆**：用**工具**做显式、由智能体控制的笔记（`memory_entries`）；**事实**面向带置信度与过时语义的、常见由通道驱动的档案/偏好类数据。
-
-Telegram 侧长期记忆压缩的更多设计背景见 `docs/superpowers/specs/2026-04-02-telegram-long-term-memory-compression-design.md`。

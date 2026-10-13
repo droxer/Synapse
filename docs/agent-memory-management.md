@@ -189,5 +189,3 @@ Environment defaults live in `backend/config/settings.py`; see `backend/.env.exa
 - **Anonymous sessions**: persistent memory requires a user id; unauthenticated deployments will not persist KV memory or facts through `PersistentMemoryStore` in the same way.
 - **Compaction tokens are heuristic**: they approximate “should we compact?” and are not billing-grade token counts.
 - **Facts vs KV memory**: use **tools** for explicit, agent-controlled notes (`memory_entries`); **facts** are for validated, often channel-driven profile/preferences-style data with confidence and staleness semantics.
-
-For deeper design history on Telegram memory compression, see `docs/superpowers/specs/2026-04-02-telegram-long-term-memory-compression-design.md`.

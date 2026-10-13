@@ -52,7 +52,3 @@ Concise guides for agents and developers. Root navigation: **`AGENTS.md`** and *
 - [zh-CN/agent-memory-management.md](zh-CN/agent-memory-management.md)
 - [zh-CN/DESIGN_STYLE_GUIDE.md](zh-CN/DESIGN_STYLE_GUIDE.md)
 - [zh-CN/brand-guidelines.md](zh-CN/brand-guidelines.md)
-
-## Design notes (`superpowers/`)
-
-Specs and plans for larger features live under [superpowers/](superpowers/).
