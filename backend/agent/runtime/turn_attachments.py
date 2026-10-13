@@ -12,7 +12,7 @@ from loguru import logger
 
 from agent.sandbox.base import SANDBOX_HOME_DIR
 from agent.tools.executor import ToolExecutor
-from api.models import VISION_MIME_TYPES
+from agent.attachments import VISION_MIME_TYPES
 
 
 def safe_attachment_filename(filename: str) -> str:

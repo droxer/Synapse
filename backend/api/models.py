@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import time as _time
-from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from pydantic import AliasChoices, BaseModel, Field, field_validator
 
-from agent.mcp.client import MCPClient
-from agent.mcp.config import MCP_RESERVED_HTTP_HEADERS, MCPServerConfig
+from agent.mcp.config import MCP_RESERVED_HTTP_HEADERS
 from agent.tools.executor import ToolExecutor
-from agent.tools.registry import ToolRegistry
 from api.events import AgentEvent, EventEmitter
+from agent.attachments import VISION_MIME_TYPES as VISION_MIME_TYPES
+from agent.attachments import FileAttachment as FileAttachment
+from agent.attachments import (
+    serialize_attachment_metadata as serialize_attachment_metadata,
+)
+from agent.mcp.state import MCPState as MCPState
 
 # UUID pattern for path parameter validation
 _UUID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
@@ -30,40 +33,6 @@ _DEFAULT_PREVIEW_PORT = 8080
 # File upload constraints
 MAX_FILE_SIZE_MB = 25
 MAX_FILES_PER_MESSAGE = 10
-VISION_MIME_TYPES = frozenset(
-    {
-        "image/png",
-        "image/jpeg",
-        "image/gif",
-        "image/webp",
-        "application/pdf",
-    }
-)
-
-
-@dataclass(frozen=True)
-class FileAttachment:
-    """Immutable representation of an uploaded file."""
-
-    filename: str
-    content_type: str
-    data: bytes
-    size: int
-    local_path: str | None = None
-
-
-def serialize_attachment_metadata(
-    attachments: tuple[FileAttachment, ...],
-) -> list[dict[str, str | int]]:
-    """Return stable metadata for attachment events and persisted messages."""
-    return [
-        {
-            "name": attachment.filename,
-            "size": attachment.size,
-            "type": attachment.content_type,
-        }
-        for attachment in attachments
-    ]
 
 
 class Runnable(Protocol):
@@ -141,41 +110,6 @@ class ConversationEntry:
         # One queue per connected SSE client, fed by a single conversation reader.
         self.stream_queues: set[asyncio.Queue[AgentEvent | None]] = set()
         self.stream_task: asyncio.Task[None] | None = None
-
-
-@dataclass
-class MCPState:
-    """Container for MCP lifecycle state, stored on app.state.
-
-    Keys in ``clients`` and ``configs`` are namespaced:
-    - Global (env-var) servers: key = server name
-    - Per-user servers: key = ``{user_id}:{server_name}``
-    """
-
-    registry: ToolRegistry | None = None
-    clients: dict[str, MCPClient] = field(default_factory=dict)
-    configs: dict[str, MCPServerConfig] = field(default_factory=dict)
-    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
-
-    @staticmethod
-    def user_key(user_id: Any, name: str) -> str:
-        """Build a namespaced key for a per-user MCP server."""
-        return f"{user_id}:{name}"
-
-    def configs_for_user(self, user_id: Any | None) -> dict[str, MCPServerConfig]:
-        """Return configs visible to a user (global + user-owned)."""
-        if user_id is None:
-            return {key: cfg for key, cfg in self.configs.items() if ":" not in key}
-
-        prefix = f"{user_id}:"
-        result: dict[str, MCPServerConfig] = {}
-        for key, cfg in self.configs.items():
-            if ":" not in key:
-                # Global server (from env var)
-                result[key] = cfg
-            elif key.startswith(prefix):
-                result[key] = cfg
-        return result
 
 
 class MessageRequest(BaseModel):

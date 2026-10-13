@@ -44,7 +44,7 @@ from agent.tools.meta.spawn_task_agent import SpawnTaskAgent
 from agent.tools.meta.wait_for_agents import WaitForAgents
 from agent.tools.registry import ToolRegistry
 from agent.events import EventEmitter, EventType
-from api.models import serialize_attachment_metadata
+from agent.attachments import serialize_attachment_metadata
 from config.settings import get_settings
 
 if TYPE_CHECKING:
