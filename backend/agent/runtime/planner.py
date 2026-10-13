@@ -43,9 +43,9 @@ from agent.tools.meta.planner_state import PlannerState
 from agent.tools.meta.spawn_task_agent import SpawnTaskAgent
 from agent.tools.meta.wait_for_agents import WaitForAgents
 from agent.tools.registry import ToolRegistry
-from api.events import EventEmitter, EventType
-from api.models import serialize_attachment_metadata
-from config.settings import get_settings
+from agent.events import EventEmitter, EventType
+from agent.attachments import serialize_attachment_metadata
+from agent.config import get_settings
 
 if TYPE_CHECKING:
     from agent.memory.store import PersistentMemoryStore

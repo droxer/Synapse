@@ -35,7 +35,7 @@ from agent.runtime.message_repair import repair_message_chain
 from agent.runtime.prompting import PromptAssembly
 from agent.runtime.skill_activation import SkillActivationController
 from agent.tools.executor import ToolExecutor
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 
 if TYPE_CHECKING:
     from agent.runtime.orchestrator import AgentState

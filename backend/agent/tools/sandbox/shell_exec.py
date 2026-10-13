@@ -35,7 +35,7 @@ def _make_stream_callbacks(
     event_emitter: Any,
 ) -> tuple[Any, Any]:
     """Create thread-safe stdout/stderr callbacks that emit SSE events."""
-    from api.events import EventType
+    from agent.events import EventType
 
     loop = asyncio.get_running_loop()
 

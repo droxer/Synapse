@@ -105,7 +105,7 @@ class PreviewStart(SandboxTool):
 
         # Emit preview available event
         if event_emitter is not None:
-            from api.events import EventType
+            from agent.events import EventType
 
             await event_emitter.emit(
                 EventType.PREVIEW_AVAILABLE,
@@ -157,7 +157,7 @@ class PreviewStop(SandboxTool):
         await session.exec(f"fuser -k {port}/tcp 2>/dev/null", timeout=5)
 
         if event_emitter is not None:
-            from api.events import EventType
+            from agent.events import EventType
 
             await event_emitter.emit(
                 EventType.PREVIEW_STOPPED,

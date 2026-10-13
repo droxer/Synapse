@@ -12,7 +12,7 @@ from loguru import logger
 from agent.sandbox.base import SANDBOX_HOME_DIR
 from agent.skills.models import SkillContent
 from agent.tools.executor import ToolExecutor
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 
 _SKILL_SANDBOX_ROOT = f"{SANDBOX_HOME_DIR}/skills"
 _SKIP_DIRS = frozenset(

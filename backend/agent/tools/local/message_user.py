@@ -10,7 +10,7 @@ from agent.tools.base import (
     ToolDefinition,
     ToolResult,
 )
-from api.events import EventType
+from agent.events import EventType
 
 
 class MessageUser(LocalTool):

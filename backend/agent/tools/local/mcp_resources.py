@@ -7,7 +7,7 @@ from typing import Any
 
 from agent.mcp.client import MCPClient
 from agent.tools.base import ExecutionContext, LocalTool, ToolDefinition, ToolResult
-from api.models import MCPState
+from agent.mcp.state import MCPState
 
 
 def _visible_client_items(

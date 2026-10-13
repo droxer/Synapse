@@ -54,6 +54,9 @@ def _parse_args() -> argparse.Namespace:
 
 
 async def _main() -> int:
+    from config.settings import install_harness_settings
+
+    install_harness_settings()
     args = _parse_args()
 
     from evals.loader import load_cases

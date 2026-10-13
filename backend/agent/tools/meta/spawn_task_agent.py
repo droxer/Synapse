@@ -14,7 +14,7 @@ from agent.tools.base import (
     ToolResult,
 )
 from agent.tools.meta.planner_state import PlannerState
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 
 _REDUNDANT_TASK_REJECTION = "Redundant task agent rejected"
 
@@ -189,7 +189,7 @@ class SpawnTaskAgent(LocalTool):
         config: TaskAgentConfig
         try:
             from agent.runtime.task_runner import DependencyFailureMode, TaskAgentConfig
-            from config.settings import get_settings
+            from agent.config import get_settings
 
             model = get_settings().LITE_MODEL if use_lite_model else None
             worker_contract = (

@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 import anthropic
 from loguru import logger
-from config.settings import get_settings
+from agent.config import get_settings
 
 # Maximum number of attempts for transient API errors. This is the only retry
 # layer: the SDK client is built with ``max_retries=0``.

@@ -22,7 +22,7 @@ from agent.context.tool_pairing import (
     repair_tool_pairing as _repair_tool_pairing,
     safe_hot_split as _safe_hot_split,
 )
-from config.settings import TokenCounterStrategy
+from agent.config import TokenCounterStrategy
 
 if TYPE_CHECKING:
     from agent.llm.client import AnthropicClient
@@ -208,7 +208,7 @@ def _estimate_tokens(
     messages do not carry (e.g. tool schemas).
     """
     if token_counter is None:
-        from config.settings import get_settings
+        from agent.config import get_settings
 
         token_counter = get_settings().COMPACT_TOKEN_COUNTER
     estimate_text_tokens = _get_text_token_estimator(token_counter)
@@ -1200,7 +1200,7 @@ def _truncate_tool_result(
 
     text = _flatten_content(content) if isinstance(content, list) else content
     if preview_chars is None or result_chars is None:
-        from config.settings import get_settings
+        from agent.config import get_settings
 
         settings = get_settings()
         preview_chars = getattr(

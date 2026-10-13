@@ -43,6 +43,30 @@
 | --- | --- |
 | `evals/` | YAML cases, `llm_judge.py`, `grader.py` — see [Agent evals](agent-evals.md) |
 
+## Dependency rule
+
+`agent/` is the reusable harness core. It must not import `api` or `config`:
+the app depends on the core, never the reverse. `tests/test_core_boundary.py`
+enforces this in a clean subprocess (no `.env`, no credentials) and also runs
+one full turn with a scripted LLM client, checking forbidden modules after the
+turn to catch lazy runtime imports.
+
+- **Events:** `agent.events` owns `EventEmitter`, `EventType`, `AgentEvent`
+  and the `ResponseCoordinator` protocol. `api.events` re-exports them.
+- **Settings:** core code calls `agent.config.get_settings()`. With no host
+  it returns `HarnessSettings` defaults. The app installs its env-driven
+  `Settings` with `config.settings.install_harness_settings()` (called by
+  `api.main`, `evals`, and `tests/conftest.py`). When the core reads a new
+  required setting, add it to `HarnessSettings` with the same default as
+  `config/settings.py`. AST tests cover literal settings reads regardless of
+  quotes or line breaks; optional fields absent from the dataclass need an
+  explicit fallback exception. Dynamic `COMPACT_*` reads are enumerated and
+  resolved compaction defaults are compared against app defaults for all four
+  runtimes. Settings aliases must retain the `settings` / `*_settings` naming
+  convention, or extend the scanner with regression coverage.
+- **Shared types:** `agent.attachments` and `agent.mcp.state`. `api.models`
+  re-exports them.
+
 ## Related
 
 - [Architecture overview](architecture-overview.md)

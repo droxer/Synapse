@@ -9,7 +9,7 @@ from loguru import logger
 
 from agent.artifacts.manager import ArtifactManager
 from agent.tools.base import ExecutionContext, LocalTool, ToolDefinition, ToolResult
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 
 
 def _slugify_ascii(value: str) -> str:

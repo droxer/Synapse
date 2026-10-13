@@ -40,9 +40,9 @@ from agent.runtime.turn_attachments import (
 from agent.skills.loader import SkillRegistry
 from agent.tools.executor import ToolExecutor
 from agent.tools.registry import ToolRegistry
-from api.events import EventEmitter, EventType
-from api.models import serialize_attachment_metadata
-from config.settings import get_settings
+from agent.events import EventEmitter, EventType
+from agent.attachments import serialize_attachment_metadata
+from agent.config import get_settings
 
 
 @dataclass(frozen=True)

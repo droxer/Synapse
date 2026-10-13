@@ -5,6 +5,11 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from agent.state.models import Base
+from config.settings import install_harness_settings
+
+# Route the core's settings through the app's Settings exactly as api.main and
+# evals do at startup, so tests see production behaviour.
+install_harness_settings()
 
 # Use SQLite for fast, reliable tests without external dependencies
 # Use a file-based database with a fixed URI to ensure persistence across connections

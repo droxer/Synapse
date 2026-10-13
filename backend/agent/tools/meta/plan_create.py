@@ -11,7 +11,7 @@ from agent.tools.base import (
     ToolResult,
 )
 from agent.tools.meta.planner_state import PlannerState
-from api.events import EventEmitter, EventType
+from agent.events import EventEmitter, EventType
 
 
 class PlanCreate(LocalTool):
