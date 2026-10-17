@@ -124,6 +124,7 @@ See [Desktop App Guide](docs/desktop-app.md) for configuration and troubleshooti
 
 - [Local Setup Guide](docs/setup.md) — Step-by-step instructions to get Synapse running on your machine
 - [Development Guide](docs/development.md) — Commands, architecture, API reference, environment variables, and contribution workflow
+- [Parallel Search MCP](docs/parallel-search-mcp.md) — Add optional web search and page fetching through the MCP page
 - [Documentation Index](docs/README.md) — Reference shards and deeper docs, including agent runtime, memory, and evals
 - [Desktop App Guide](docs/desktop-app.md) — Tauri desktop app setup, configuration, OAuth flow, and troubleshooting
 - [Agent Memory Guide](docs/agent-memory-management.md) — Working context, compaction, persistent memory, and verified facts
