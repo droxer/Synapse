@@ -41,6 +41,7 @@ Concise guides for agents and developers. Root navigation: **`AGENTS.md`** and *
 | [evals.md](evals.md) | Detailed eval harness guide |
 | [development.md](development.md) | Full development guide |
 | [setup.md](setup.md) | Environment setup |
+| [parallel-search-mcp.md](parallel-search-mcp.md) | Optional Parallel MCP web search and page fetching |
 | [desktop-app.md](desktop-app.md) | Desktop packaging and architecture |
 | [DESIGN_STYLE_GUIDE.md](DESIGN_STYLE_GUIDE.md) | UI conventions |
 | [brand-guidelines.md](brand-guidelines.md) | Brand |
