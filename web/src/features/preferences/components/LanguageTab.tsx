@@ -66,11 +66,11 @@ export function LanguageTab() {
               onClick={() => handleSelect(loc)}
               className={cn(
                 /* Block card — no flex-1/min-w-0 or minmax(0,1fr) on CJK labels. */
-                "group relative block w-full rounded-xl p-5 text-left transition-colors duration-200 ease-out",
+                "group relative block w-full rounded-xl p-5 text-left transition-colors duration-100 ease-out",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isActive
-                  ? "bg-primary/5"
-                  : "bg-muted hover:bg-[color-mix(in_srgb,var(--color-muted),var(--color-foreground)_4%)]",
+                  ? "bg-accent-subtle"
+                  : "bg-surface-soft hover:bg-surface-hover",
               )}
             >
               {isActive ? (
@@ -82,9 +82,9 @@ export function LanguageTab() {
               <span
                 aria-hidden="true"
                 className={cn(
-                  "block text-heading-md transition-colors duration-200",
+                  "block text-heading-md transition-colors duration-100",
                   isActive
-                    ? "text-primary/70"
+                    ? "text-info"
                     : "text-muted-foreground-dim group-hover:text-muted-foreground",
                 )}
               >
@@ -107,14 +107,10 @@ export function LanguageTab() {
           <p className="label-section text-text-subtle">{t("preferences.language.preview")}</p>
         </div>
         <div className="relative px-5 pb-6 pt-4 sm:px-6 sm:pb-8 sm:pt-5">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,color-mix(in_srgb,var(--color-primary)_8%,transparent),transparent)]"
-          />
-          <p aria-live="polite" className="cjk-safe-centered relative text-heading-md text-foreground">
+          <p aria-live="polite" className="cjk-safe-centered text-heading-md text-foreground">
             {activeMeta.preview}
           </p>
-          <p className="cjk-safe-centered relative mt-3 text-caption-bold text-muted-foreground">
+          <p className="cjk-safe-centered mt-3 text-caption-bold text-muted-foreground">
             {activeMeta.native}
             <span aria-hidden="true"> · </span>
             Synapse

@@ -67,10 +67,10 @@ function TaskRow({ task, isActive, locale, onSelect, onDelete }: TaskRowProps) {
         onClick={() => onSelect(task.id)}
         aria-current={isActive ? "true" : undefined}
         className={cn(
-          "flex w-full items-center gap-3 rounded-md px-3 py-2.5 pr-12 text-left transition-colors duration-150",
-          "hover:bg-muted",
+          "flex w-full items-center gap-3 rounded-md px-3 py-2.5 pr-12 text-left transition-colors duration-100",
+          "hover:bg-surface-soft",
           ROW_FOCUS_CLASS,
-          isActive && "bg-muted",
+          isActive && "bg-surface-hover",
         )}
       >
         {task.isRunning && <PulsingDot size="sm" className="shrink-0" />}
@@ -78,7 +78,7 @@ function TaskRow({ task, isActive, locale, onSelect, onDelete }: TaskRowProps) {
           title={task.title}
           className={cn(
             "min-w-0 flex-1 truncate text-body-sm text-foreground",
-            isActive && "font-bold",
+            isActive && "font-medium",
           )}
         >
           {task.title}

@@ -9,7 +9,8 @@ export default auth((req) => {
   const isDesktopCallback = nextUrl.pathname === "/auth/desktop-callback";
   const isLocalDesignReview =
     process.env.NODE_ENV !== "production" &&
-    nextUrl.pathname.startsWith("/design-review");
+    (nextUrl.pathname.startsWith("/design-review") ||
+      nextUrl.pathname.startsWith("/design-system"));
   const desktopNonce = nextUrl.searchParams.get("nonce");
   const isDesktopLogin =
     isLoginPage &&

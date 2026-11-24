@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Bot, FileText, Settings2 } from "lucide-react";
 import { ConversationWorkspace } from "@/features/conversation/components/ConversationWorkspace";
 import { ArtifactFilesPanel } from "@/features/agent-computer";
+import { ChannelsListening } from "@/features/channels/components/ChannelsListening";
+import { ChannelsOnboarding } from "@/features/channels/components/ChannelsOnboarding";
+import { PreferencesDialog } from "@/features/preferences/PreferencesDialog";
+import { SkillCard } from "@/features/skills/components/SkillCard";
+import type { Skill } from "@/features/skills/api/skills-api";
 import { ProductPageHeader, ProductStatCard } from "@/shared/components/ProductPage";
 import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
@@ -19,7 +24,8 @@ import type {
 
 export type DesignReviewTheme = "light" | "dark";
 
-const now = Date.now();
+// Deterministic timestamp so SSR and client hydration always match.
+const now = Date.parse("2026-01-15T12:00:00.000Z");
 
 const messages: readonly ChatMessage[] = [
   {
@@ -193,7 +199,32 @@ const swatches = [
   ["Error", "bg-critical text-on-destructive"],
 ] as const;
 
+const fixtureSkills: readonly Skill[] = [
+  {
+    name: "web-research",
+    description: "Search documentation, verify citations, and summarize primary technical sources.",
+    source_path: "/bundled/web-research",
+    source_type: "bundled",
+    enabled: true,
+  },
+  {
+    name: "design-audit",
+    description: "Inspect contrast pairs, typography roles, and spacing tokens across light and dark surfaces.",
+    source_path: "/user/design-audit",
+    source_type: "user",
+    enabled: true,
+  },
+  {
+    name: "release-checklist",
+    description: "Validate changelog entries, migration scripts, and pre-release build checks.",
+    source_path: "/project/release-checklist",
+    source_type: "project",
+    enabled: false,
+  },
+];
+
 export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewTheme }) {
+  const [prefsOpen, setPrefsOpen] = useState(false);
   useEffect(() => {
     const root = document.documentElement;
     const hadDarkClass = root.classList.contains("dark");
@@ -224,9 +255,9 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
               <Bot aria-hidden="true" className="h-4 w-4" />
               Primary Action
             </Button>
-            <Button type="button" variant="secondary" size="sm">
+            <Button type="button" variant="secondary" size="sm" onClick={() => setPrefsOpen(true)}>
               <Settings2 aria-hidden="true" className="h-4 w-4" />
-              Secondary
+              Open Preferences
             </Button>
           </>
         }
@@ -282,6 +313,56 @@ export function DesignReviewHarness({ theme }: { readonly theme: DesignReviewThe
           </div>
         </aside>
       </section>
+
+      <section className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="label-section text-text-subtle">Offline surface fixtures</p>
+            <h2 className="mt-1 text-heading-sm">Channels, Skills &amp; Preferences</h2>
+          </div>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setPrefsOpen(true)}>
+            <Settings2 aria-hidden="true" className="h-4 w-4" />
+            Open Preferences Dialog
+          </Button>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <p className="text-caption-bold text-muted-foreground">Channels · Onboarding</p>
+            <div className="h-[34rem] overflow-hidden rounded-xl bg-background shadow-elevated">
+              <ChannelsOnboarding
+                onConfigureBot={() => undefined}
+                onConfigureDiscord={() => undefined}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-caption-bold text-muted-foreground">Channels · Listening</p>
+            <div className="h-[34rem] overflow-hidden rounded-xl bg-background shadow-elevated">
+              <ChannelsListening
+                onOpenTelegram={() => undefined}
+                onOpenDiscord={() => undefined}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-caption-bold text-muted-foreground">Skills · Card Variants</p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {fixtureSkills.map((skill) => (
+              <SkillCard
+                key={skill.name}
+                skill={skill}
+                onToggle={() => undefined}
+                onDelete={() => undefined}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <PreferencesDialog open={prefsOpen} onOpenChange={setPrefsOpen} />
     </main>
   );
 }

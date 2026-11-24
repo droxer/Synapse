@@ -92,22 +92,16 @@ export function PreferencesDialog({ open, onOpenChange }: PreferencesDialogProps
                     aria-current={isActive ? "page" : undefined}
                     onClick={() => setActiveId(id)}
                     className={cn(
-                      "group relative flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-1.5 text-body-sm transition-colors duration-150",
+                      "group relative flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-1.5 text-body-sm transition-colors duration-100",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                       isActive
-                        ? "bg-background text-foreground md:font-medium"
-                        : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                        ? "bg-background text-foreground font-medium shadow-xs dark:bg-surface-hover"
+                        : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
                     )}
                   >
-                    {isActive ? (
-                      <span
-                        aria-hidden="true"
-                        className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary md:inset-y-1.5 md:left-0 md:right-auto md:h-auto md:w-0.5"
-                      />
-                    ) : null}
                     <Icon
                       className={cn(
-                        "h-4 w-4 shrink-0 transition-colors duration-150",
+                        "h-4 w-4 shrink-0 transition-colors duration-100",
                         isActive ? "text-info" : "text-text-subtle group-hover:text-muted-foreground",
                       )}
                     />

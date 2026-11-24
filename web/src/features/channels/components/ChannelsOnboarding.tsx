@@ -27,14 +27,9 @@ export function ChannelsOnboarding({ onConfigureBot, onConfigureDiscord }: Chann
         animate="show"
         className="flex w-full max-w-sm flex-col items-center gap-7 text-center"
       >
-        <div className="relative flex h-28 w-28 items-center justify-center" aria-hidden="true">
-          {/* Broadcast pulse — tonal discs, no outlines */}
-          <span className="absolute inset-0 rounded-full bg-primary/[0.06] motion-safe:animate-ping [animation-duration:2.6s]" />
-          <span className="absolute inset-0 rounded-full bg-surface-soft" />
-          <span className="absolute inset-[18%] rounded-full bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)]" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-muted">
-            <ChannelProviderIcon provider="telegram" size="lg" />
-          </div>
+        <div className="flex h-14 w-24 items-center justify-center gap-2 rounded-xl bg-surface-soft" aria-hidden="true">
+          <ChannelProviderIcon provider="telegram" size="lg" />
+          <ChannelProviderIcon provider="discord" size="lg" />
         </div>
 
         <div className="flex w-full flex-col items-center space-y-1.5">

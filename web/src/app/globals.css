@@ -75,16 +75,9 @@
   /* Legacy alias retained so existing `rounded-2xl` resolves to the 12px tier */
   --radius-2xl: var(--radius-xxl);
 
-  /* ─── Spacing scale — 4px base ─── */
-  --spacing-xxs: 4px;
-  --spacing-xs: 8px;
-  --spacing-sm: 10px;
-  --spacing-md: 12px;
-  --spacing-base: 16px;
-  --spacing-lg: 20px;
-  --spacing-xl: 24px;
-  --spacing-xxl: 32px;
-  --spacing-xxxl: 40px;
+  /* ─── Spacing scale — 4px base ───
+     T-shirt spacing vars (--spacing-xs..--spacing-xxxl) live in :root instead of
+     @theme so Tailwind v4 does not override `max-w-xs`/`max-w-md`/`max-w-xl` etc. */
   --spacing-section-sm: 48px;
   --spacing-section: 64px;
   --spacing-section-lg: 80px;
@@ -302,6 +295,17 @@
    Mirrors @theme semantic values for runtime CSS variable resolution. */
 
 :root {
+
+  /* Spacing scale — 4px base (kept out of @theme to avoid max-w-* collisions) */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 10px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 32px;
+  --spacing-xxxl: 40px;
 
   /* DESIGN.md canonical */
   --color-canvas: #ffffff;

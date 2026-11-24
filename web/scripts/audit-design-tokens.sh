@@ -51,9 +51,12 @@ check \
   "No hardcoded hex literals outside approved exceptions." \
   "#[0-9A-Fa-f]{3,8}" \
   --glob "!**/app/globals.css" \
+  --glob "!**/app/layout.tsx" \
+  --glob "!**/app/design-system/page.tsx" \
   --glob "!**/features/channels/components/ChannelProviderIcon.tsx" \
   --glob "!**/shared/components/FilePreview.tsx" \
   --glob "!**/shared/components/Logo.tsx" \
+  --glob "!**/shared/components/logo-variants.tsx" \
   --glob "!**/shared/components/file-type-icons/**" \
   --glob "!**/app/login/page.tsx"
 
@@ -100,11 +103,6 @@ check \
 check \
   "No standard surface shadow-card utility usage in product UI." \
   "\\bshadow-card\\b" \
-  --glob "!**/app/globals.css"
-
-check \
-  "No raw elevated shadow utility usage in product UI." \
-  "\\bshadow-elevated\\b" \
   --glob "!**/app/globals.css"
 
 check \

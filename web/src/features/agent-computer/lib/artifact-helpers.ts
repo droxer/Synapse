@@ -162,19 +162,19 @@ export function fileCategoryColor(contentType: string, name?: string): FileCateg
       case "php":
       case "rb":
       case "swift":
-        return { icon: "text-success", bg: "bg-success/10" };
+        return { icon: "text-success-text", bg: "bg-success-subtle" };
       case "csv":
       case "xlsx":
       case "xls":
       case "ods":
-        return { icon: "text-warning", bg: "bg-warning/10" };
+        return { icon: "text-warning-text", bg: "bg-warning-subtle" };
       case "pdf":
       case "zip":
       case "tar":
       case "gz":
       case "rar":
       case "7z":
-        return { icon: "text-destructive", bg: "bg-destructive/10" };
+        return { icon: "text-destructive", bg: "bg-danger-subtle" };
       case "png":
       case "jpg":
       case "jpeg":
@@ -193,17 +193,17 @@ export function fileCategoryColor(contentType: string, name?: string): FileCateg
   if (contentType.startsWith("image/"))
     return { icon: "text-info", bg: "bg-accent-subtle" };
   if (contentType === "application/pdf")
-    return { icon: "text-destructive", bg: "bg-destructive/10" };
+    return { icon: "text-destructive", bg: "bg-danger-subtle" };
   if (
     contentType.startsWith("text/x-") ||
     contentType === "text/javascript" ||
     contentType === "application/json"
   )
-    return { icon: "text-success", bg: "bg-success/10" };
+    return { icon: "text-success-text", bg: "bg-success-subtle" };
   if (contentType === "text/html")
-    return { icon: "text-warning", bg: "bg-warning/10" };
+    return { icon: "text-warning-text", bg: "bg-warning-subtle" };
   if (contentType === "text/csv" || contentType.includes("spreadsheet"))
-    return { icon: "text-warning", bg: "bg-warning/10" };
+    return { icon: "text-warning-text", bg: "bg-warning-subtle" };
   if (
     contentType.startsWith("text/") ||
     contentType.includes("wordprocessingml") ||
