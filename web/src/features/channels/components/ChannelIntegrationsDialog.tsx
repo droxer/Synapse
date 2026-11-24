@@ -51,17 +51,11 @@ function ProviderTile({
     <button
       type="button"
       onClick={onOpen}
-      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-xl bg-surface-soft p-4 text-left transition-[background-color,transform] duration-200 ease-out hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-xl bg-surface-soft p-4 text-left transition-colors duration-100 ease-out hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       style={{
         ["--tile-brand" as string]: brand,
       }}
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-60"
-        style={{ background: `${brand}26` }}
-      />
-
       <div className="flex items-center justify-between">
         <ChannelProviderIcon provider={provider} size="lg" />
         {(configured || linked) && (

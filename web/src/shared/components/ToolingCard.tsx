@@ -45,7 +45,7 @@ export function ToolingCard({
     <article
       className={cn(
         "surface-panel group relative flex h-full flex-col p-4",
-        "transition-[background-color,box-shadow] duration-200 ease-out",
+        "transition-[background-color,box-shadow] duration-100 ease-out",
         disabled
           ? "opacity-60"
           : "hover:bg-sidebar-hover hover:shadow-elevated",
@@ -66,7 +66,7 @@ export function ToolingCard({
 
       <h3
         className={cn(
-          "mt-3 text-sm font-semibold leading-snug",
+          "mt-3 text-body-sm-bold leading-snug",
           disabled ? "text-muted-foreground" : "text-foreground",
         )}
       >

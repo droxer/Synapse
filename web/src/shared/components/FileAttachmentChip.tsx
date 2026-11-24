@@ -15,9 +15,9 @@ interface FileAttachmentChipProps {
 export function FileAttachmentChip({ name, size, previewUrl, onRemove }: FileAttachmentChipProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-full bg-muted py-1 pr-1 pl-1.5 text-xs text-foreground">
+    <div className="flex min-w-0 items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-1.5 text-xs text-foreground">
       {previewUrl ? (
-        <img src={previewUrl} alt={name} width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+        <img src={previewUrl} alt={name} width={28} height={28} className="h-7 w-7 rounded-sm object-cover" />
       ) : (
         <Paperclip className="ml-1 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
       )}

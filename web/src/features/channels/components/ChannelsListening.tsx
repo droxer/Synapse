@@ -31,12 +31,6 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
 
   return (
     <div className="relative h-full w-full min-w-0 overflow-hidden bg-background">
-      {/* Atmosphere: faint radial wash */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 [background:radial-gradient(ellipse_60%_50%_at_50%_42%,color-mix(in_srgb,var(--color-success)_6%,transparent),transparent_70%)]"
-      />
-
       {/* Centered content via absolute positioning — avoids flex/grid intrinsic-size collapse on CJK text */}
       <div className="absolute inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center px-8 py-10">
@@ -46,20 +40,17 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
             animate="show"
             className="relative z-10 w-[28rem] max-w-full text-center"
           >
-            <div className="mx-auto mb-6 relative flex h-20 w-20 items-center justify-center" aria-hidden="true">
-              <span className="absolute inset-0 rounded-2xl bg-success/10 motion-safe:animate-ping [animation-duration:2.4s]" />
-              <div className="relative flex h-14 w-24 items-center justify-center gap-2 rounded-2xl bg-surface-soft">
-                <ChannelProviderIcon provider="telegram" size="lg" />
-                <ChannelProviderIcon provider="discord" size="lg" />
-              </div>
+            <div className="mx-auto mb-5 flex h-14 w-24 items-center justify-center gap-2 rounded-xl bg-surface-soft" aria-hidden="true">
+              <ChannelProviderIcon provider="telegram" size="lg" />
+              <ChannelProviderIcon provider="discord" size="lg" />
             </div>
 
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-success-subtle px-3 py-1">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full bg-success-subtle px-2.5 py-1">
               <span className="relative inline-flex h-1.5 w-1.5" aria-hidden="true">
                 <span className="absolute inset-0 rounded-full bg-success/50 motion-safe:animate-ping" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
               </span>
-              <span className="text-caption-bold uppercase tracking-wider text-success-text">
+              <span className="text-caption-bold text-success-text">
                 {t("channels.header.live")}
               </span>
             </div>
@@ -77,7 +68,7 @@ export function ChannelsListening({ onOpenTelegram, onOpenDiscord }: ChannelsLis
                   key={item.provider}
                   type="button"
                   onClick={item.onOpen}
-                  className="w-full rounded-xl bg-surface-soft p-4 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="w-full rounded-xl bg-surface-soft p-4 text-left transition-colors duration-100 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 shrink-0">

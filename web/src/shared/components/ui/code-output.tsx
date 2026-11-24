@@ -62,13 +62,13 @@ export function CodeOutput({ output, icon: Icon, label, language, className }: C
           onClick={handleCopy}
           aria-label={copied ? t("output.copied") : t("output.copyToClipboard")}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-micro text-muted-foreground transition-colors hover:bg-background hover:text-foreground",
+            "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-micro text-muted-foreground transition-colors duration-100 hover:bg-background hover:text-foreground",
             OUTPUT_SURFACE_FOCUS_CLASSES,
           )}
         >
           {copied ? (
             <>
-              <Check className="h-3 w-3" />
+              <Check className="h-3 w-3 text-success-text" />
               {t("output.copied")}
             </>
           ) : (

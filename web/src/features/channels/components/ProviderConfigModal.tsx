@@ -316,7 +316,7 @@ export function ProviderDangerZone({
     <div className="rounded-xl bg-danger-subtle p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-caption-bold uppercase tracking-wider text-destructive">{title}</p>
+          <p className="label-section text-destructive">{title}</p>
           <p className="mt-0.5 text-caption text-muted-foreground">{description}</p>
         </div>
         <Button
@@ -363,7 +363,7 @@ export function ProviderTriggerCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex w-full flex-col gap-2 overflow-hidden rounded-xl bg-surface-soft p-3 text-left transition-[background-color] duration-200 ease-out hover:bg-[color-mix(in_srgb,var(--color-surface-soft),var(--color-ink-deep)_4%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="group relative flex w-full flex-col gap-2 overflow-hidden rounded-xl bg-surface-soft p-3 text-left transition-colors duration-100 ease-out hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2.5 min-w-0">
